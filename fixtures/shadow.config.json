@@ -1,0 +1,8 @@
+{
+  "inputs": { "type": "jsonl", "path": "example-inputs.jsonl" },
+  "candidate": { "type": "command", "template": "echo {input}" },
+  "judge": { "type": "exact-match" },
+  "thresholds": { "minPassRate": 0.75, "maxRegressions": 1 },
+  "concurrency": 4,
+  "output": { "dir": "../shadow-out" }
+}
