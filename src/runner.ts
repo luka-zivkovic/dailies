@@ -22,7 +22,9 @@ async function runOneItem(config: Config, item: InputItem): Promise<ItemResult> 
 
   let candidateOutput: string;
   try {
-    candidateOutput = await withRetry(() => runCandidate(config.candidate, item.input));
+    candidateOutput = await withRetry(() =>
+      runCandidate(config.candidate, item.input, config.timeoutMs),
+    );
   } catch (err) {
     return {
       ...base,
@@ -34,7 +36,7 @@ async function runOneItem(config: Config, item: InputItem): Promise<ItemResult> 
 
   try {
     const judge = await withRetry(() =>
-      judgeItem(config.judge, item.input, candidateOutput, item.baseline_output),
+      judgeItem(config.judge, item.input, candidateOutput, item.baseline_output, config.timeoutMs),
     );
     return {
       ...base,

@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import type { JudgeConfig } from './config.js';
+import { DEFAULT_TIMEOUT_MS, type JudgeConfig } from './config.js';
+import { fetchWithTimeout } from './http.js';
 
 /** The judge-gate contract response: POST /judge → { score, pass, reason? } */
 export const judgeResultSchema = z.object({
@@ -15,6 +16,7 @@ export async function judgeItem(
   input: string,
   candidateOutput: string,
   baselineOutput?: string,
+  timeoutMs: number = DEFAULT_TIMEOUT_MS,
 ): Promise<JudgeResult> {
   if (judge.type === 'exact-match') {
     if (baselineOutput === undefined) {
@@ -33,15 +35,20 @@ export async function judgeItem(
   }
 
   // http judge implementing the gate contract
-  const res = await fetch(judge.url, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', ...judge.headers },
-    body: JSON.stringify({
-      input,
-      candidate_output: candidateOutput,
-      ...(baselineOutput !== undefined ? { baseline_output: baselineOutput } : {}),
-    }),
-  });
+  const res = await fetchWithTimeout(
+    judge.url,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', ...judge.headers },
+      body: JSON.stringify({
+        input,
+        candidate_output: candidateOutput,
+        ...(baselineOutput !== undefined ? { baseline_output: baselineOutput } : {}),
+      }),
+    },
+    timeoutMs,
+    'judge',
+  );
   if (!res.ok) {
     throw new Error(`judge HTTP ${res.status} from ${judge.url}`);
   }

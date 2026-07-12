@@ -32,6 +32,11 @@ export const reportSchema = z.object({
     errored: z.number().int(),
     passRate: z.number(),
     regressions: z.number().int(),
+    /**
+     * True when every item errored: a systemic failure (candidate/judge down),
+     * not a signal about candidate quality. Maps to CLI exit code 2.
+     */
+    allErrored: z.boolean(),
   }),
   verdict: z.enum(['promote', 'block']),
   items: z.array(itemResultSchema),
@@ -47,6 +52,7 @@ export interface Totals {
   errored: number;
   passRate: number;
   regressions: number;
+  allErrored: boolean;
 }
 
 export function aggregate(items: ItemResult[]): Totals {
@@ -56,7 +62,8 @@ export function aggregate(items: ItemResult[]): Totals {
   const errored = items.filter((i) => i.error !== undefined).length;
   const regressions = items.filter((i) => i.regression).length;
   const passRate = total === 0 ? 0 : passed / total;
-  return { total, passed, failed, errored, passRate, regressions };
+  const allErrored = total > 0 && errored === total;
+  return { total, passed, failed, errored, passRate, regressions, allErrored };
 }
 
 export function decideVerdict(
@@ -67,6 +74,22 @@ export function decideVerdict(
     totals.regressions <= thresholds.maxRegressions
     ? 'promote'
     : 'block';
+}
+
+export const EXIT_PROMOTE = 0;
+export const EXIT_BLOCK = 1;
+export const EXIT_RUN_ERROR = 2;
+
+/**
+ * Map a finished report to the CLI exit code. When every item errored the run
+ * is a systemic failure — indistinguishable from a bad candidate otherwise —
+ * so it exits 2 (run error) rather than 1 (block).
+ */
+export function decideExitCode(report: Pick<Report, 'verdict' | 'totals'>): number {
+  if (report.totals.allErrored) {
+    return EXIT_RUN_ERROR;
+  }
+  return report.verdict === 'promote' ? EXIT_PROMOTE : EXIT_BLOCK;
 }
 
 const MAX_FAILING_EXAMPLES = 10;

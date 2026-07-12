@@ -20,7 +20,9 @@ That runs the bundled example: five historical inputs (`fixtures/example-inputs.
 
 - `0` — promote
 - `1` — block
-- `2` — run error (bad config, unreadable inputs, etc.)
+- `2` — run error (bad config, unreadable inputs, or **every** item errored — see below)
+
+If *all* items error (candidate/judge unreachable, every call timing out, …), the run is a systemic failure rather than a verdict on the candidate, so `shadow-run` exits `2` instead of `1`. The report is still written; `totals.allErrored` is `true`.
 
 One example item intentionally regresses, so the report shows a failing example while the run still promotes under the example thresholds (`minPassRate: 0.75`, `maxRegressions: 1`). Tighten `maxRegressions` to `0` to see a block.
 
@@ -58,13 +60,17 @@ One example item intentionally regresses, so the report shows a failing example 
     "maxRegressions": 1    // failing items that have a baseline_output
   },
   "concurrency": 4,        // default 4
+  "timeoutMs": 60000,      // per-call timeout (ms) for every candidate command/request
+                           // and judge request; default 60000. A timed-out call is an
+                           // item error and counts as a failure (never skipped).
   "output": { "dir": "../shadow-out" }
 }
 ```
 
 Semantics:
 
-- Every input runs through the candidate, then the judge. Candidate/judge failures are retried once; an item that still fails counts as a **failure** in the totals — it is never silently skipped.
+- Every input runs through the candidate, then the judge. Candidate/judge failures (including timeouts after `timeoutMs`) are retried once; an item that still fails counts as a **failure** in the totals — it is never silently skipped.
+- If **all** items errored, the CLI exits `2` (run error) instead of `1` (block): a fully-errored run says nothing about candidate quality, only that the harness could not reach the candidate or judge.
 - A **regression** is a failing item that has a `baseline_output` (behavior production used to get right).
 - Verdict is `promote` iff `passRate >= minPassRate` **and** `regressions <= maxRegressions`.
 - `report.json` uses a versioned schema (`schemaVersion: 1`); `report.md` is the human summary with failing examples.
