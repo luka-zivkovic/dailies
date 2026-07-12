@@ -1,5 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { aggregate, decideVerdict, type ItemResult } from '../src/report.js';
+import {
+  aggregate,
+  decideExitCode,
+  decideVerdict,
+  EXIT_BLOCK,
+  EXIT_PROMOTE,
+  EXIT_RUN_ERROR,
+  type ItemResult,
+  type Totals,
+} from '../src/report.js';
 
 function item(overrides: Partial<ItemResult> & { id: string }): ItemResult {
   return {
@@ -26,6 +35,7 @@ describe('aggregate', () => {
       errored: 1,
       passRate: 0.5,
       regressions: 1,
+      allErrored: false,
     });
   });
 
@@ -38,8 +48,69 @@ describe('aggregate', () => {
   });
 });
 
+describe('aggregate allErrored', () => {
+  it('is true when every item errored (systemic failure)', () => {
+    const totals = aggregate([
+      item({ id: 'a', pass: false, error: 'candidate failed after retry: down' }),
+      item({ id: 'b', pass: false, error: 'candidate failed after retry: down' }),
+    ]);
+    expect(totals.allErrored).toBe(true);
+  });
+
+  it('is false when at least one item did not error', () => {
+    const totals = aggregate([
+      item({ id: 'a', pass: false, error: 'candidate failed after retry: down' }),
+      item({ id: 'b', pass: true }),
+    ]);
+    expect(totals.allErrored).toBe(false);
+  });
+
+  it('is false for an empty item list', () => {
+    expect(aggregate([]).allErrored).toBe(false);
+  });
+});
+
+describe('decideExitCode', () => {
+  const baseTotals: Totals = {
+    total: 2,
+    passed: 0,
+    failed: 2,
+    errored: 2,
+    passRate: 0,
+    regressions: 0,
+    allErrored: true,
+  };
+
+  it('maps an all-errored run to exit 2 (run error), not 1 (block)', () => {
+    expect(decideExitCode({ verdict: 'block', totals: baseTotals })).toBe(EXIT_RUN_ERROR);
+  });
+
+  it('maps a block with at least one non-errored item to exit 1', () => {
+    expect(
+      decideExitCode({ verdict: 'block', totals: { ...baseTotals, errored: 1, allErrored: false } }),
+    ).toBe(EXIT_BLOCK);
+  });
+
+  it('maps a promote to exit 0', () => {
+    expect(
+      decideExitCode({
+        verdict: 'promote',
+        totals: { ...baseTotals, passed: 2, failed: 0, errored: 0, passRate: 1, allErrored: false },
+      }),
+    ).toBe(EXIT_PROMOTE);
+  });
+});
+
 describe('decideVerdict', () => {
-  const totals = { total: 10, passed: 9, failed: 1, errored: 0, passRate: 0.9, regressions: 1 };
+  const totals = {
+    total: 10,
+    passed: 9,
+    failed: 1,
+    errored: 0,
+    passRate: 0.9,
+    regressions: 1,
+    allErrored: false,
+  };
 
   it('promotes when pass rate and regressions are within thresholds', () => {
     expect(decideVerdict(totals, { minPassRate: 0.9, maxRegressions: 1 })).toBe('promote');

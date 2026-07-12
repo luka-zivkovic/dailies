@@ -16,6 +16,16 @@ describe('config validation', () => {
     expect(config.candidate.type).toBe('command');
   });
 
+  it('defaults timeoutMs to 60000 and accepts an explicit value', () => {
+    expect(parseConfig(validConfig).timeoutMs).toBe(60_000);
+    expect(parseConfig({ ...validConfig, timeoutMs: 500 }).timeoutMs).toBe(500);
+  });
+
+  it('rejects a non-positive or non-integer timeoutMs', () => {
+    expect(() => parseConfig({ ...validConfig, timeoutMs: 0 })).toThrow();
+    expect(() => parseConfig({ ...validConfig, timeoutMs: 1.5 })).toThrow();
+  });
+
   it('accepts an http candidate and http judge with headers', () => {
     const config = parseConfig({
       ...validConfig,

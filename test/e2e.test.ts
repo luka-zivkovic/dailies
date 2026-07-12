@@ -96,6 +96,7 @@ describe('end-to-end with mock HTTP candidate and judge', () => {
       judge: { type: 'http', url: judgeUrl },
       thresholds: { minPassRate: 1, maxRegressions: 0 },
       concurrency: 2,
+      timeoutMs: 10_000,
       output: { dir: 'unused' },
       ...overrides,
     };
@@ -150,6 +151,7 @@ describe('end-to-end with mock HTTP candidate and judge', () => {
       failed: 1,
       errored: 1,
       regressions: 1,
+      allErrored: true,
     });
     expect(report.items[0]?.error).toMatch(/candidate failed after retry/);
   });

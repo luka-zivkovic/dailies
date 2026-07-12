@@ -3,12 +3,8 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { Command } from 'commander';
 import { parseConfig, type Config } from './config.js';
-import { renderMarkdown } from './report.js';
+import { decideExitCode, EXIT_RUN_ERROR, renderMarkdown } from './report.js';
 import { runShadow } from './runner.js';
-
-const EXIT_PROMOTE = 0;
-const EXIT_BLOCK = 1;
-const EXIT_RUN_ERROR = 2;
 
 function resolveFrom(baseDir: string, p: string): string {
   return isAbsolute(p) ? p : resolve(baseDir, p);
@@ -53,7 +49,14 @@ async function main(): Promise<number> {
   console.log(`report: ${jsonPath}`);
   console.log(`report: ${mdPath}`);
 
-  return report.verdict === 'promote' ? EXIT_PROMOTE : EXIT_BLOCK;
+  if (totals.allErrored) {
+    console.error(
+      `shadow-run error: all ${totals.total} items errored — this is a systemic failure ` +
+        `(candidate/judge unreachable or misconfigured?), not a verdict on the candidate. ` +
+        `Exiting ${EXIT_RUN_ERROR} (run error) instead of 1 (block).`,
+    );
+  }
+  return decideExitCode(report);
 }
 
 main()

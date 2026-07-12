@@ -1,5 +1,6 @@
 export {
   configSchema,
+  DEFAULT_TIMEOUT_MS,
   inputItemSchema,
   parseConfig,
   type CandidateConfig,
@@ -10,7 +11,11 @@ export {
 export { judgeItem, judgeResultSchema, type JudgeResult } from './judge.js';
 export {
   aggregate,
+  decideExitCode,
   decideVerdict,
+  EXIT_BLOCK,
+  EXIT_PROMOTE,
+  EXIT_RUN_ERROR,
   renderMarkdown,
   REPORT_SCHEMA_VERSION,
   reportSchema,

@@ -1,5 +1,8 @@
 import { z } from 'zod';
 
+/** Default per-call timeout for candidate/judge invocations, in milliseconds. */
+export const DEFAULT_TIMEOUT_MS = 60_000;
+
 export const inputsConfigSchema = z.object({
   type: z.literal('jsonl'),
   path: z.string().min(1),
@@ -45,6 +48,11 @@ export const configSchema = z.object({
     maxRegressions: z.number().int().min(0),
   }),
   concurrency: z.number().int().min(1).default(4),
+  /**
+   * Per-call timeout (ms) applied to every candidate command/request and every
+   * judge request. A timed-out call is an item error and counts as a failure.
+   */
+  timeoutMs: z.number().int().min(1).default(DEFAULT_TIMEOUT_MS),
   output: z.object({
     dir: z.string().min(1),
   }),
