@@ -4,7 +4,7 @@
 
 Greenroom is the release layer of an AI trust ecosystem: safe shipping of AI changes (prompts, models, configs) via shadow evaluation and judged promotion. See [PLAN.md](./PLAN.md) for the product thesis and roadmap.
 
-**What exists today (v0 wedge):** `shadow-run`, a CLI that runs a candidate AI change against historical inputs, judges each result against your production baseline, and emits a promote/block report. No serving-path changes required.
+**What exists today (v0 wedge):** the `greenroom` CLI ("shadow-run" mode) that runs a candidate AI change against historical inputs, judges each result against your production baseline, and emits a promote/block report. No serving-path changes required.
 
 ## Quickstart
 
@@ -22,13 +22,13 @@ That runs the bundled example: five historical inputs (`fixtures/example-inputs.
 - `1` — block
 - `2` — run error (bad config, unreadable inputs, or **every** item errored — see below)
 
-If *all* items error (candidate/judge unreachable, every call timing out, …), the run is a systemic failure rather than a verdict on the candidate, so `shadow-run` exits `2` instead of `1`. The report is still written; `totals.allErrored` is `true`.
+If *all* items error (candidate/judge unreachable, every call timing out, …), the run is a systemic failure rather than a verdict on the candidate, so `greenroom` exits `2` instead of `1`. The report is still written; `totals.allErrored` is `true`.
 
 One example item intentionally regresses, so the report shows a failing example while the run still promotes under the example thresholds (`minPassRate: 0.75`, `maxRegressions: 1`). Tighten `maxRegressions` to `0` to see a block.
 
 ## Configuration
 
-`shadow-run --config shadow.config.json`. Relative paths are resolved against the config file's directory.
+`greenroom --config shadow.config.json`. Relative paths are resolved against the config file's directory.
 
 ```jsonc
 {

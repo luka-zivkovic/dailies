@@ -8,8 +8,7 @@
     "node": ">=20"
   },
   "bin": {
-    "greenroom": "dist/cli.js",
-    "shadow-run": "dist/cli.js"
+    "greenroom": "dist/cli.js"
   },
   "files": [
     "dist"
