@@ -23,7 +23,7 @@ async function loadConfig(configPath: string): Promise<Config> {
 
 async function main(): Promise<number> {
   const program = new Command()
-    .name('soundcheck')
+    .name('dailies')
     .description(
       'Run a candidate AI change against historical inputs, judge it vs production, emit a promote/block report',
     )
@@ -51,7 +51,7 @@ async function main(): Promise<number> {
 
   if (totals.allErrored) {
     console.error(
-      `soundcheck error: all ${totals.total} items errored — this is a systemic failure ` +
+      `dailies error: all ${totals.total} items errored — this is a systemic failure ` +
         `(candidate/judge unreachable or misconfigured?), not a verdict on the candidate. ` +
         `Exiting ${EXIT_RUN_ERROR} (run error) instead of 1 (block).`,
     );
@@ -64,6 +64,6 @@ main()
     process.exitCode = code;
   })
   .catch((err: unknown) => {
-    console.error(`soundcheck error: ${err instanceof Error ? err.message : String(err)}`);
+    console.error(`dailies error: ${err instanceof Error ? err.message : String(err)}`);
     process.exitCode = EXIT_RUN_ERROR;
   });
