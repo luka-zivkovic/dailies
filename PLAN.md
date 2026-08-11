@@ -1,6 +1,6 @@
 # PLAN
 
-> **Working name:** `release-layer`. Not final. Rename before anything public.
+> Named **greenroom** (2026-08-12): the greenroom is where a performer waits and rehearses before being allowed on stage — shadow evaluation before promotion.
 
 ## Thesis
 
@@ -24,7 +24,7 @@ POST /judge
 - **Coeval is the first-class judge** — it already owns rubric-based evaluation — but the contract is deliberately pluggable: any endpoint that speaks it can gate a rollout (in-house judges, other eval vendors, a regex).
 - **Trace-store-agnostic** on the input side: historical inputs can come from anywhere. **Ironside is first-class** — pull replay inputs via its raw-events endpoint, and write shadow results back tagged with the `environment: 'shadow'` convention so shadow traffic never pollutes production analytics.
 
-## v0 wedge (built now): shadow-runner CLI
+## v0 wedge (built now): greenroom CLI
 
 A standalone CLI: **run a candidate against historical inputs, judge candidate vs. production, emit a promote/block report.**
 
@@ -34,7 +34,7 @@ A standalone CLI: **run a candidate against historical inputs, judge candidate v
 
 ## Build trigger for the full product
 
-The control plane + data plane (canary percentages, auto-rollback, promotion state machine) is **demand-gated and not built now**. Build it when **≥3 design partners** are either (a) running the manual shadow-runner loop as part of their real release process, or (b) explicitly asking for auto-blocking / staged rollout. Until then, every feature request routes back to making the CLI loop sharper.
+The control plane + data plane (canary percentages, auto-rollback, promotion state machine) is **demand-gated and not built now**. Build it when **≥3 design partners** are either (a) running the manual greenroom loop as part of their real release process, or (b) explicitly asking for auto-blocking / staged rollout. Until then, every feature request routes back to making the CLI loop sharper.
 
 ## Why standalone (not a feature of Ironside or Coeval)
 

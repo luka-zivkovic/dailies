@@ -1,8 +1,8 @@
-# release-layer
+# greenroom
 
-> **Note:** `release-layer` is a working name, not final.
+> Candidates rehearse on production's script before going on stage.
 
-The release layer of an AI trust ecosystem: safe shipping of AI changes (prompts, models, configs) via shadow evaluation and judged promotion. See [PLAN.md](./PLAN.md) for the product thesis and roadmap.
+Greenroom is the release layer of an AI trust ecosystem: safe shipping of AI changes (prompts, models, configs) via shadow evaluation and judged promotion. See [PLAN.md](./PLAN.md) for the product thesis and roadmap.
 
 **What exists today (v0 wedge):** `shadow-run`, a CLI that runs a candidate AI change against historical inputs, judges each result against your production baseline, and emits a promote/block report. No serving-path changes required.
 

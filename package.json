@@ -1,13 +1,14 @@
 {
-  "name": "shadow-runner",
+  "name": "greenroom",
   "version": "0.1.0",
-  "description": "Run a candidate AI change against historical inputs, judge it vs production, emit a promote/block report",
+  "description": "Candidates rehearse on production's script before going on stage: run an AI change against historical inputs, judge it vs the production baseline, emit a promote/block report.",
   "license": "MIT",
   "type": "module",
   "engines": {
     "node": ">=20"
   },
   "bin": {
+    "greenroom": "dist/cli.js",
     "shadow-run": "dist/cli.js"
   },
   "files": [
@@ -25,5 +26,9 @@
     "@types/node": "^20.14.0",
     "typescript": "^5.5.0",
     "vitest": "^2.1.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luka-zivkovic/greenroom.git"
   }
 }
