@@ -1,14 +1,14 @@
 {
-  "name": "greenroom",
+  "name": "soundcheck",
   "version": "0.1.0",
-  "description": "Candidates rehearse on production's script before going on stage: run an AI change against historical inputs, judge it vs the production baseline, emit a promote/block report.",
+  "description": "Run the real set on the real rig before doors open: shadow-test an AI change against historical inputs, judge it vs the production baseline, emit a promote/block report.",
   "license": "MIT",
   "type": "module",
   "engines": {
     "node": ">=20"
   },
   "bin": {
-    "greenroom": "dist/cli.js"
+    "soundcheck": "dist/cli.js"
   },
   "files": [
     "dist"
@@ -28,6 +28,6 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/luka-zivkovic/greenroom.git"
+    "url": "git+https://github.com/luka-zivkovic/soundcheck.git"
   }
 }
