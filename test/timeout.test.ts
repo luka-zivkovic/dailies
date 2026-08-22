@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { runCandidate } from '../src/candidate.js';
 import type { Config } from '../src/config.js';
 import { judgeItem } from '../src/judge.js';
+import { decideExitCode, EXIT_BLOCK } from '../src/report.js';
 import { runShadow } from '../src/runner.js';
 
 /** A server that accepts requests but never responds (simulates a hung endpoint). */
@@ -73,9 +74,35 @@ describe('timeouts', () => {
       passed: 0,
       failed: 1,
       errored: 1,
+      candidateErrored: 1,
+      judgeErrored: 0,
+      evaluated: 0,
       allErrored: true,
     });
+    expect(report.verdict).toBe('block');
+    expect(decideExitCode(report)).toBe(EXIT_BLOCK);
     expect(report.items[0]?.pass).toBe(false);
+    expect(report.items[0]).toMatchObject({
+      outcome: 'error',
+      errorStage: 'candidate',
+      errorKind: 'timeout',
+      regression: false,
+    });
     expect(report.items[0]?.error).toMatch(/timed out after 150ms/);
+    expect(report.items[0]?.attempts.candidate).toEqual([
+      {
+        attempt: 1,
+        outcome: 'error',
+        errorKind: 'timeout',
+        retryable: true,
+        delayBeforeNextMs: 100,
+      },
+      {
+        attempt: 2,
+        outcome: 'error',
+        errorKind: 'timeout',
+        retryable: true,
+      },
+    ]);
   }, 15_000);
 });

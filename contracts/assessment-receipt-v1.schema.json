@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coeval.dev/contracts/assessment-receipt-v1.schema.json",
+  "title": "Coeval Assessment Receipt v1",
+  "description": "Closed, policy-free evidence emitted for a Coeval release_evidence run.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "receiptId",
+    "evalRunId",
+    "projectId",
+    "skillId",
+    "skillVersionId",
+    "status",
+    "run",
+    "requestedModelBinding",
+    "skillDigest",
+    "datasetDigest",
+    "items",
+    "evidenceDigest"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "receiptId": { "$ref": "#/$defs/nonEmptyString" },
+    "evalRunId": { "$ref": "#/$defs/nonEmptyString" },
+    "projectId": { "$ref": "#/$defs/nonEmptyString" },
+    "skillId": { "$ref": "#/$defs/nonEmptyString" },
+    "skillVersionId": { "$ref": "#/$defs/nonEmptyString" },
+    "status": { "enum": ["complete", "incomplete"] },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "totalItems", "completedItems", "failedItems", "agreedItems"],
+      "properties": {
+        "status": { "$ref": "#/$defs/runStatus" },
+        "totalItems": { "$ref": "#/$defs/nonNegativeInteger" },
+        "completedItems": { "$ref": "#/$defs/nonNegativeInteger" },
+        "failedItems": { "$ref": "#/$defs/nonNegativeInteger" },
+        "agreedItems": { "$ref": "#/$defs/nonNegativeInteger" }
+      }
+    },
+    "requestedModelBinding": { "$ref": "#/$defs/modelBinding" },
+    "skillDigest": { "$ref": "#/$defs/sha256Digest" },
+    "datasetDigest": { "$ref": "#/$defs/sha256Digest" },
+    "items": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/item" }
+    },
+    "evidenceDigest": { "$ref": "#/$defs/sha256Digest" }
+  },
+  "$defs": {
+    "nonEmptyString": { "type": "string", "minLength": 1 },
+    "nonNegativeInteger": { "type": "integer", "minimum": 0 },
+    "sha256Digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "runStatus": {
+      "enum": ["pending", "running", "completed", "failed", "canceled"]
+    },
+    "itemStatus": {
+      "enum": ["pending", "completed", "failed", "skipped"]
+    },
+    "modelBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "modelId", "modelVersion", "temperature"],
+      "properties": {
+        "provider": { "type": "string" },
+        "modelId": { "type": "string" },
+        "modelVersion": { "type": "string" },
+        "temperature": { "type": "number" },
+        "topP": { "type": "number" },
+        "baseUrl": { "type": "string" }
+      }
+    },
+    "providerMetadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["model", "requestId", "responseId", "systemFingerprint"],
+      "properties": {
+        "model": { "type": ["string", "null"] },
+        "requestId": { "type": ["string", "null"] },
+        "responseId": { "type": ["string", "null"] },
+        "systemFingerprint": { "type": ["string", "null"] }
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "clientItemId",
+        "caseId",
+        "status",
+        "judgedLabel",
+        "verdictId",
+        "error",
+        "contentDigest",
+        "providerMetadata"
+      ],
+      "properties": {
+        "clientItemId": { "$ref": "#/$defs/nonEmptyString" },
+        "caseId": { "$ref": "#/$defs/nonEmptyString" },
+        "status": { "$ref": "#/$defs/itemStatus" },
+        "judgedLabel": {
+          "type": ["string", "null"],
+          "enum": ["pass", "fail", "ambiguous", null]
+        },
+        "verdictId": { "type": ["string", "null"] },
+        "error": { "type": ["string", "null"] },
+        "contentDigest": { "$ref": "#/$defs/sha256Digest" },
+        "providerMetadata": { "$ref": "#/$defs/providerMetadata" }
+      }
+    }
+  }
+}

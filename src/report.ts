@@ -1,57 +1,468 @@
 import { z } from 'zod';
+import {
+  coevalAssessmentReceiptSchema,
+  coevalEvidenceOperationSchema,
+  verifyCoevalReceipt,
+} from './coeval.js';
+import { ERROR_KINDS, type ErrorKind } from './errors.js';
 import { judgeResultSchema } from './judge.js';
+import { attemptLedgerSchema } from './retry.js';
 
-export const REPORT_SCHEMA_VERSION = 1;
+export const REPORT_SCHEMA_VERSION = 3;
+
+export const itemOutcomeSchema = z.enum(['pass', 'fail', 'error']);
+export const comparisonSchema = z.enum([
+  'regression',
+  'improvement',
+  'stable_pass',
+  'stable_fail',
+  'unpaired',
+]);
+export const errorStageSchema = z.enum(['candidate', 'judge']);
+export const errorKindSchema = z.enum(ERROR_KINDS);
+
+export function compareOutcome(
+  baselineLabel: 'pass' | 'fail' | undefined,
+  outcome: 'pass' | 'fail' | 'error',
+): z.infer<typeof comparisonSchema> {
+  if (baselineLabel === undefined || outcome === 'error') return 'unpaired';
+  if (baselineLabel === 'pass') return outcome === 'pass' ? 'stable_pass' : 'regression';
+  return outcome === 'pass' ? 'improvement' : 'stable_fail';
+}
 
 export const itemResultSchema = z.object({
   id: z.string(),
   input: z.string(),
+  baseline_label: z.enum(['pass', 'fail']).optional(),
   baseline_output: z.string().optional(),
   candidate_output: z.string().optional(),
   judge: judgeResultSchema.optional(),
   /** Set when the candidate or judge failed after retry; the item counts as a failure. */
   error: z.string().optional(),
+  /** Machine-readable outcome. Errors mean the item was not fully evaluated. */
+  outcome: itemOutcomeSchema,
+  /** Stage that prevented the item from being fully evaluated. Present only for errors. */
+  errorStage: errorStageSchema.optional(),
+  /** Coarse machine-readable error classification. Present only for errors. */
+  errorKind: errorKindSchema.optional(),
   pass: z.boolean(),
-  /** A failing item that has a baseline_output (behavior we used to get right). */
+  /** Candidate quality relative to an explicit historical label. */
+  comparison: comparisonSchema,
+  /** Compatibility projection; true iff comparison is regression. */
   regression: z.boolean(),
+  /** Ordered, timestamp-free operation attempts for deterministic retry auditing. */
+  attempts: z.object({
+    candidate: attemptLedgerSchema,
+    judge: attemptLedgerSchema.optional(),
+  }).strict(),
+}).strict().superRefine((item, ctx) => {
+  const expectedComparison = compareOutcome(item.baseline_label, item.outcome);
+  if (item.comparison !== expectedComparison) {
+    ctx.addIssue({ code: 'custom', message: `comparison must be ${expectedComparison}` });
+  }
+  if (item.regression !== (item.comparison === 'regression')) {
+    ctx.addIssue({ code: 'custom', message: 'regression must agree with comparison' });
+  }
+  const candidateFinal = item.attempts.candidate.at(-1);
+  const judgeFinal = item.attempts.judge?.at(-1);
+  if (item.outcome === 'error') {
+    if (item.error === undefined || item.errorStage === undefined || item.errorKind === undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'errored items require error, errorStage, and errorKind',
+      });
+    }
+    if (item.pass) {
+      ctx.addIssue({ code: 'custom', message: 'errored items cannot pass' });
+    }
+    if (item.regression) {
+      ctx.addIssue({ code: 'custom', message: 'unevaluated errors cannot be regressions' });
+    }
+    if (item.judge !== undefined) {
+      ctx.addIssue({ code: 'custom', message: 'errored items cannot carry a completed judge result' });
+    }
+    if (item.errorStage === 'candidate' && item.attempts.judge !== undefined) {
+      ctx.addIssue({ code: 'custom', message: 'candidate failures cannot have judge attempts' });
+    }
+    if (item.errorStage === 'candidate' && item.candidate_output !== undefined) {
+      ctx.addIssue({ code: 'custom', message: 'candidate failures cannot carry candidate_output' });
+    }
+    if (item.errorStage === 'candidate' && candidateFinal?.outcome !== 'error') {
+      ctx.addIssue({ code: 'custom', message: 'candidate failure requires a final failed attempt' });
+    }
+    if (
+      item.errorStage === 'candidate' &&
+      candidateFinal?.errorKind !== item.errorKind
+    ) {
+      ctx.addIssue({ code: 'custom', message: 'candidate errorKind must match final attempt' });
+    }
+    if (item.errorStage === 'judge' && item.candidate_output === undefined) {
+      ctx.addIssue({ code: 'custom', message: 'judge failures require candidate_output' });
+    }
+    if (item.errorStage === 'judge' && (
+      candidateFinal?.outcome !== 'success' ||
+      (judgeFinal !== undefined && judgeFinal.outcome !== 'error')
+    )) {
+      ctx.addIssue({ code: 'custom', message: 'judge failure requires candidate success and any judge ledger to end failed' });
+    }
+    if (
+      item.errorStage === 'judge' &&
+      judgeFinal !== undefined &&
+      judgeFinal.errorKind !== item.errorKind
+    ) {
+      ctx.addIssue({ code: 'custom', message: 'judge errorKind must match final attempt' });
+    }
+    return;
+  }
+
+  if (item.error !== undefined || item.errorStage !== undefined || item.errorKind !== undefined) {
+    ctx.addIssue({ code: 'custom', message: 'completed items cannot carry error fields' });
+  }
+  if ((item.outcome === 'pass') !== item.pass) {
+    ctx.addIssue({ code: 'custom', message: 'outcome and pass must agree' });
+  }
+  if (item.candidate_output === undefined || item.judge === undefined) {
+    ctx.addIssue({ code: 'custom', message: 'completed items require candidate and judge output' });
+  } else if (item.judge.pass !== item.pass) {
+    ctx.addIssue({ code: 'custom', message: 'judge pass must agree with item outcome' });
+  }
+  if (
+    candidateFinal?.outcome !== 'success' ||
+    (judgeFinal !== undefined && judgeFinal.outcome !== 'success')
+  ) {
+    ctx.addIssue({ code: 'custom', message: 'completed items require candidate success and any judge ledger to end successful' });
+  }
 });
 
-export const reportSchema = z.object({
+const reportShapeSchema = z.object({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
+  judgeType: z.enum(['exact-match', 'http', 'coeval']),
   startedAt: z.string(),
   finishedAt: z.string(),
   thresholds: z.object({
-    minPassRate: z.number(),
-    maxRegressions: z.number(),
-  }),
+    minPassRate: z.number().min(0).max(1),
+    maxRegressions: z.number().int().nonnegative(),
+  }).strict(),
   totals: z.object({
-    total: z.number().int(),
-    passed: z.number().int(),
-    failed: z.number().int(),
+    total: z.number().int().nonnegative(),
+    passed: z.number().int().nonnegative(),
+    failed: z.number().int().nonnegative(),
     /** Subset of `failed` where the candidate or judge errored after retry. */
-    errored: z.number().int(),
-    passRate: z.number(),
-    regressions: z.number().int(),
+    errored: z.number().int().nonnegative(),
+    /** Required candidate executions that failed before judging. */
+    candidateErrored: z.number().int().nonnegative(),
+    /** Judge executions that failed, leaving release evidence unknown. */
+    judgeErrored: z.number().int().nonnegative(),
+    /** Protocol errors at either stage; these indicate a broken evidence contract. */
+    protocolErrored: z.number().int().nonnegative(),
+    /** Items that received a completed judge result (pass or fail). */
+    evaluated: z.number().int().nonnegative(),
+    /** Fraction of all items that received a completed judge result. */
+    evaluationCoverage: z.number().min(0).max(1),
+    passRate: z.number().min(0).max(1),
+    regressions: z.number().int().nonnegative(),
+    comparisonCounts: z.object({
+      regression: z.number().int().nonnegative(),
+      improvement: z.number().int().nonnegative(),
+      stable_pass: z.number().int().nonnegative(),
+      stable_fail: z.number().int().nonnegative(),
+      unpaired: z.number().int().nonnegative(),
+    }).strict(),
     /**
-     * True when every item errored: a systemic failure (candidate/judge down),
-     * not a signal about candidate quality. Maps to CLI exit code 2.
+     * True when every item errored. The typed stages determine whether this is
+     * a candidate block or an inconclusive judging failure.
      */
     allErrored: z.boolean(),
-  }),
-  verdict: z.enum(['promote', 'block']),
+  }).strict(),
+  verdict: z.enum(['promote', 'block', 'inconclusive']),
+  /** Coeval evidence and operation audit. It contains no Dailies release decision. */
+  evidence: z.object({
+    provider: z.literal('coeval'),
+    /** Dailies-owned pinned judge identity, checked against any retained receipt. */
+    skillVersionId: z.string().min(1),
+    /** Eval run returned by the batch submit, independent of any retained receipt. */
+    evalRunId: z.string().min(1).optional(),
+    status: z.enum(['complete', 'incomplete', 'failed']),
+    operations: z.array(coevalEvidenceOperationSchema).min(1).max(10_000),
+    receipt: coevalAssessmentReceiptSchema.optional(),
+  }).strict().optional(),
   items: z.array(itemResultSchema),
+}).strict();
+
+export const reportSchema = reportShapeSchema.superRefine((report, ctx) => {
+  const expectedTotals = aggregate(report.items);
+  if (JSON.stringify(report.totals) !== JSON.stringify(expectedTotals)) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['totals'],
+      message: 'totals must exactly equal aggregate(items)',
+    });
+  }
+  const expectedVerdict = decideVerdict(expectedTotals, report.thresholds);
+  if (report.verdict !== expectedVerdict) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['verdict'],
+      message: `verdict must be ${expectedVerdict}`,
+    });
+  }
+
+  const evidence = report.evidence;
+  const itemsNeedingJudgeEvidence = report.items.filter(
+    (item) => item.outcome !== 'error' || item.errorStage === 'judge',
+  );
+  if (report.judgeType === 'coeval') {
+    if (report.items.some((item) => item.attempts.judge !== undefined)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['items'],
+        message: 'Coeval items cannot fabricate per-item judge attempts; use evidence.operations',
+      });
+    }
+  } else if (itemsNeedingJudgeEvidence.some((item) => item.attempts.judge === undefined)) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['items'],
+      message: 'non-Coeval completed and judge-error items require judge attempts',
+    });
+  }
+  const submittedItems = report.items.filter(
+    (item) => item.attempts.candidate.at(-1)?.outcome === 'success',
+  );
+  if (report.judgeType !== 'coeval') {
+    if (evidence !== undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['evidence'],
+        message: 'non-Coeval reports cannot carry Coeval evidence',
+      });
+    }
+    return;
+  }
+  if (submittedItems.length > 0 && evidence === undefined) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['evidence'],
+      message: 'Coeval reports with submitted candidates require evidence audit',
+    });
+    return;
+  }
+  if (submittedItems.length === 0) {
+    if (evidence !== undefined) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['evidence'],
+        message: 'all-candidate-failure Coeval reports cannot carry provider operations',
+      });
+    }
+    return;
+  }
+  if (evidence === undefined) return;
+  const operationFailed = (operation: (typeof evidence.operations)[number]) =>
+    operation.termination !== undefined ||
+    operation.attempts.at(-1)?.outcome === 'error';
+  const operationErrorKind = (operation: (typeof evidence.operations)[number]) =>
+    operation.termination?.errorKind ?? operation.attempts.at(-1)?.errorKind;
+  const phases = evidence.operations.map((operation) => operation.phase);
+  if (phases[0] !== 'submit' || phases.filter((phase) => phase === 'submit').length !== 1) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['evidence', 'operations'],
+      message: 'Coeval operations must start with exactly one submit',
+    });
+  }
+  const firstReceipt = phases.indexOf('receipt');
+  if (
+    phases.some((phase, index) => (
+      (index > 0 && phase === 'submit') ||
+      (firstReceipt >= 0 && index > firstReceipt)
+    )) ||
+    phases.filter((phase) => phase === 'receipt').length > 1 ||
+    (firstReceipt >= 0 && !phases.slice(1, firstReceipt).includes('poll'))
+  ) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['evidence', 'operations'],
+      message: 'Coeval operations must be submit, polls, then at most one receipt',
+    });
+  }
+  const failedOperationIndex = evidence.operations.findIndex(operationFailed);
+  if (failedOperationIndex >= 0 && failedOperationIndex !== evidence.operations.length - 1) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['evidence', 'operations'],
+      message: 'a failed Coeval operation must terminate collection',
+    });
+  }
+  const submitSucceeded = evidence.operations[0]?.attempts.at(-1)?.outcome === 'success';
+  if (submitSucceeded !== (evidence.evalRunId !== undefined)) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['evidence', 'evalRunId'],
+      message: 'evalRunId must exist exactly when batch submission succeeded',
+    });
+  }
+
+  if (evidence.receipt === undefined) {
+    if (evidence.status !== 'failed') {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['evidence', 'status'],
+        message: 'receipt-less evidence must be failed',
+      });
+    }
+    const finalEvidenceOperation = evidence.operations.at(-1);
+    if (finalEvidenceOperation === undefined || !operationFailed(finalEvidenceOperation)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['evidence', 'operations'],
+        message: 'receipt-less failed evidence must end in a failed operation',
+      });
+    }
+    const expectedItemKind = finalEvidenceOperation !== undefined &&
+      operationErrorKind(finalEvidenceOperation) === 'protocol'
+      ? 'protocol'
+      : 'incomplete';
+    if (submittedItems.some(
+      (item) =>
+        item.outcome !== 'error' ||
+        item.errorStage !== 'judge' ||
+        item.errorKind !== expectedItemKind,
+    )) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['items'],
+        message: 'failed Coeval collection must match every submitted item judge error',
+      });
+    }
+    return;
+  }
+  if (evidence.status !== evidence.receipt.status) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['evidence', 'status'],
+      message: 'evidence status must match retained receipt status',
+    });
+  }
+  const receiptOperation = evidence.operations.at(-1);
+  const pollOperations = evidence.operations.filter((operation) => operation.phase === 'poll');
+  const lastPoll = pollOperations.at(-1);
+  if (
+    receiptOperation?.phase !== 'receipt' ||
+    receiptOperation.status !== evidence.receipt.status ||
+    lastPoll === undefined ||
+    lastPoll.status !== evidence.receipt.run.status ||
+    !['completed', 'failed', 'canceled'].includes(lastPoll.status ?? '')
+  ) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['evidence', 'operations'],
+      message: 'retained receipt requires a matching final receipt operation',
+    });
+  }
+  if (pollOperations.slice(0, -1).some(
+    (operation) => operation.status !== 'pending' && operation.status !== 'running',
+  )) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['evidence', 'operations'],
+      message: 'collection cannot poll again after a terminal eval-run status',
+    });
+  }
+
+  const candidates = submittedItems.map((item) => ({
+    id: item.id,
+    input: item.input,
+    output: item.candidate_output ?? '',
+  }));
+  if (submittedItems.some((item) => item.candidate_output === undefined)) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['items'],
+      message: 'Coeval-submitted items require candidate_output',
+    });
+    return;
+  }
+  if (evidence.evalRunId === undefined) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['evidence', 'evalRunId'],
+      message: 'retained receipt requires submitted evalRunId identity',
+    });
+    return;
+  }
+  try {
+    const verification = verifyCoevalReceipt(
+      evidence.receipt,
+      evidence.receipt,
+      evidence.evalRunId,
+      evidence.skillVersionId,
+      candidates,
+    );
+    if (verification.status !== evidence.status) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['evidence', 'status'],
+        message: 'evidence status disagrees with receipt verification',
+      });
+    }
+    if (verification.status === 'complete') {
+      for (const item of submittedItems) {
+        const label = verification.labels.get(item.id);
+        if (
+          label === undefined ||
+          item.outcome !== label ||
+          item.judge?.pass !== (label === 'pass')
+        ) {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['items'],
+            message: `report outcome does not match Coeval receipt for ${item.id}`,
+          });
+        }
+      }
+    } else if (submittedItems.some(
+      (item) =>
+        item.outcome !== 'error' ||
+        item.errorStage !== 'judge' ||
+        item.errorKind !== 'incomplete',
+    )) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['items'],
+        message: 'incomplete Coeval receipt requires incomplete judge errors',
+      });
+    }
+  } catch (error) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['evidence', 'receipt'],
+      message: error instanceof Error ? error.message : String(error),
+    });
+  }
 });
 
 export type ItemResult = z.infer<typeof itemResultSchema>;
 export type Report = z.infer<typeof reportSchema>;
+export type ItemOutcome = z.infer<typeof itemOutcomeSchema>;
+export type Comparison = z.infer<typeof comparisonSchema>;
+export type ErrorStage = z.infer<typeof errorStageSchema>;
+export type { ErrorKind };
+export type Verdict = Report['verdict'];
 
 export interface Totals {
   total: number;
   passed: number;
   failed: number;
   errored: number;
+  candidateErrored: number;
+  judgeErrored: number;
+  protocolErrored: number;
+  evaluated: number;
+  evaluationCoverage: number;
   passRate: number;
   regressions: number;
+  comparisonCounts: Record<Comparison, number>;
   allErrored: boolean;
 }
 
@@ -59,17 +470,63 @@ export function aggregate(items: ItemResult[]): Totals {
   const total = items.length;
   const passed = items.filter((i) => i.pass).length;
   const failed = total - passed;
-  const errored = items.filter((i) => i.error !== undefined).length;
-  const regressions = items.filter((i) => i.regression).length;
+  const errored = items.filter((i) => i.outcome === 'error').length;
+  const candidateErrored = items.filter(
+    (i) => i.outcome === 'error' && i.errorStage === 'candidate',
+  ).length;
+  const judgeErrored = items.filter(
+    (i) => i.outcome === 'error' && i.errorStage === 'judge',
+  ).length;
+  const protocolErrored = items.filter(
+    (i) => i.outcome === 'error' && i.errorKind === 'protocol',
+  ).length;
+  const evaluated = total - errored;
+  const comparisonCounts: Record<Comparison, number> = {
+    regression: 0,
+    improvement: 0,
+    stable_pass: 0,
+    stable_fail: 0,
+    unpaired: 0,
+  };
+  for (const item of items) comparisonCounts[item.comparison] += 1;
+  const regressions = comparisonCounts.regression;
   const passRate = total === 0 ? 0 : passed / total;
+  const evaluationCoverage = total === 0 ? 0 : evaluated / total;
   const allErrored = total > 0 && errored === total;
-  return { total, passed, failed, errored, passRate, regressions, allErrored };
+  return {
+    total,
+    passed,
+    failed,
+    errored,
+    candidateErrored,
+    judgeErrored,
+    protocolErrored,
+    evaluated,
+    evaluationCoverage,
+    passRate,
+    regressions,
+    comparisonCounts,
+    allErrored,
+  };
 }
 
 export function decideVerdict(
   totals: Totals,
   thresholds: { minPassRate: number; maxRegressions: number },
-): 'promote' | 'block' {
+): Verdict {
+  // A judge/protocol error compromises the evidence, even when threshold slack
+  // would otherwise allow the run to pass. Mixed candidate+judge failures are
+  // therefore inconclusive too.
+  if (totals.judgeErrored > 0 || totals.protocolErrored > 0) {
+    return 'inconclusive';
+  }
+  // Every v0 input is required. A candidate that cannot execute one of them is
+  // a release failure, even though it is not a judged baseline regression.
+  if (totals.candidateErrored > 0) return 'block';
+  // Defensive coverage guard for schema drift or a future non-error outcome.
+  if (totals.evaluated < totals.total || totals.evaluationCoverage < 1) {
+    return 'inconclusive';
+  }
   return totals.passRate >= thresholds.minPassRate &&
     totals.regressions <= thresholds.maxRegressions
     ? 'promote'
@@ -81,14 +538,11 @@ export const EXIT_BLOCK = 1;
 export const EXIT_RUN_ERROR = 2;
 
 /**
- * Map a finished report to the CLI exit code. When every item errored the run
- * is a systemic failure — indistinguishable from a bad candidate otherwise —
- * so it exits 2 (run error) rather than 1 (block).
+ * Map a finished report to the CLI exit code. Inconclusive evidence is a run
+ * error, not a product-quality verdict.
  */
 export function decideExitCode(report: Pick<Report, 'verdict' | 'totals'>): number {
-  if (report.totals.allErrored) {
-    return EXIT_RUN_ERROR;
-  }
+  if (report.verdict === 'inconclusive') return EXIT_RUN_ERROR;
   return report.verdict === 'promote' ? EXIT_PROMOTE : EXIT_BLOCK;
 }
 
@@ -101,19 +555,42 @@ function truncate(s: string, max = 200): string {
 export function renderMarkdown(report: Report): string {
   const { totals, thresholds } = report;
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
-  const emoji = report.verdict === 'promote' ? 'PROMOTE' : 'BLOCK';
+  const heading = report.verdict.toUpperCase();
 
   const lines: string[] = [
-    `# Shadow run report: ${emoji}`,
+    `# Shadow run report: ${heading}`,
     '',
     `- Verdict: **${report.verdict}**`,
     `- Pass rate: **${pct(totals.passRate)}** (${totals.passed}/${totals.total}) — threshold: ≥ ${pct(thresholds.minPassRate)}`,
     `- Regressions vs baseline: **${totals.regressions}** — threshold: ≤ ${thresholds.maxRegressions}`,
-    `- Errored items (counted as failures): ${totals.errored}`,
+    `- Comparisons: ${totals.comparisonCounts.regression} regressions, ${totals.comparisonCounts.improvement} improvements, ${totals.comparisonCounts.stable_pass} stable passes, ${totals.comparisonCounts.stable_fail} stable fails, ${totals.comparisonCounts.unpaired} unpaired`,
+    `- Errored items (not evaluated): ${totals.errored}`,
+    `- Candidate execution errors: ${totals.candidateErrored}`,
+    `- Judge errors: ${totals.judgeErrored}`,
+    `- Evaluation coverage: **${pct(totals.evaluationCoverage)}** (${totals.evaluated}/${totals.total})`,
     `- Started: ${report.startedAt}`,
     `- Finished: ${report.finishedAt}`,
     '',
   ];
+
+  if (report.evidence?.provider === 'coeval') {
+    const { evalRunId, receipt, operations } = report.evidence;
+    lines.push(
+      '## Coeval evidence audit',
+      '',
+      `- Status: ${report.evidence.status}`,
+      `- Pinned skill version: ${report.evidence.skillVersionId}`,
+      ...(evalRunId === undefined ? [] : [`- Eval run: ${evalRunId}`]),
+      `- Operations: ${operations.length} (${operations.map((operation) => operation.phase).join(' → ')})`,
+      ...(receipt === undefined
+        ? []
+        : [
+            `- Receipt: ${receipt.receiptId}`,
+            `- Evidence digest: \`${receipt.evidenceDigest}\``,
+          ]),
+      '',
+    );
+  }
 
   const failing = report.items.filter((i) => !i.pass);
   if (failing.length > 0) {
@@ -124,6 +601,7 @@ export function renderMarkdown(report: Report): string {
       if (item.baseline_output !== undefined) {
         lines.push(`- baseline_output: \`${truncate(item.baseline_output)}\``);
       }
+      lines.push(`- comparison: ${item.comparison}`);
       if (item.candidate_output !== undefined) {
         lines.push(`- candidate_output: \`${truncate(item.candidate_output)}\``);
       }

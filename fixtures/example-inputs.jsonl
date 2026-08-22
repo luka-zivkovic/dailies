@@ -1,5 +1,5 @@
-{"id": "greet-1", "input": "hello world", "baseline_output": "hello world"}
-{"id": "greet-2", "input": "how do I reset my password?", "baseline_output": "how do I reset my password?"}
-{"id": "refund-1", "input": "I want a refund for order 4519", "baseline_output": "I want a refund for order 4519"}
-{"id": "billing-1", "input": "why was I charged twice?", "baseline_output": "why was I charged twice?"}
-{"id": "drift-1", "input": "cancel my subscription", "baseline_output": "cancel my subscription immediately"}
+{"id": "greet-1", "input": "hello world", "baseline_label": "pass", "baseline_output": "hello world"}
+{"id": "greet-2", "input": "how do I reset my password?", "baseline_label": "pass", "baseline_output": "how do I reset my password?"}
+{"id": "refund-1", "input": "I want a refund for order 4519", "baseline_label": "pass", "baseline_output": "I want a refund for order 4519"}
+{"id": "billing-1", "input": "why was I charged twice?", "baseline_label": "pass", "baseline_output": "why was I charged twice?"}
+{"id": "drift-1", "input": "cancel my subscription", "baseline_label": "pass", "baseline_output": "cancel my subscription immediately"}

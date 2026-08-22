@@ -1,6 +1,7 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { DEFAULT_TIMEOUT_MS, type CandidateConfig } from './config.js';
+import { OperationError, httpOperationError } from './errors.js';
 import { fetchWithTimeout } from './http.js';
 
 const execFileAsync = promisify(execFile);
@@ -36,9 +37,15 @@ export async function runCandidate(
     } catch (err) {
       const e = err as NodeJS.ErrnoException & { killed?: boolean; signal?: string };
       if (e.killed === true && e.signal === 'SIGKILL') {
-        throw new Error(`candidate command timed out after ${timeoutMs}ms`);
+        throw new OperationError(`candidate command timed out after ${timeoutMs}ms`, 'timeout', {
+          cause: err,
+        });
       }
-      throw err;
+      throw new OperationError(
+        `candidate command failed: ${err instanceof Error ? err.message : String(err)}`,
+        'execution',
+        { cause: err },
+      );
     }
   }
 
@@ -55,7 +62,7 @@ export async function runCandidate(
     'candidate',
   );
   if (!res.ok) {
-    throw new Error(`candidate HTTP ${res.status} from ${candidate.url}`);
+    throw httpOperationError('candidate', candidate.url, res);
   }
   const text = await res.text();
 
@@ -73,8 +80,9 @@ export async function runCandidate(
       return output;
     }
     const kind = output === null ? 'null' : Array.isArray(output) ? 'array' : typeof output;
-    throw new Error(
+    throw new OperationError(
       `candidate response from ${candidate.url} has an "output" field that is not a string (got ${kind})`,
+      'protocol',
     );
   }
   return text; // JSON without an `output` key — use the raw body

@@ -10,7 +10,7 @@ export async function loadInputs(path: string): Promise<InputItem[]> {
   if (lines.length === 0) {
     throw new Error(`inputs file is empty: ${path}`);
   }
-  return lines.map((line, i) => {
+  const items = lines.map((line, i) => {
     let parsed: unknown;
     try {
       parsed = JSON.parse(line);
@@ -25,4 +25,18 @@ export async function loadInputs(path: string): Promise<InputItem[]> {
     }
     return result.data;
   });
+
+  const firstLineById = new Map<string, number>();
+  for (const [index, item] of items.entries()) {
+    const firstLine = firstLineById.get(item.id);
+    if (firstLine !== undefined) {
+      throw new Error(
+        `inputs file ${path}, line ${index + 1}: duplicate input id ${JSON.stringify(item.id)} ` +
+          `(first seen on line ${firstLine})`,
+      );
+    }
+    firstLineById.set(item.id, index + 1);
+  }
+
+  return items;
 }
