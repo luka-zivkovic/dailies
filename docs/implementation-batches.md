@@ -1,6 +1,6 @@
 # Portfolio implementation batches
 
-Status: **independently audited; Batches 0, 1A, 1B, and 1C complete; later gates remain open**
+Status: **independently audited; Batches 0, 1A, 1B, 1C, and 2 complete; later gates remain open**
 
 Last reviewed: 2026-08-22
 
@@ -217,6 +217,8 @@ qualification cannot emit a performance claim.
 
 ## Batch 2 — dataset revisions and exposure
 
+Implementation status: **complete and independently reviewed on 2026-08-22**.
+
 Coeval implements the four accepted immutable dataset roles:
 
 - analysis/authoring;
@@ -240,6 +242,12 @@ historical blindness or full review provenance for legacy cases.
 Move the retained evaluator regression gate from the CURRENT mutable golden set
 to an immutable regression/golden revision identity. This remains
 known-failure governance, not sealed validation or calibration.
+
+The ordinary collection-freeze API creates only analysis/authoring and
+iterative-development revisions. Regression/golden revisions are materialized
+only by promotion/retirement governance, and the database enforces the same
+source-role invariant. Pre-migration in-flight evaluator jobs are late-pinned
+once with audit evidence rather than failed during rolling deployment.
 
 In parallel, an independent benchmark owner may begin Casefile corpus
 collection under the accepted protocol. Detector authors do not receive the
@@ -460,8 +468,8 @@ historical semantics and must be accepted before their runtime batch:
 8. **Resolved for Batch 1C:** ownership and isolation of the neutral benchmark
    workspace is fixed by Casefile ADR-0002; comparator execution never becomes
    Casefile product behavior.
-9. Exact dataset-role compatibility matrix. Sealed validation must be disjoint
-   from exposed roles; analysis/authoring, iterative-development, and
-   regression/golden overlap rules must be named rather than inferred.
+9. **Resolved for Batch 2:** the directional compatibility, declassification,
+   sealed-successor, exact-input identity, and public sealed-intake boundary
+   are fixed by Coeval ADR-0007.
 
 Resolve each in the contract phase of its owning batch before runtime code.
