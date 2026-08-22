@@ -12,6 +12,8 @@ Release execution accepts only a strict configuration with
 
 The input declaration pins the exact JSONL bytes with a lowercase
 `sha256:<64 hex>` digest. Dailies verifies that digest before candidate work.
+Each non-empty JSONL line is a strict input object; unknown item keys are
+rejected rather than silently discarded.
 The declared scope contains:
 
 - stable scope id;
@@ -23,8 +25,9 @@ The declared scope contains:
   reason.
 
 Trust policy lists the admissible classes. `verified` and `deterministic` are
-the default. Listing `self_reported` requires a visible self-reported-evidence override
-with a non-empty reason; an override without that class is also invalid.
+the default. Listing `self_reported` requires a visible self-reported-evidence
+override with a non-empty reason; an override without that class is also
+invalid.
 `production_sample` always requires a bounded, ordered time range.
 
 ## Derived trust contract
@@ -42,6 +45,12 @@ do not fabricate a trust class for evidence that was never completed.
 Incomplete or invalid Coeval evidence remains explicitly incomplete; it is not
 silently downgraded to self-reported evidence.
 
+The report-level trust summary has `status: complete` only when at least one
+item has completed evidence. When no item was evaluated it records
+`status: unavailable`, the configured derivation path, `admissible: false`,
+and `reason: no_completed_evidence`; it does not claim the intended Coeval path
+actually produced verified evidence.
+
 ## Report contract
 
 `report.json` has `schemaVersion: 4`, `decision`, and no `verdict` field. It
@@ -53,8 +62,8 @@ retains:
 - expected, observed, and evaluated coverage;
 - producer-supplied dataset revision, exposure, and review provenance, each
   explicitly `not_provided` for current integrations and Coeval receipt v1;
-- configured trust policy, derived trust class/derivation, and whether the
-  evidence is admissible; and
+- configured trust policy, achieved trust class when evidence completed (or
+  explicit unavailability), derivation path, and admissibility; and
 - an exact deterministic decision statement naming the scope kind, id, and
   input digest.
 
@@ -74,6 +83,11 @@ failure remains `inconclusive`. The precedence is fixed in ADR-0005.
 reports as distinct return variants. V3 is read-only and is never upgraded or
 used for release-policy execution. Versions 1, 2, unknown versions, and objects
 without an explicit version are rejected with a version diagnostic.
+
+`fixtures/report-v3-exact.json`, `fixtures/report-v3-http.json`, and
+`fixtures/report-v3-coeval-incomplete.json` were captured from the pre-v4
+`a6d494f` runtime. Compatibility tests validate and return those historical
+objects byte-for-byte so later live-schema changes cannot silently redefine v3.
 
 The v4 execution schema never accepts a v3 report, and configuration without
 an explicit v4 scope/trust contract is rejected before execution.

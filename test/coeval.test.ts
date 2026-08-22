@@ -12,7 +12,7 @@ import {
   sha256Digest,
 } from '../src/coeval.js';
 import { parseConfig, type Config } from '../src/config.js';
-import { decideExitCode, reportSchema, type Report } from '../src/report.js';
+import { decideExitCode, renderMarkdown, reportSchema, type Report } from '../src/report.js';
 import { runShadow } from '../src/runner.js';
 import { v4ContractForPath } from './v4-fixture.js';
 
@@ -399,6 +399,7 @@ describe('Coeval release-evidence boundary', () => {
       expect(permissive.decision).toBe('promote');
       expect(decideExitCode(permissive)).toBe(0);
       expect(strict.trust).toEqual({
+        status: 'complete',
         class: 'verified',
         derivation: 'coeval_receipt_v1',
         admissible: true,
@@ -610,6 +611,12 @@ describe('Coeval release-evidence boundary', () => {
       const report = await runShadow(config);
       expect(report).toMatchObject({ judgeType: 'coeval', decision: 'block' });
       expect(report.evidence).toBeUndefined();
+      expect(report.trust).toEqual({
+        status: 'unavailable',
+        derivation: 'coeval_receipt_v1',
+        admissible: false,
+        reason: 'no_completed_evidence',
+      });
       expect(mock.callCounts.submit).toBe(0);
       expect(report.items[0]).toMatchObject({
         outcome: 'error',
@@ -703,6 +710,21 @@ describe('Coeval release-evidence boundary', () => {
           item.comparison === 'unpaired' &&
           item.trustClass === undefined,
       )).toBe(true);
+      expect(report.trust).toEqual({
+        status: 'unavailable',
+        derivation: 'coeval_receipt_v1',
+        admissible: false,
+        reason: 'no_completed_evidence',
+      });
+      expect(renderMarkdown(report)).toContain('Trust: **unavailable**');
+      const forgedVerifiedTrust = structuredClone(report) as Record<string, any>;
+      forgedVerifiedTrust.trust = {
+        status: 'complete',
+        class: 'verified',
+        derivation: 'coeval_receipt_v1',
+        admissible: true,
+      };
+      expect(reportSchema.safeParse(forgedVerifiedTrust).success).toBe(false);
 
       const nonterminalReceipt = structuredClone(report);
       const retainedReceipt = nonterminalReceipt.evidence?.receipt;
@@ -729,6 +751,12 @@ describe('Coeval release-evidence boundary', () => {
     try {
       const report = await runShadow(makeConfig(path, mock.url));
       expect(report.decision).toBe('inconclusive');
+      expect(report.trust).toEqual({
+        status: 'unavailable',
+        derivation: 'coeval_receipt_v1',
+        admissible: false,
+        reason: 'no_completed_evidence',
+      });
       expect(mock.callCounts).toMatchObject({ submit: 1, poll: 0, receipt: 0 });
       expect(report.evidence?.operations.at(-1)).toEqual({
         phase: 'poll',

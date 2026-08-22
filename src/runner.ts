@@ -303,12 +303,21 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
   }
 
   const totals = aggregate(items);
-  const trust = config.judge.type === 'exact-match'
+  const trustPath = config.judge.type === 'exact-match'
     ? { class: 'deterministic' as const, derivation: 'exact_match_v1' as const }
     : config.judge.type === 'coeval'
       ? { class: 'verified' as const, derivation: 'coeval_receipt_v1' as const }
       : { class: 'self_reported' as const, derivation: 'http_judge_v1' as const };
-  const admissible = config.trustPolicy.admissibleClasses.includes(trust.class);
+  const policyAdmissible = config.trustPolicy.admissibleClasses.includes(trustPath.class);
+  const trust = totals.evaluated > 0
+    ? { status: 'complete' as const, ...trustPath, admissible: policyAdmissible }
+    : {
+        status: 'unavailable' as const,
+        derivation: trustPath.derivation,
+        admissible: false as const,
+        reason: 'no_completed_evidence' as const,
+      };
+  const admissible = trust.status === 'complete' && trust.admissible;
   const decision = decideDecision(totals, config.thresholds, admissible);
   const report: Report = {
     schemaVersion: REPORT_SCHEMA_VERSION,
@@ -342,7 +351,7 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
       },
     },
     trustPolicy: config.trustPolicy,
-    trust: { ...trust, admissible },
+    trust,
     decision,
     decisionStatement: buildDecisionStatement(
       decision,

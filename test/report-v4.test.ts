@@ -1,11 +1,12 @@
 import { createHash } from 'node:crypto';
-import { mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { parseConfig, type Config } from '../src/config.js';
 import {
+  buildDecisionStatement,
   parseReportForInspection,
   reportSchema,
   type Report,
@@ -199,7 +200,12 @@ describe('report/config v4 scope and trust contract', () => {
       const report = await runShadow(config);
       expect(report).toMatchObject({
         decision: 'inconclusive',
-        trust: { class: 'self_reported', admissible: false },
+        trust: {
+          status: 'unavailable',
+          derivation: 'http_judge_v1',
+          admissible: false,
+          reason: 'no_completed_evidence',
+        },
         totals: { protocolErrored: 2 },
       });
       expect(report.items.every((item) => item.trustClass === undefined)).toBe(true);
@@ -247,10 +253,32 @@ describe('report/config v4 scope and trust contract', () => {
     }
 
     const current = await fixture();
-    await expect(runShadow({
-      ...current.config,
-      scope: { ...current.config.scope, expectedItems: 3 },
-    })).rejects.toThrow(/expected 3 items/i);
+    let countMismatchCalls = 0;
+    const countMismatchServer = createServer((_req, res) => {
+      countMismatchCalls += 1;
+      res.writeHead(200, { 'content-type': 'application/json' }).end('{"output":"unused"}');
+    });
+    const countMismatchPort = await new Promise<number>((resolve) => {
+      countMismatchServer.listen(0, '127.0.0.1', () => {
+        const address = countMismatchServer.address();
+        if (address === null || typeof address === 'string') throw new Error('server did not bind');
+        resolve(address.port);
+      });
+    });
+    try {
+      await expect(runShadow({
+        ...current.config,
+        candidate: {
+          type: 'http',
+          url: `http://127.0.0.1:${countMismatchPort}/candidate`,
+          bodyTemplate: '{"input": {input}}',
+        },
+        scope: { ...current.config.scope, expectedItems: 3 },
+      })).rejects.toThrow(/expected 3 items/i);
+      expect(countMismatchCalls).toBe(0);
+    } finally {
+      closeServer(countMismatchServer);
+    }
   });
 
   it('rejects report tampering across derived trust, scope coverage, decision, and statement', async () => {
@@ -264,11 +292,40 @@ describe('report/config v4 scope and trust contract', () => {
       ['decision', (candidate) => { candidate.decision = 'block'; }],
       ['decision statement', (candidate) => { candidate.decisionStatement = 'unscoped promote'; }],
       ['item trust', (candidate) => { candidate.items[0].trustClass = 'verified'; }],
+      ['exact-match output', (candidate) => { candidate.items[0].candidate_output = 'not-alpha'; }],
     ];
     for (const [name, mutate] of mutations) {
       const candidate = structuredClone(report) as unknown as Record<string, any>;
       mutate(candidate);
       expect(reportSchema.safeParse(candidate).success, name).toBe(false);
+    }
+  });
+
+  it('rejects a coordinated HTTP-to-exact trust masquerade', async () => {
+    const judge = await httpJudge({ score: 1, pass: true });
+    try {
+      const { config } = await fixture({ type: 'http', url: judge.url });
+      const report = await runShadow(config);
+      const masquerade = structuredClone(report) as Record<string, any>;
+      masquerade.items[0].candidate_output = 'does-not-match-baseline';
+      masquerade.judgeType = 'exact-match';
+      masquerade.trust = {
+        status: 'complete',
+        class: 'deterministic',
+        derivation: 'exact_match_v1',
+        admissible: true,
+      };
+      for (const item of masquerade.items) item.trustClass = 'deterministic';
+      masquerade.decision = 'promote';
+      masquerade.decisionStatement = buildDecisionStatement(
+        'promote',
+        masquerade.scope.kind,
+        masquerade.scope.id,
+        masquerade.scope.inputArtifact.digest,
+      );
+      expect(reportSchema.safeParse(masquerade).success).toBe(false);
+    } finally {
+      closeServer(judge.server);
     }
   });
 
@@ -292,6 +349,30 @@ describe('report/config v4 scope and trust contract', () => {
       const candidate = { ...legacy, ...(version === undefined ? {} : { schemaVersion: version }) };
       if (version === undefined) delete candidate.schemaVersion;
       expect(() => parseReportForInspection(candidate)).toThrow(/report schema version/i);
+    }
+
+    const historicalBytes = await readFile(
+      new URL('../fixtures/report-v3-exact.json', import.meta.url),
+      'utf8',
+    );
+    const historical = JSON.parse(historicalBytes) as unknown;
+    const historicalInspection = parseReportForInspection(historical);
+    expect(historicalInspection).toMatchObject({ schemaVersion: 3, readOnly: true });
+    expect(`${JSON.stringify(historicalInspection.report, null, 2)}\n`).toBe(historicalBytes);
+
+    for (const fixtureName of [
+      'report-v3-http.json',
+      'report-v3-coeval-incomplete.json',
+    ]) {
+      const historicalMinifiedBytes = await readFile(
+        new URL(`../fixtures/${fixtureName}`, import.meta.url),
+        'utf8',
+      );
+      const historicalMinified = JSON.parse(historicalMinifiedBytes) as unknown;
+      const historicalMinifiedInspection = parseReportForInspection(historicalMinified);
+      expect(historicalMinifiedInspection).toMatchObject({ schemaVersion: 3, readOnly: true });
+      expect(`${JSON.stringify(historicalMinifiedInspection.report)}\n`)
+        .toBe(historicalMinifiedBytes);
     }
   });
 });

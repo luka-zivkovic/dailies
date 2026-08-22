@@ -190,5 +190,14 @@ export const inputItemSchema = z.object({
 export type InputItem = z.infer<typeof inputItemSchema>;
 
 export function parseConfig(raw: unknown): Config {
+  const version = typeof raw === 'object' && raw !== null && 'schemaVersion' in raw
+    ? (raw as { schemaVersion?: unknown }).schemaVersion
+    : undefined;
+  if (version !== CONFIG_SCHEMA_VERSION) {
+    throw new Error(
+      `unsupported config schema version: ${version === undefined ? 'missing' : String(version)}; ` +
+        `release execution requires schemaVersion ${CONFIG_SCHEMA_VERSION}`,
+    );
+  }
   return configSchema.parse(raw);
 }

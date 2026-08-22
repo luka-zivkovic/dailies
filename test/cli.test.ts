@@ -241,6 +241,46 @@ describe('CLI decision and report agreement', () => {
     }
   });
 
+  it('explains self-reported trust insufficiency and retains a reasoned override', async () => {
+    const judgeServer = createServer((_req, res) => {
+      res.writeHead(200, { 'content-type': 'application/json' }).end('{"score":1,"pass":true}');
+    });
+    const port = await listen(judgeServer);
+    try {
+      const judge = { type: 'http', url: `http://127.0.0.1:${port}/judge` };
+      const ordinary = await writeRun(
+        [{ id: 'ordinary', input: 'x', baseline_output: 'x' }],
+        {
+          judge,
+          trustPolicy: { admissibleClasses: ['verified', 'deterministic'] },
+        },
+      );
+      const ordinaryCli = await runCli(ordinary.configPath);
+      expect(ordinaryCli.code).toBe(2);
+      expect(ordinaryCli.stderr).toContain('self_reported evidence is not admitted');
+      expect((await readReport(ordinary.outputDir)).decision).toBe('inconclusive');
+
+      const reason = 'Customer accepts the migration judge for this release.';
+      const overridden = await writeRun(
+        [{ id: 'overridden', input: 'x', baseline_output: 'x' }],
+        {
+          judge,
+          trustPolicy: {
+            admissibleClasses: ['verified', 'deterministic', 'self_reported'],
+            selfReportedOverride: { reason },
+          },
+        },
+      );
+      const overriddenCli = await runCli(overridden.configPath);
+      expect(overriddenCli.code).toBe(0);
+      expect((await readReport(overridden.outputDir)).decision).toBe('promote');
+      expect(await readFile(join(overridden.outputDir, 'report.md'), 'utf8')).toContain(reason);
+    } finally {
+      judgeServer.closeAllConnections();
+      judgeServer.close();
+    }
+  });
+
   it.each([
     ['a non-retryable 401', 401, '{"error":"unauthorized"}', 'http'],
     ['a malformed successful payload', 200, '{"pass":true}', 'protocol'],
@@ -294,7 +334,7 @@ describe('CLI decision and report agreement', () => {
       );
       const cli = await runCli(configPath);
       expect(cli.code).toBe(2);
-      expect(cli.stderr).toContain('expected 4');
+      expect(cli.stderr).toContain('release execution requires schemaVersion 4');
       expect(candidateCalls).toBe(0);
     } finally {
       candidateServer.closeAllConnections();

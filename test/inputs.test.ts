@@ -1,4 +1,5 @@
 import { mkdtemp, writeFile } from 'node:fs/promises';
+import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
@@ -24,14 +25,62 @@ describe('input preflight', () => {
     await expect(loadInputs(path)).rejects.toThrow(
       /line 2: duplicate input id "same" \(first seen on line 1\)/,
     );
+
+    let candidateCalls = 0;
+    const server = createServer((_req, res) => {
+      candidateCalls += 1;
+      res.writeHead(200, { 'content-type': 'application/json' }).end('{"output":"unused"}');
+    });
+    const port = await new Promise<number>((resolve) => {
+      server.listen(0, '127.0.0.1', () => {
+        const address = server.address();
+        if (address === null || typeof address === 'string') throw new Error('server did not bind');
+        resolve(address.port);
+      });
+    });
+    const config: Config = {
+      ...v4ContractForPath(path),
+      candidate: {
+        type: 'http',
+        url: `http://127.0.0.1:${port}/candidate`,
+        bodyTemplate: '{"input": {input}}',
+      },
+      judge: { type: 'exact-match' },
+      thresholds: { minPassRate: 1, maxRegressions: 0 },
+      concurrency: 1,
+      timeoutMs: 1_000,
+      output: { dir: 'unused' },
+    };
+    try {
+      await expect(runShadow(config)).rejects.toThrow(/duplicate input id/);
+      expect(candidateCalls).toBe(0);
+    } finally {
+      server.closeAllConnections();
+      server.close();
+    }
   });
 
   it('rejects a missing exact-match baseline before candidate execution', async () => {
     const path = await writeInputs([{ id: 'missing', input: 'a' }]);
+    let candidateCalls = 0;
+    const server = createServer((_req, res) => {
+      candidateCalls += 1;
+      res.writeHead(200, { 'content-type': 'application/json' }).end('{"output":"unused"}');
+    });
+    const port = await new Promise<number>((resolve) => {
+      server.listen(0, '127.0.0.1', () => {
+        const address = server.address();
+        if (address === null || typeof address === 'string') throw new Error('server did not bind');
+        resolve(address.port);
+      });
+    });
     const config: Config = {
       ...v4ContractForPath(path),
-      // If preflight regresses, this would become an item-level candidate error.
-      candidate: { type: 'command', template: 'exit 91' },
+      candidate: {
+        type: 'http',
+        url: `http://127.0.0.1:${port}/candidate`,
+        bodyTemplate: '{"input": {input}}',
+      },
       judge: { type: 'exact-match' },
       thresholds: { minPassRate: 1, maxRegressions: 0 },
       concurrency: 1,
@@ -39,9 +88,15 @@ describe('input preflight', () => {
       output: { dir: 'unused' },
     };
 
-    await expect(runShadow(config)).rejects.toThrow(
-      /input missing is missing baseline_output required by the exact-match judge/,
-    );
+    try {
+      await expect(runShadow(config)).rejects.toThrow(
+        /input missing is missing baseline_output required by the exact-match judge/,
+      );
+      expect(candidateCalls).toBe(0);
+    } finally {
+      server.closeAllConnections();
+      server.close();
+    }
   });
 
   it('rejects an invalid baseline_label at input parsing', async () => {

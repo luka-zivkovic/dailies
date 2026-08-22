@@ -51,11 +51,23 @@ async function main(): Promise<number> {
   console.log(`report: ${mdPath}`);
 
   if (report.decision === 'inconclusive') {
-    console.error(
-      `dailies inconclusive: ${totals.errored} of ${totals.total} items errored and ` +
-        `${totals.evaluated}/${totals.total} were fully evaluated. Incomplete evidence is not ` +
-        `a decision on the candidate. Exiting ${EXIT_RUN_ERROR} (run error).`,
-    );
+    if (
+      totals.errored === 0 &&
+      report.trust.status === 'complete' &&
+      !report.trust.admissible
+    ) {
+      console.error(
+        `dailies inconclusive: complete ${report.trust.class} evidence is not admitted by ` +
+          `the configured trust policy. Record an explicit policy override where appropriate. ` +
+          `Exiting ${EXIT_RUN_ERROR} (run error).`,
+      );
+    } else {
+      console.error(
+        `dailies inconclusive: ${totals.errored} of ${totals.total} items errored and ` +
+          `${totals.evaluated}/${totals.total} were fully evaluated. Incomplete evidence is not ` +
+          `a decision on the candidate. Exiting ${EXIT_RUN_ERROR} (run error).`,
+      );
+    }
   }
   return decideExitCode(report);
 }

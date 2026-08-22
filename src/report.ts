@@ -540,11 +540,23 @@ const reportScopeSchema = z.object({
   }
 });
 
-const trustSummarySchema = z.object({
+const trustDerivationSchema = z.enum([
+  'exact_match_v1',
+  'coeval_receipt_v1',
+  'http_judge_v1',
+]);
+
+const trustSummarySchema = z.discriminatedUnion('status', [z.object({
+  status: z.literal('complete'),
   class: trustClassSchema,
-  derivation: z.enum(['exact_match_v1', 'coeval_receipt_v1', 'http_judge_v1']),
+  derivation: trustDerivationSchema,
   admissible: z.boolean(),
-}).strict();
+}).strict(), z.object({
+  status: z.literal('unavailable'),
+  derivation: trustDerivationSchema,
+  admissible: z.literal(false),
+  reason: z.literal('no_completed_evidence'),
+}).strict()]);
 
 const reportV4ShapeSchema = z.object({
   schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
@@ -593,19 +605,36 @@ export const reportSchema = reportV4ShapeSchema.superRefine((report, ctx) => {
   }
 
   const expected = expectedTrust(report.judgeType);
-  if (report.trust.class !== expected.class || report.trust.derivation !== expected.derivation) {
+  const hasCompletedEvidence = report.totals.evaluated > 0;
+  if (report.trust.derivation !== expected.derivation) {
     ctx.addIssue({
       code: 'custom',
       path: ['trust'],
-      message: `trust must be derived as ${expected.class}/${expected.derivation}`,
+      message: `trust path must be derived as ${expected.derivation}`,
     });
   }
-  const admissible = report.trustPolicy.admissibleClasses.includes(expected.class);
-  if (report.trust.admissible !== admissible) {
+  const policyAdmissible = report.trustPolicy.admissibleClasses.includes(expected.class);
+  if (hasCompletedEvidence) {
+    if (
+      report.trust.status !== 'complete' ||
+      report.trust.class !== expected.class ||
+      report.trust.admissible !== policyAdmissible
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['trust'],
+        message: `completed evidence trust must be ${expected.class} with admissibility ${policyAdmissible}`,
+      });
+    }
+  } else if (
+    report.trust.status !== 'unavailable' ||
+    report.trust.admissible !== false ||
+    report.trust.reason !== 'no_completed_evidence'
+  ) {
     ctx.addIssue({
       code: 'custom',
-      path: ['trust', 'admissible'],
-      message: `trust admissibility must be ${admissible}`,
+      path: ['trust'],
+      message: 'a report with no completed evidence must retain unavailable trust',
     });
   }
 
@@ -619,6 +648,43 @@ export const reportSchema = reportV4ShapeSchema.superRefine((report, ctx) => {
           ? 'errored items cannot carry a trust class'
           : `completed items require ${expected.class} trust`,
       });
+    }
+  }
+
+  if (report.judgeType === 'exact-match') {
+    for (const [index, item] of report.items.entries()) {
+      if (item.outcome === 'error') {
+        if (item.errorStage === 'judge') {
+          ctx.addIssue({
+            code: 'custom',
+            path: ['items', index],
+            message: 'exact_match_v1 cannot produce a judge-stage error',
+          });
+        }
+        continue;
+      }
+      const expectedPass =
+        item.baseline_output !== undefined &&
+        item.candidate_output === item.baseline_output;
+      const expectedReason = expectedPass
+        ? undefined
+        : 'candidate output does not exactly match baseline output';
+      if (
+        item.baseline_output === undefined ||
+        item.pass !== expectedPass ||
+        item.outcome !== (expectedPass ? 'pass' : 'fail') ||
+        item.judge?.pass !== expectedPass ||
+        item.judge?.score !== (expectedPass ? 1 : 0) ||
+        item.judge?.reason !== expectedReason ||
+        JSON.stringify(item.attempts.judge) !==
+          JSON.stringify([{ attempt: 1, outcome: 'success' }])
+      ) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['items', index],
+          message: 'item must exactly reproduce exact_match_v1 from candidate and baseline output',
+        });
+      }
     }
   }
 
@@ -650,7 +716,11 @@ export const reportSchema = reportV4ShapeSchema.superRefine((report, ctx) => {
     });
   }
 
-  const expectedDecision = decideDecision(report.totals, report.thresholds, admissible);
+  const expectedDecision = decideDecision(
+    report.totals,
+    report.thresholds,
+    hasCompletedEvidence && policyAdmissible,
+  );
   if (report.decision !== expectedDecision) {
     ctx.addIssue({
       code: 'custom',
@@ -836,6 +906,10 @@ export function renderMarkdown(report: Report): string {
   const { totals, thresholds } = report;
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
   const heading = report.decision.toUpperCase();
+  const trustLine = report.trust.status === 'complete'
+    ? `- Trust: **${report.trust.class}** (${report.trust.derivation}; ${report.trust.admissible ? 'admissible' : 'not admissible'})`
+    : `- Trust: **unavailable** (${report.trust.derivation}; no completed evidence)`;
+  const overrideReason = report.trustPolicy.selfReportedOverride?.reason;
 
   const lines: string[] = [
     `# Shadow run report: ${heading}`,
@@ -843,7 +917,10 @@ export function renderMarkdown(report: Report): string {
     `- Decision: **${report.decision}**`,
     `- Scope: **${report.scope.kind}** (${report.scope.id})`,
     `- Exact input: \`${report.scope.inputArtifact.digest}\``,
-    `- Trust: **${report.trust.class}** (${report.trust.derivation}; ${report.trust.admissible ? 'admissible' : 'not admissible'})`,
+    trustLine,
+    ...(overrideReason === undefined
+      ? []
+      : [`- Self-reported evidence override: ${overrideReason}`]),
     `- Pass rate: **${pct(totals.passRate)}** (${totals.passed}/${totals.total}) — threshold: ≥ ${pct(thresholds.minPassRate)}`,
     `- Regressions vs baseline: **${totals.regressions}** — threshold: ≤ ${thresholds.maxRegressions}`,
     `- Comparisons: ${totals.comparisonCounts.regression} regressions, ${totals.comparisonCounts.improvement} improvements, ${totals.comparisonCounts.stable_pass} stable passes, ${totals.comparisonCounts.stable_fail} stable fails, ${totals.comparisonCounts.unpaired} unpaired`,

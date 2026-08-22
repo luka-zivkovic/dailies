@@ -181,6 +181,18 @@ describe('decision monotonicity', () => {
                     maxRegressions: strictMax,
                   });
                   if (strict === 'promote') expect(lenient).toBe('promote');
+
+                  const lenientDecision = decideDecision(totals, {
+                    minPassRate: lenientRate,
+                    maxRegressions: lenientMax,
+                  }, true);
+                  const strictDecision = decideDecision(totals, {
+                    minPassRate: strictRate,
+                    maxRegressions: strictMax,
+                  }, true);
+                  if (strictDecision === 'promote') {
+                    expect(lenientDecision).toBe('promote');
+                  }
                 }
               }
             }
@@ -201,6 +213,9 @@ describe('decision monotonicity', () => {
               const thresholds = { minPassRate, maxRegressions };
               if (decideVerdict(before, thresholds) === 'promote') {
                 expect(decideVerdict(after, thresholds)).toBe('promote');
+              }
+              if (decideDecision(before, thresholds, true) === 'promote') {
+                expect(decideDecision(after, thresholds, true)).toBe('promote');
               }
             }
           }

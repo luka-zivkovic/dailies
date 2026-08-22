@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 3,
+  "judgeType": "exact-match",
+  "startedAt": "2026-08-22T12:00:00.000Z",
+  "finishedAt": "2026-08-22T12:00:00.000Z",
+  "thresholds": {
+    "minPassRate": 1,
+    "maxRegressions": 0
+  },
+  "totals": {
+    "total": 1,
+    "passed": 1,
+    "failed": 0,
+    "errored": 0,
+    "candidateErrored": 0,
+    "judgeErrored": 0,
+    "protocolErrored": 0,
+    "evaluated": 1,
+    "evaluationCoverage": 1,
+    "passRate": 1,
+    "regressions": 0,
+    "comparisonCounts": {
+      "regression": 0,
+      "improvement": 0,
+      "stable_pass": 1,
+      "stable_fail": 0,
+      "unpaired": 0
+    },
+    "allErrored": false
+  },
+  "verdict": "promote",
+  "items": [
+    {
+      "id": "historical-exact",
+      "input": "hello",
+      "baseline_label": "pass",
+      "baseline_output": "hello",
+      "candidate_output": "hello",
+      "judge": {
+        "score": 1,
+        "pass": true
+      },
+      "outcome": "pass",
+      "pass": true,
+      "comparison": "stable_pass",
+      "regression": false,
+      "attempts": {
+        "candidate": [
+          {
+            "attempt": 1,
+            "outcome": "success"
+          }
+        ],
+        "judge": [
+          {
+            "attempt": 1,
+            "outcome": "success"
+          }
+        ]
+      }
+    }
+  ]
+}

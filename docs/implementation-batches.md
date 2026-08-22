@@ -1,6 +1,6 @@
 # Portfolio implementation batches
 
-Status: **independently audited; decision gates remain open; Batch 0 authorized**
+Status: **independently audited; Batches 0, 1A, and 1B complete; later gates remain open**
 
 Last reviewed: 2026-08-22
 
@@ -144,6 +144,8 @@ one artifact; later source-row mutation cannot change a stored receipt; and a
 correction creates a linked successor.
 
 ## Batch 1B — Dailies scope and trust
+
+Implementation status: **complete and independently reviewed on 2026-08-22**.
 
 Decision gate 3 was accepted on 2026-08-22 and is recorded in Dailies
 ADR-0005. Operational/protocol integrity failure remains `inconclusive`, while

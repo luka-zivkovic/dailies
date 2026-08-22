@@ -11,6 +11,14 @@ const validConfig = {
 };
 
 describe('config validation', () => {
+  it('rejects missing and legacy config versions with a migration diagnostic', () => {
+    const { schemaVersion: _schemaVersion, ...unversioned } = validConfig;
+    expect(() => parseConfig(unversioned)).toThrow(/unsupported config schema version: missing/);
+    expect(() => parseConfig({ ...validConfig, schemaVersion: 3 })).toThrow(
+      /release execution requires schemaVersion 4/,
+    );
+  });
+
   it('accepts a valid command + exact-match config and defaults concurrency to 4', () => {
     const config = parseConfig(validConfig);
     expect(config.concurrency).toBe(4);
