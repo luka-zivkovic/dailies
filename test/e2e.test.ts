@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Config } from '../src/config.js';
 import { decideExitCode, EXIT_RUN_ERROR } from '../src/report.js';
 import { runShadow } from '../src/runner.js';
+import { selfReportedTestPolicy, v4ContractForPath } from './v4-fixture.js';
 
 interface JudgeRequest {
   input: string;
@@ -105,7 +106,8 @@ describe('end-to-end with mock HTTP candidate and judge', () => {
 
   function makeConfig(inputsPath: string, overrides: Partial<Config> = {}): Config {
     return {
-      inputs: { type: 'jsonl', path: inputsPath },
+      ...v4ContractForPath(inputsPath),
+      trustPolicy: selfReportedTestPolicy,
       candidate: { type: 'http', url: candidateUrl, bodyTemplate: '{"prompt": {input}}' },
       judge: { type: 'http', url: judgeUrl },
       thresholds: { minPassRate: 1, maxRegressions: 0 },
@@ -124,8 +126,8 @@ describe('end-to-end with mock HTTP candidate and judge', () => {
     ]);
     const report = await runShadow(makeConfig(inputsPath));
 
-    expect(report.schemaVersion).toBe(3);
-    expect(report.verdict).toBe('promote');
+    expect(report.schemaVersion).toBe(4);
+    expect(report.decision).toBe('promote');
     expect(report.totals).toMatchObject({ total: 3, passed: 3, failed: 0, regressions: 0 });
     expect(report.items.map((i) => i.id)).toEqual(['a', 'b', 'c']);
     expect(report.items[0]?.candidate_output).toBe('HELLO');
@@ -141,7 +143,7 @@ describe('end-to-end with mock HTTP candidate and judge', () => {
     ]);
     const report = await runShadow(makeConfig(inputsPath));
 
-    expect(report.verdict).toBe('promote');
+    expect(report.decision).toBe('promote');
     expect(report.items[0]?.error).toBeUndefined();
     expect(report.items[0]?.candidate_output).toBe('FLAKY');
     expect(report.items[0]?.attempts.candidate).toEqual([
@@ -169,7 +171,7 @@ describe('end-to-end with mock HTTP candidate and judge', () => {
     });
     const report = await runShadow(config);
 
-    expect(report.verdict).toBe('block');
+    expect(report.decision).toBe('block');
     expect(report.totals).toMatchObject({
       total: 1,
       passed: 0,
@@ -204,7 +206,7 @@ describe('end-to-end with mock HTTP candidate and judge', () => {
       }),
     );
 
-    expect(report.verdict).toBe('inconclusive');
+    expect(report.decision).toBe('inconclusive');
     expect(decideExitCode(report)).toBe(EXIT_RUN_ERROR);
     expect(report.totals).toMatchObject({
       total: 4,
@@ -240,7 +242,7 @@ describe('end-to-end with mock HTTP candidate and judge', () => {
       }),
     );
 
-    expect(report.verdict).toBe('inconclusive');
+    expect(report.decision).toBe('inconclusive');
     expect(report.totals).toMatchObject({
       passed: 1,
       errored: 1,
@@ -272,7 +274,7 @@ describe('end-to-end with mock HTTP candidate and judge', () => {
     });
     const report = await runShadow(config);
 
-    expect(report.verdict).toBe('block');
+    expect(report.decision).toBe('block');
     expect(report.totals.passed).toBe(0);
     expect(report.totals.regressions).toBe(2);
     expect(report.items.every((i) => i.judge?.reason !== undefined || i.error !== undefined)).toBe(true);

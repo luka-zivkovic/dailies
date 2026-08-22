@@ -15,3 +15,4 @@ Status meanings:
 - [0002 — Release-evidence execution ownership](0002-release-evidence-execution-ownership.md) — Accepted
 - [0003 — Scope-bound release decisions](0003-scope-bound-release-decisions.md) — Accepted
 - [0004 — Multi-criterion release policy](0004-multi-criterion-release-policy.md) — Accepted
+- [0005 — Release-decision precedence under mixed evidence](0005-decision-precedence.md) — Accepted

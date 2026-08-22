@@ -10,12 +10,13 @@ import {
 } from './coeval.js';
 import { classifyOperationError } from './errors.js';
 import { judgeItem } from './judge.js';
-import { loadInputs } from './inputs.js';
+import { loadInputArtifact } from './inputs.js';
 import { mapPool } from './pool.js';
 import {
   aggregate,
+  buildDecisionStatement,
   compareOutcome,
-  decideVerdict,
+  decideDecision,
   REPORT_SCHEMA_VERSION,
   reportSchema,
   type ItemResult,
@@ -104,6 +105,7 @@ async function judgeCandidate(config: Config, execution: CandidateSuccess): Prom
       pass: judge.pass,
       comparison,
       regression: comparison === 'regression',
+      trustClass: config.judge.type === 'exact-match' ? 'deterministic' : 'self_reported',
       attempts: { candidate: execution.candidateAttempts, judge: result.attempts },
     };
   } catch (err) {
@@ -170,6 +172,7 @@ function coevalJudgedResult(
     pass,
     comparison,
     regression: comparison === 'regression',
+    trustClass: 'verified',
     attempts: {
       candidate: execution.candidateAttempts,
     },
@@ -185,7 +188,14 @@ export interface RunShadowOptions {
 export async function runShadow(config: Config, options: RunShadowOptions = {}): Promise<Report> {
   const now = options.now ?? (() => new Date());
   const startedAt = now().toISOString();
-  const inputs = await loadInputs(config.inputs.path);
+  const inputArtifact = await loadInputArtifact(config.inputs.path, config.inputs.digest);
+  const inputs = inputArtifact.items;
+  if (inputs.length !== config.scope.expectedItems) {
+    throw new Error(
+      `scope ${JSON.stringify(config.scope.id)} expected ${config.scope.expectedItems} items, ` +
+        `but the exact input artifact contains ${inputs.length}`,
+    );
+  }
 
   if (config.judge.type === 'coeval') {
     const invalid = inputs.find(
@@ -293,6 +303,22 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
   }
 
   const totals = aggregate(items);
+  const trustPath = config.judge.type === 'exact-match'
+    ? { class: 'deterministic' as const, derivation: 'exact_match_v1' as const }
+    : config.judge.type === 'coeval'
+      ? { class: 'verified' as const, derivation: 'coeval_receipt_v1' as const }
+      : { class: 'self_reported' as const, derivation: 'http_judge_v1' as const };
+  const policyAdmissible = config.trustPolicy.admissibleClasses.includes(trustPath.class);
+  const trust = totals.evaluated > 0
+    ? { status: 'complete' as const, ...trustPath, admissible: policyAdmissible }
+    : {
+        status: 'unavailable' as const,
+        derivation: trustPath.derivation,
+        admissible: false as const,
+        reason: 'no_completed_evidence' as const,
+      };
+  const admissible = trust.status === 'complete' && trust.admissible;
+  const decision = decideDecision(totals, config.thresholds, admissible);
   const report: Report = {
     schemaVersion: REPORT_SCHEMA_VERSION,
     judgeType: config.judge.type,
@@ -300,7 +326,39 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
     finishedAt: now().toISOString(),
     thresholds: config.thresholds,
     totals,
-    verdict: decideVerdict(totals, config.thresholds),
+    scope: {
+      id: config.scope.id,
+      kind: config.scope.kind,
+      collectionProcedure: config.scope.collectionProcedure,
+      population: config.scope.population,
+      timeWindow: config.scope.timeWindow,
+      inputArtifact: {
+        type: 'jsonl',
+        digest: inputArtifact.digest,
+        declaredDigest: config.inputs.digest,
+        byteLength: inputArtifact.byteLength,
+        itemCount: inputs.length,
+      },
+      coverage: {
+        expectedItems: config.scope.expectedItems,
+        observedItems: inputs.length,
+        evaluatedItems: totals.evaluated,
+      },
+      producerProvenance: {
+        datasetRevision: 'not_provided',
+        exposure: 'not_provided',
+        review: 'not_provided',
+      },
+    },
+    trustPolicy: config.trustPolicy,
+    trust,
+    decision,
+    decisionStatement: buildDecisionStatement(
+      decision,
+      config.scope.kind,
+      config.scope.id,
+      inputArtifact.digest,
+    ),
     ...(evidence === undefined ? {} : { evidence }),
     items,
   };

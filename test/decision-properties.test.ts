@@ -6,11 +6,13 @@ import { afterEach, describe, expect, it } from 'vitest';
 import type { Config } from '../src/config.js';
 import {
   compareOutcome,
+  decideDecision,
   decideVerdict,
   type Comparison,
   type Totals,
 } from '../src/report.js';
 import { runShadow } from '../src/runner.js';
+import { v4ContractForPath } from './v4-fixture.js';
 
 const tempDirs: string[] = [];
 
@@ -81,7 +83,7 @@ function exactConfig(
   thresholds = { minPassRate: 1, maxRegressions: 0 },
 ): Config {
   return {
-    inputs: { type: 'jsonl', path },
+    ...v4ContractForPath(path),
     candidate: { type: 'command', template: 'printf %s {input}' },
     judge: { type: 'exact-match' },
     thresholds,
@@ -109,7 +111,7 @@ describe('paired comparison semantics', () => {
       { id: 'output-only', input: 'candidate', baseline_output: 'production' },
     ]);
     const report = await runShadow(exactConfig(path, 1));
-    expect(report.verdict).toBe('block');
+    expect(report.decision).toBe('block');
     expect(report.items[0]).toMatchObject({
       outcome: 'fail',
       comparison: 'unpaired',
@@ -134,8 +136,8 @@ describe('paired comparison semantics', () => {
     const tolerant = await runShadow(
       exactConfig(path, 1, { minPassRate: 0, maxRegressions: 0 }),
     );
-    expect(strict.verdict).toBe('block');
-    expect(tolerant.verdict).toBe('promote');
+    expect(strict.decision).toBe('block');
+    expect(tolerant.decision).toBe('promote');
     expect(tolerant.totals).toMatchObject({
       passRate: 0,
       regressions: 0,
@@ -153,7 +155,7 @@ describe('paired comparison semantics', () => {
       },
     ]);
     const report = await runShadow(exactConfig(path, 1));
-    expect(report.verdict).toBe('promote');
+    expect(report.decision).toBe('promote');
     expect(report.items[0]).toMatchObject({ comparison: 'improvement', regression: false });
     expect(report.totals.comparisonCounts.improvement).toBe(1);
   });
@@ -179,6 +181,18 @@ describe('decision monotonicity', () => {
                     maxRegressions: strictMax,
                   });
                   if (strict === 'promote') expect(lenient).toBe('promote');
+
+                  const lenientDecision = decideDecision(totals, {
+                    minPassRate: lenientRate,
+                    maxRegressions: lenientMax,
+                  }, true);
+                  const strictDecision = decideDecision(totals, {
+                    minPassRate: strictRate,
+                    maxRegressions: strictMax,
+                  }, true);
+                  if (strictDecision === 'promote') {
+                    expect(lenientDecision).toBe('promote');
+                  }
                 }
               }
             }
@@ -200,11 +214,46 @@ describe('decision monotonicity', () => {
               if (decideVerdict(before, thresholds) === 'promote') {
                 expect(decideVerdict(after, thresholds)).toBe('promote');
               }
+              if (decideDecision(before, thresholds, true) === 'promote') {
+                expect(decideDecision(after, thresholds, true)).toBe('promote');
+              }
             }
           }
         }
       }
     }
+  });
+
+  it('never promotes complete self-reported evidence without admission', () => {
+    for (let total = 1; total <= 20; total += 1) {
+      for (let passed = 0; passed <= total; passed += 1) {
+        const totals = completeTotals(total, passed, 0);
+        for (const minPassRate of [0, 0.5, 0.8, 1]) {
+          expect(decideDecision(totals, { minPassRate, maxRegressions: total }, false))
+            .not.toBe('promote');
+        }
+      }
+    }
+  });
+
+  it('keeps candidate failure blocking but makes judge/protocol integrity failure inconclusive', () => {
+    const candidateFailure = {
+      ...completeTotals(2, 1, 0),
+      errored: 1,
+      candidateErrored: 1,
+      evaluated: 1,
+      evaluationCoverage: 0.5,
+    };
+    expect(decideDecision(candidateFailure, { minPassRate: 0, maxRegressions: 9 }, true))
+      .toBe('block');
+
+    const mixedIntegrityFailure = {
+      ...candidateFailure,
+      judgeErrored: 1,
+      protocolErrored: 1,
+    };
+    expect(decideDecision(mixedIntegrityFailure, { minPassRate: 0, maxRegressions: 9 }, true))
+      .toBe('inconclusive');
   });
 });
 

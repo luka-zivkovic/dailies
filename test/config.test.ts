@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { parseConfig } from '../src/config.js';
+import { v4ContractForBytes } from './v4-fixture.js';
 
 const validConfig = {
-  inputs: { type: 'jsonl', path: 'inputs.jsonl' },
+  ...v4ContractForBytes('inputs.jsonl', '{"id":"one","input":"x"}\n', 1),
   candidate: { type: 'command', template: 'echo {input}' },
   judge: { type: 'exact-match' },
   thresholds: { minPassRate: 0.9, maxRegressions: 0 },
@@ -10,10 +11,19 @@ const validConfig = {
 };
 
 describe('config validation', () => {
+  it('rejects missing and legacy config versions with a migration diagnostic', () => {
+    const { schemaVersion: _schemaVersion, ...unversioned } = validConfig;
+    expect(() => parseConfig(unversioned)).toThrow(/unsupported config schema version: missing/);
+    expect(() => parseConfig({ ...validConfig, schemaVersion: 3 })).toThrow(
+      /release execution requires schemaVersion 4/,
+    );
+  });
+
   it('accepts a valid command + exact-match config and defaults concurrency to 4', () => {
     const config = parseConfig(validConfig);
     expect(config.concurrency).toBe(4);
     expect(config.candidate.type).toBe('command');
+    expect(config.trustPolicy.admissibleClasses).toEqual(['verified', 'deterministic']);
   });
 
   it('defaults timeoutMs to 60000 and accepts an explicit value', () => {
@@ -119,5 +129,24 @@ describe('config validation', () => {
 
   it('rejects concurrency < 1', () => {
     expect(() => parseConfig({ ...validConfig, concurrency: 0 })).toThrow();
+  });
+
+  it('requires bounded ordered time windows for production samples', () => {
+    expect(() => parseConfig({
+      ...validConfig,
+      scope: { ...validConfig.scope, kind: 'production_sample' },
+    })).toThrow(/bounded time range/i);
+    expect(() => parseConfig({
+      ...validConfig,
+      scope: {
+        ...validConfig.scope,
+        kind: 'production_sample',
+        timeWindow: {
+          kind: 'range',
+          start: '2026-08-23T00:00:00.000Z',
+          end: '2026-08-22T00:00:00.000Z',
+        },
+      },
+    })).toThrow(/must not precede/i);
   });
 });
