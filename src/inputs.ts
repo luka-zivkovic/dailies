@@ -1,9 +1,16 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
+import type { z } from 'zod';
 import { inputItemSchema, type InputItem } from './config.js';
 
 export interface InputArtifact {
   items: InputItem[];
+  digest: string;
+  byteLength: number;
+}
+
+export interface ParsedInputArtifact<T> {
+  items: T[];
   digest: string;
   byteLength: number;
 }
@@ -13,6 +20,15 @@ export async function loadInputArtifact(
   path: string,
   expectedDigest?: string,
 ): Promise<InputArtifact> {
+  return loadInputArtifactWithSchema(path, inputItemSchema, expectedDigest);
+}
+
+/** Version-selectable exact-byte loader used by the additive suite contract. */
+export async function loadInputArtifactWithSchema<T extends { id: string }>(
+  path: string,
+  schema: z.ZodType<T>,
+  expectedDigest?: string,
+): Promise<ParsedInputArtifact<T>> {
   const bytes = await readFile(path);
   const digest = `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
   if (expectedDigest !== undefined && digest !== expectedDigest) {
@@ -39,7 +55,7 @@ export async function loadInputArtifact(
     } catch {
       throw new Error(`inputs file ${path}, line ${lineNumber}: not valid JSON`);
     }
-    const result = inputItemSchema.safeParse(parsed);
+    const result = schema.safeParse(parsed);
     if (!result.success) {
       throw new Error(
         `inputs file ${path}, line ${lineNumber}: ${result.error.issues[0]?.message ?? 'invalid item'}`,

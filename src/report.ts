@@ -16,6 +16,11 @@ import {
 import { ERROR_KINDS, type ErrorKind } from './errors.js';
 import { judgeResultSchema } from './judge.js';
 import { attemptLedgerSchema } from './retry.js';
+import {
+  reportV5Schema,
+  SUITE_REPORT_SCHEMA_VERSION,
+  type SuiteReport,
+} from './report-v5.js';
 
 export const LEGACY_REPORT_SCHEMA_VERSION = 3;
 export const REPORT_SCHEMA_VERSION = 4;
@@ -484,7 +489,7 @@ export const reportV3Schema = reportV3ShapeSchema.superRefine((report, ctx) => {
   }
 });
 
-const reportTrustPolicySchema = z.object({
+export const reportTrustPolicySchema = z.object({
   admissibleClasses: z.array(trustClassSchema).min(1),
   selfReportedOverride: z.object({
     reason: z.string().min(1).refine((value) => value.trim().length > 0),
@@ -498,7 +503,7 @@ const reportTrustPolicySchema = z.object({
   }
 });
 
-const reportScopeSchema = z.object({
+export const reportScopeSchema = z.object({
   id: z.string().min(1).refine((value) => value.trim().length > 0),
   kind: scopeKindSchema,
   collectionProcedure: z.string().min(1).refine((value) => value.trim().length > 0),
@@ -756,9 +761,10 @@ export type Decision = Report['decision'];
 
 export type ReportInspection =
   | { schemaVersion: 3; readOnly: true; report: ReportV3 }
-  | { schemaVersion: 4; readOnly: false; report: Report };
+  | { schemaVersion: 4; readOnly: false; report: Report }
+  | { schemaVersion: 5; readOnly: false; report: SuiteReport };
 
-/** Parse historical v3 reports without normalizing or upgrading them. */
+/** Parse v3, v4, or v5 reports without normalizing or upgrading versions. */
 export function parseReportForInspection(raw: unknown): ReportInspection {
   if (typeof raw !== 'object' || raw === null || !('schemaVersion' in raw)) {
     throw new Error('unsupported report schema version: missing');
@@ -771,6 +777,10 @@ export function parseReportForInspection(raw: unknown): ReportInspection {
   if (version === REPORT_SCHEMA_VERSION) {
     reportSchema.parse(raw);
     return { schemaVersion: 4, readOnly: false, report: raw as Report };
+  }
+  if (version === SUITE_REPORT_SCHEMA_VERSION) {
+    reportV5Schema.parse(raw);
+    return { schemaVersion: 5, readOnly: false, report: raw as SuiteReport };
   }
   throw new Error(`unsupported report schema version: ${String(version)}`);
 }
@@ -891,7 +901,7 @@ export const EXIT_RUN_ERROR = 2;
  * Map a finished report to the CLI exit code. Inconclusive evidence is a run
  * error, not a product-quality verdict.
  */
-export function decideExitCode(report: Pick<Report, 'decision' | 'totals'>): number {
+export function decideExitCode(report: Pick<Report, 'decision'>): number {
   if (report.decision === 'inconclusive') return EXIT_RUN_ERROR;
   return report.decision === 'promote' ? EXIT_PROMOTE : EXIT_BLOCK;
 }

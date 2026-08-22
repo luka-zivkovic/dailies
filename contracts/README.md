@@ -1,4 +1,4 @@
-# Vendored Coeval receipt contract
+# Vendored Coeval evidence contracts
 
 Dailies vendors Coeval's frozen assessment-receipt v1 JSON Schema, digest
 specification, positive fixture, and conformance corpus. The runtime schema in
@@ -7,6 +7,14 @@ Schema/runtime-schema agreement plus the independent digest, ordering,
 coverage, and candidate-content checks applied by Dailies. See
 [`assessment-receipt-v1.md`](assessment-receipt-v1.md) for the pinned bytes
 and mutation rules.
+
+Dailies also vendors Coeval's policy-free
+`coeval/evaluator-suite-manifest/v1` schema, specification, positive fixture,
+and adversarial corpus. The manifest binds ordered criterion definitions to
+exact evaluator versions while each criterion continues to produce its own
+unchanged receipt-v1 artifact. Dailies pins and verifies the manifest before
+candidate or provider execution, then supplies the customer-owned release
+roles and thresholds that the producer contract deliberately excludes.
 
 ## Compatibility policy
 
@@ -24,6 +32,12 @@ and mutation rules.
   accepted.
 - Dailies owns release policy. Receipt fixtures must never contain thresholds,
   promote/block decisions, rollout configuration, or overrides.
+- Suite manifest v1 is independently closed and content addressed. Dailies
+  accepts only exact canonical bytes with the configured manifest identity and
+  digest. It never selects an unpinned latest suite.
+- Criterion identity is bound to receipt evidence through manifest
+  `projectId`, `skillId`, `skillVersionId`, and `skillDigest`; criterion fields
+  do not alter the frozen receipt-v1 digest basis.
 
 The contract is vendored rather than imported as a runtime dependency so
 Coeval and Dailies retain independent release cadences. Producer and consumer

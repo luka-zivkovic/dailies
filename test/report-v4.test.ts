@@ -345,7 +345,7 @@ describe('report/config v4 scope and trust contract', () => {
       .toThrow();
 
     expect(parseReportForInspection(current)).toMatchObject({ schemaVersion: 4, readOnly: false });
-    for (const version of [undefined, 1, 2, 5]) {
+    for (const version of [undefined, 1, 2, 6]) {
       const candidate = { ...legacy, ...(version === undefined ? {} : { schemaVersion: version }) };
       if (version === undefined) delete candidate.schemaVersion;
       expect(() => parseReportForInspection(candidate)).toThrow(/report schema version/i);

@@ -34,6 +34,9 @@ The local CLI is the current product surface. It:
   safe admissibility default; and
 - emits a scope-bound v4 tri-state release report while retaining a separate
   read-only v3 inspection parser.
+- additively consumes a pinned Coeval evaluator-suite manifest with separate
+  criterion receipts in v5, applies explicit customer criterion policy, and
+  retains v4 execution compatibility.
 
 The CLI is also the demand probe. Improve the integrity and usefulness of this
 loop before committing to a hosted control plane or serving integration.
@@ -46,7 +49,7 @@ Founder review accepted the following constraints on 2026-08-22:
    insufficient for automated promotion by default.
 2. Preserve release/provider execution ownership from ADR-0002.
 3. Bind every decision to the evidence scopes in ADR-0003.
-4. Apply mandatory, advisory, blocking, and non-compensatory criterion policy
+4. Apply mandatory, advisory, blocking, and non-implicitly-compensatory criterion policy
    in Dailies as defined by ADR-0004.
 5. Consume Coeval's separate policy-free criterion evidence rather than asking
    Coeval for a suite release verdict.
@@ -59,7 +62,8 @@ The next planning pass may divide work into batches, but it must cover:
    reports, and decision claims;
 2. trust class through item results, aggregation, reports, and policy, with the
    safe default enforced;
-3. criterion and suite-policy mapping without implicit compensation;
+3. criterion and suite-policy mapping without implicit compensation
+   (**implemented in additive v5 for null-trial Coeval suites**);
 4. conformance fixtures for scope, trust, incomplete, tampered, and conflicting
    multi-criterion evidence;
 5. adversarial decision tests for false promotion, false blocking,

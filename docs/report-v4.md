@@ -4,6 +4,8 @@ Status: **accepted Batch 1B contract**
 
 Version 4 makes evidence scope and trust part of the release decision. It does
 not change Coeval receipt v1 and does not introduce multi-criterion policy.
+It remains an executable compatibility contract after additive v5 introduced
+criterion suites; v4 artifacts are never reinterpreted as suite evidence.
 
 ## Configuration contract
 
@@ -79,9 +81,10 @@ failure remains `inconclusive`. The precedence is fixed in ADR-0005.
 
 ## Historical reports
 
-`parseReportForInspection` accepts valid v4 reports and valid historical v3
-reports as distinct return variants. V3 is read-only and is never upgraded or
-used for release-policy execution. Versions 1, 2, unknown versions, and objects
+`parseReportForInspection` accepts valid v5, v4, and historical v3 reports as
+distinct return variants. V3 is read-only and is never upgraded or used for
+release-policy execution. V4 remains its own single-criterion contract rather
+than being upgraded into v5. Versions 1, 2, unknown versions, and objects
 without an explicit version are rejected with a version diagnostic.
 
 `fixtures/report-v3-exact.json`, `fixtures/report-v3-http.json`, and

@@ -259,6 +259,15 @@ legacy or visible regression data cannot be re-roled sealed.
 
 ## Batch 3 — single criteria, policy-free suites, and release policy
 
+Status: **Complete (2026-08-23).** Coeval now supports immutable criterion
+definitions, exact evaluator bindings, criterion-scoped evidence, explicit
+multi-criterion imports and UI selection, and canonical policy-free suite
+manifest v1 artifacts while leaving receipt v1 unchanged. Dailies v5 vendors
+and verifies that contract, collects separate criterion receipts, and applies
+explicit mandatory, blocking, advisory, or formula-defined compensatory
+customer policy without a default weighted average. V3/v4 Dailies artifacts
+remain read-only/compatible.
+
 ### Coeval
 
 Add a versioned criterion model and policy-free suite manifest:

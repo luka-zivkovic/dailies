@@ -14,7 +14,13 @@ the documentation-first roadmap. The time-sensitive
 [positioning note](docs/positioning.md) records the intended wedge without
 turning competitor features into product authority.
 
-**What exists today (v0 wedge):** the `dailies` CLI ("shadow-run" mode) runs a candidate AI change against exact, digest-pinned JSONL bytes, judges each result, binds the result to a customer-declared evidence scope, enforces evidence trust, and emits a tri-state report. No serving-path changes are required.
+**What exists today (local wedge):** the `dailies` CLI runs a candidate AI
+change against exact, digest-pinned JSONL bytes, binds the result to a
+customer-declared evidence scope, enforces evidence trust, and emits a
+tri-state report. V4 retains the original single-criterion shadow run. Additive
+v5 consumes a pinned, policy-free Coeval suite manifest and separate verified
+receipt-v1 evidence for each criterion, then applies customer-owned release
+policy. No serving-path changes are required.
 
 ## Quickstart
 
@@ -150,11 +156,47 @@ Semantics:
 - Target release decisions are bound to declared evidence scopes. A successful run over a curated regression corpus means the candidate satisfied that corpus policy; it does not by itself claim representative production quality. See [ADR-0003](docs/decisions/0003-scope-bound-release-decisions.md).
 - `report.json` uses schema v4 with `decision` (never `verdict`), the declared scope, separate declared/observed exact-input digests, coverage, derived trust, policy, and a deterministic statement that names the scope and digest. Producer dataset revision, exposure, and review provenance are explicitly `not_provided` for current integrations and receipt v1; Dailies does not infer them from unrelated fields. The parser re-derives totals, trust, admissibility, decision, item/attempt consistency, and Coeval linkage. `parseReportForInspection` also validates frozen v3 reports as read-only historical objects without upgrading them; v1, v2, unversioned, and unknown versions are rejected. See [`docs/report-v4.md`](docs/report-v4.md).
 
+## Criterion suite mode (v5)
+
+V5 is additive; existing v4 configurations keep their existing execution and
+report semantics. A v5 configuration replaces the singular `judge` and
+`thresholds` fields with a pinned exact Coeval evaluator-suite manifest, a
+Coeval provider, and customer policy v1.
+
+The manifest groups ordered, single-criterion evaluators without release
+weights or decisions. Dailies executes the candidate once, submits one
+assessment per manifest member, verifies each unchanged receipt v1 against the
+manifest's project/skill/version/digest binding, and preserves criterion-level
+scope, trust, completeness, comparisons, and policy outcomes.
+
+Policy v1 accepts mandatory blocking, mandatory advisory, optional advisory,
+and mandatory compensatory roles. Optional blocking/compensation are rejected.
+Compensatory criteria are threshold-free pass-rate operands: compensation
+exists only through the explicit same-unit
+`dailies/weighted-pass-rate/v1` formula and its exact-rational minimum; there
+is no hidden criterion threshold or default weighted average.
+The accepted mixed-evidence precedence remains intact: required integrity
+failure is inconclusive, candidate execution failure blocks, a complete
+admissible blocking failure outranks unrelated mandatory incompleteness, and
+otherwise missing mandatory evidence is inconclusive.
+
+The v5 report audits redacted provider/candidate identity, deadline, polling,
+timeout, concurrency, and deterministic manifest-order scheduling. It also
+pins one candidate dataset digest across all receipts and retains a rejected
+receipt (or a typed zero-request termination) so integrity failures can be
+reproduced by the report parser.
+
+The first v5 transport reads exact canonical manifest bytes from a local file
+and supports `trialPlan: null`. A public Coeval manifest-fetch route and
+repeated-trial reduction remain explicit future contracts. See
+[`docs/report-v5.md`](docs/report-v5.md) for the schema and invariants.
+
 ## Development
 
 ```sh
 npm test        # vitest: config validation, aggregation, judges, e2e with mock HTTP servers
 npm run build   # tsc
+npm run --silent benchmark:batch3 # internal, local-only v5 scalability probe
 ```
 
 GitHub Actions runs `npm ci`, the TypeScript build, and the complete test suite on pushes and pull requests.

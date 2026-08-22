@@ -1,0 +1,266 @@
+{
+  "contract": "coeval/evaluator-suite-manifest/v1",
+  "baseFixture": "evaluator-suite-manifest-v1.complete.json",
+  "cases": [
+    {
+      "name": "positive-control",
+      "structural": "accept",
+      "semantic": "accept",
+      "mutations": []
+    },
+    {
+      "name": "unknown-root-field",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        { "op": "add", "path": "/unexpected", "value": true }
+      ]
+    },
+    {
+      "name": "unknown-member-field",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        { "op": "add", "path": "/members/0/unexpected", "value": true }
+      ]
+    },
+    {
+      "name": "forbidden-release-policy",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        { "op": "add", "path": "/releasePolicy", "value": { "decision": "promote" } }
+      ]
+    },
+    {
+      "name": "forbidden-member-weight",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        { "op": "add", "path": "/members/0/weight", "value": 0.5 }
+      ]
+    },
+    {
+      "name": "forbidden-member-role",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        { "op": "add", "path": "/members/0/role", "value": "mandatory" }
+      ]
+    },
+    {
+      "name": "unsupported-schema-version",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        { "op": "replace", "path": "/schemaVersion", "value": 2 }
+      ]
+    },
+    {
+      "name": "unsupported-applicability",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        { "op": "replace", "path": "/members/0/applicability/kind", "value": "metadata_filter" }
+      ]
+    },
+    {
+      "name": "unsupported-trial-plan-kind",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trialPlan",
+          "value": { "kind": "majority_vote", "trialsPerItem": 3 }
+        }
+      ]
+    },
+    {
+      "name": "trial-count-too-small",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trialPlan",
+          "value": { "kind": "independent_repetitions", "trialsPerItem": 1 }
+        }
+      ]
+    },
+    {
+      "name": "trial-count-too-large",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trialPlan",
+          "value": { "kind": "independent_repetitions", "trialsPerItem": 11 }
+        }
+      ]
+    },
+    {
+      "name": "forbidden-trial-threshold",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trialPlan",
+          "value": { "kind": "independent_repetitions", "trialsPerItem": 3, "threshold": 0.67 }
+        }
+      ]
+    },
+    {
+      "name": "malformed-manifest-digest",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        { "op": "replace", "path": "/manifestDigest", "value": "sha256:not-a-digest" }
+      ]
+    },
+    {
+      "name": "tampered-manifest-digest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "manifestDigest mismatch",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/manifestDigest",
+          "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    {
+      "name": "tampered-criterion-digest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "criterionDigest mismatch",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/members/0/criterionDigest",
+          "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        { "op": "recompute-manifest-digest" }
+      ]
+    },
+    {
+      "name": "noncontiguous-position",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "not ordered by contiguous position",
+      "mutations": [
+        { "op": "replace", "path": "/members/1/position", "value": 4 },
+        { "op": "recompute-manifest-digest" }
+      ]
+    },
+    {
+      "name": "reordered-criteria",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "criterion order mismatch",
+      "mutations": [
+        { "op": "reverse", "path": "/members" },
+        { "op": "reindex-members" },
+        { "op": "recompute-manifest-digest" }
+      ]
+    },
+    {
+      "name": "missing-criterion",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "exact criterion coverage",
+      "mutations": [
+        { "op": "remove", "path": "/members/1" },
+        { "op": "recompute-manifest-digest" }
+      ]
+    },
+    {
+      "name": "substituted-criterion-version",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "substituted criterion version",
+      "mutations": [
+        { "op": "replace", "path": "/members/1/criterionVersionId", "value": "criterionv_safety_substitute" },
+        { "op": "recompute-criterion-digests" },
+        { "op": "recompute-manifest-digest" }
+      ]
+    },
+    {
+      "name": "substituted-criterion-definition",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "substituted criterion definition",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/members/1/criterionDefinition",
+          "value": "A materially different safety definition."
+        },
+        { "op": "recompute-criterion-digests" },
+        { "op": "recompute-manifest-digest" }
+      ]
+    },
+    {
+      "name": "duplicated-criterion",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "criterionId values must be unique",
+      "mutations": [
+        { "op": "replace", "path": "/members/1/criterionId", "value": "criterion_factuality" },
+        { "op": "recompute-criterion-digests" },
+        { "op": "recompute-manifest-digest" }
+      ]
+    },
+    {
+      "name": "unknown-criterion",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "unknown criterion",
+      "mutations": [
+        { "op": "replace", "path": "/members/1/criterionId", "value": "criterion_unknown" },
+        { "op": "replace", "path": "/members/1/criterionVersionId", "value": "criterionv_unknown_1" },
+        { "op": "recompute-criterion-digests" },
+        { "op": "recompute-manifest-digest" }
+      ]
+    },
+    {
+      "name": "substituted-evaluator",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "substituted evaluator",
+      "mutations": [
+        { "op": "replace", "path": "/members/1/skillId", "value": "skill_substitute" },
+        { "op": "replace", "path": "/members/1/skillVersionId", "value": "skillv_substitute_1" },
+        {
+          "op": "replace",
+          "path": "/members/1/skillDigest",
+          "value": "sha256:1111111111111111111111111111111111111111111111111111111111111111"
+        },
+        {
+          "op": "replace",
+          "path": "/members/1/outputContractDigest",
+          "value": "sha256:2222222222222222222222222222222222222222222222222222222222222222"
+        },
+        { "op": "recompute-manifest-digest" }
+      ]
+    },
+    {
+      "name": "valid-trial-plan-is-a-different-manifest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "identity digest mismatch",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trialPlan",
+          "value": { "kind": "independent_repetitions", "trialsPerItem": 3 }
+        },
+        { "op": "recompute-manifest-digest" }
+      ]
+    }
+  ]
+}

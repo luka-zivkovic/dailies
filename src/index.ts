@@ -24,6 +24,16 @@ export {
   type TrustPolicy,
 } from './config.js';
 export {
+  parseSuiteConfig,
+  suiteConfigSchema,
+  suiteInputItemSchema,
+  suiteProviderConfigSchema,
+  SUITE_CONFIG_SCHEMA_VERSION,
+  type SuiteConfig,
+  type SuiteInputItem,
+  type SuiteProviderConfig,
+} from './config-v5.js';
+export {
   canonicalJson,
   COEVAL_CLIENT_ITEM_ID_MAX_LENGTH,
   coevalAssessmentReceiptSchema,
@@ -55,9 +65,30 @@ export {
 export { judgeItem, judgeResultSchema, type JudgeResult } from './judge.js';
 export {
   loadInputArtifact,
+  loadInputArtifactWithSchema,
   loadInputs,
   type InputArtifact,
+  type ParsedInputArtifact,
 } from './inputs.js';
+export {
+  applyReleasePolicy,
+  binaryThresholdRuleSchema,
+  compensationFormulaSchema,
+  criterionPolicySchema,
+  passRateOperandRuleSchema,
+  releasePolicyDigest,
+  releasePolicyV1Schema,
+  verifyReleasePolicy,
+  type CompensationFormula,
+  type CompensationResult,
+  type CriterionEvidenceState,
+  type CriterionPolicy,
+  type CriterionPolicyInput,
+  type CriterionPolicyResult,
+  type DecisionPrecedence,
+  type PolicyDecision,
+  type ReleasePolicyV1,
+} from './policy.js';
 export {
   aggregate,
   buildDecisionStatement,
@@ -93,6 +124,22 @@ export {
   type Verdict,
 } from './report.js';
 export {
+  aggregateCriterionItems,
+  buildSuiteDecisionStatement,
+  candidateExecutionIdentity,
+  compareCriterionOutcome,
+  providerExecutionIdentity,
+  renderSuiteMarkdown,
+  reportV5Schema,
+  suiteCandidateDatasetDigest,
+  suiteExecutionPolicyDigest,
+  SUITE_REPORT_SCHEMA_VERSION,
+  type CriterionItem,
+  type CriterionTotals,
+  type SuiteCandidateItem,
+  type SuiteReport,
+} from './report-v5.js';
+export {
   attemptRecordSchema,
   attemptLedgerSchema,
   DEFAULT_MAX_ATTEMPTS,
@@ -108,3 +155,18 @@ export {
   type RetryResult,
 } from './retry.js';
 export { runShadow, type RunShadowOptions } from './runner.js';
+export { runSuiteRelease, type RunSuiteOptions } from './suite-runner.js';
+export {
+  evaluatorSuiteCriterionDigest,
+  evaluatorSuiteManifestDigest,
+  evaluatorSuiteManifestMemberSchema,
+  evaluatorSuiteManifestSchema,
+  evaluatorSuiteTrialPlanSchema,
+  loadEvaluatorSuiteManifest,
+  parseCanonicalEvaluatorSuiteManifestBytes,
+  verifyEvaluatorSuiteManifest,
+  verifyReceiptManifestBinding,
+  type EvaluatorSuiteManifest,
+  type EvaluatorSuiteManifestMember,
+  type ExpectedEvaluatorSuiteManifest,
+} from './suite-manifest.js';
