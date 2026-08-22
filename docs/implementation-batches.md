@@ -1,6 +1,6 @@
 # Portfolio implementation batches
 
-Status: **independently audited; Batches 0, 1A, and 1B complete; later gates remain open**
+Status: **independently audited; Batches 0, 1A, 1B, and 1C complete; later gates remain open**
 
 Last reviewed: 2026-08-22
 
@@ -28,23 +28,25 @@ Explicit non-goals for these batches are product merger, semantic clustering,
 a Dailies serving proxy, release policy in Coeval, and dynamic execution or MCP
 traffic proxying in Casefile.
 
-## Starting point to preserve
+## Completed foundation to preserve
 
-The current uncommitted foundation already contains substantial correctness
-work. Planning must not accidentally rebuild or regress it:
+The completed Batches 0–1C contain correctness and contract work that later
+batches must not rebuild or regress:
 
-- Coeval has a closed release-evidence receipt v1, hardened provider prompt
-  boundaries, observed provider metadata, terminal-failure handling, and one
-  positive producer contract fixture. The accepted negative fixture set is not
-  yet vendored.
-- Dailies has tri-state decisions, strict receipt verification, typed retries
-  and actual-operation ledgers, deterministic reports, and adversarial
-  decision tests.
+- Coeval has immutable exact-byte terminal receipt artifacts, hardened provider
+  prompt boundaries, observed provider metadata, terminal-failure handling,
+  and portable producer contract fixtures.
+- Dailies has scope-bound report/config schema v4, tri-state decisions, enforced
+  evidence trust, strict receipt verification, typed retries and actual-operation
+  ledgers, deterministic reports, and adversarial decision tests.
 - Casefile has deterministic reports, strict completeness, SARIF, lock/verify,
-  static-analysis hardening, and a 31-artifact authored regression corpus.
+  static-analysis hardening, a 31-artifact authored regression corpus, and its
+  public no-execution benchmark adapter protocol.
+- The separate neutral benchmark repository owns qualification execution, raw
+  evidence, replay verification, and claim-free synthetic conformance results.
 
-These are CURRENT implementation facts. The accepted charters and ADRs are the
-TARGET.
+These are CURRENT implementation facts. The accepted charters and ADRs remain
+the TARGET for later batches.
 
 ## Regular batch flow
 
@@ -70,6 +72,8 @@ Every implementation batch follows the same flow:
 No batch is complete merely because the happy-path test passes.
 
 ## Batch 0 — foundation checkpoint
+
+Implementation status: **complete and independently reviewed on 2026-08-22**.
 
 Goal: establish a reviewable baseline before adding the newly accepted target
 work.
@@ -116,6 +120,8 @@ unknown dirty-worktree dependency, every portable negative fixture is rejected
 by both producer and consumer, and no untracked authority document remains.
 
 ## Batch 1A — Coeval immutable receipts
+
+Implementation status: **complete and independently reviewed on 2026-08-22**.
 
 Decision gates 1, 2, and 6 were accepted on 2026-08-22 and are recorded in
 Coeval ADR-0006. Exact-byte `bytea` storage, idempotent historical freeze with
@@ -181,6 +187,13 @@ masquerading legacy evidence cannot become v4; and output remains deterministic.
 
 ## Batch 1C — neutral Casefile benchmark protocol
 
+Implementation status: **complete and independently reviewed on 2026-08-22**.
+
+Ownership/isolation is resolved by accepted Casefile ADR-0002: the separately
+owned `agent-artifact-trust-bench` repository owns the harness, comparator
+execution, and raw results. Casefile owns only its public protocol, adapter, and
+synthetic qualification corpus. Gate 5 remains open for the blind-run design.
+
 The comparator harness lives in a separately owned benchmark workspace or
 repository, not inside Casefile's product runtime or CI. Casefile ships only
 its adapter, public protocol, and synthetic qualification corpus. Build no
@@ -199,8 +212,8 @@ hidden corpus in the product repository.
 
 Exit gate: Casefile CI never executes a comparator or assessed artifact; the
 neutral harness rejects unfrozen tool versions; all-positive and
-all-unsupported adapters produce visibly bad metrics; and qualification cannot
-emit a performance claim.
+all-unsupported adapters visibly fail named qualification expectations; and
+qualification cannot emit a performance claim.
 
 ## Batch 2 — dataset revisions and exposure
 
@@ -444,8 +457,9 @@ historical semantics and must be accepted before their runtime batch:
    The evaluator-version regression gate remains in Coeval (Coeval ADR-0006).
 7. Collection and independent-review plan for the first genuinely sealed
    validation revision.
-8. Ownership and isolation of the neutral benchmark workspace so comparator
-   execution never becomes Casefile product behavior.
+8. **Resolved for Batch 1C:** ownership and isolation of the neutral benchmark
+   workspace is fixed by Casefile ADR-0002; comparator execution never becomes
+   Casefile product behavior.
 9. Exact dataset-role compatibility matrix. Sealed validation must be disjoint
    from exposed roles; analysis/authoring, iterative-development, and
    regression/golden overlap rules must be named rather than inferred.
