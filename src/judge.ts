@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { DEFAULT_TIMEOUT_MS, type JudgeConfig } from './config.js';
+import { OperationError, httpOperationError } from './errors.js';
 import { fetchWithTimeout } from './http.js';
 
 /** The judge-gate contract response: POST /judge → { score, pass, reason? } */
@@ -34,6 +35,13 @@ export async function judgeItem(
     };
   }
 
+  if (judge.type === 'coeval') {
+    throw new OperationError(
+      'coeval judge must be run through its batch evidence protocol',
+      'protocol',
+    );
+  }
+
   // http judge implementing the gate contract
   const res = await fetchWithTimeout(
     judge.url,
@@ -50,11 +58,24 @@ export async function judgeItem(
     'judge',
   );
   if (!res.ok) {
-    throw new Error(`judge HTTP ${res.status} from ${judge.url}`);
+    throw httpOperationError('judge', judge.url, res);
   }
-  const parsed = judgeResultSchema.safeParse(await res.json());
+  let raw: unknown;
+  try {
+    raw = await res.json();
+  } catch (error) {
+    throw new OperationError(
+      `judge response does not match gate contract: invalid JSON`,
+      'protocol',
+      { cause: error },
+    );
+  }
+  const parsed = judgeResultSchema.safeParse(raw);
   if (!parsed.success) {
-    throw new Error(`judge response does not match gate contract: ${parsed.error.message}`);
+    throw new OperationError(
+      `judge response does not match gate contract: ${parsed.error.message}`,
+      'protocol',
+    );
   }
   return parsed.data;
 }

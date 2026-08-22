@@ -1,0 +1,130 @@
+{
+  "contract": "coeval/assessment-receipt/v1",
+  "baseFixture": "assessment-receipt-v1.complete.json",
+  "cases": [
+    {
+      "name": "positive-control",
+      "structural": "accept",
+      "semantic": "accept",
+      "mutations": []
+    },
+    {
+      "name": "empty-verdict-id-is-valid-v1",
+      "structural": "accept",
+      "semantic": "accept",
+      "mutations": [
+        { "op": "replace", "path": "/items/0/verdictId", "value": "" },
+        { "op": "recompute-evidence-digest" }
+      ]
+    },
+    {
+      "name": "unknown-root-field",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        { "op": "add", "path": "/calibrationRef", "value": "not-part-of-v1" }
+      ]
+    },
+    {
+      "name": "unknown-run-field",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        { "op": "add", "path": "/run/unexpected", "value": true }
+      ]
+    },
+    {
+      "name": "unknown-model-binding-field",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        { "op": "add", "path": "/requestedModelBinding/unexpected", "value": true }
+      ]
+    },
+    {
+      "name": "unknown-item-field",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        { "op": "add", "path": "/items/0/unexpected", "value": true }
+      ]
+    },
+    {
+      "name": "unknown-provider-metadata-field",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        { "op": "add", "path": "/items/0/providerMetadata/unexpected", "value": true }
+      ]
+    },
+    {
+      "name": "unsupported-schema-version",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        { "op": "replace", "path": "/schemaVersion", "value": 2 }
+      ]
+    },
+    {
+      "name": "malformed-digest",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        { "op": "replace", "path": "/evidenceDigest", "value": "sha256:not-a-digest" }
+      ]
+    },
+    {
+      "name": "tampered-evidence-digest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "evidenceDigest mismatch",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evidenceDigest",
+          "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    {
+      "name": "items-out-of-order",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "not ordered by clientItemId",
+      "mutations": [
+        { "op": "reverse", "path": "/items" },
+        { "op": "recompute-dataset-digest" },
+        { "op": "recompute-evidence-digest" }
+      ]
+    },
+    {
+      "name": "candidate-coverage-gap",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "exact clientItemId coverage",
+      "mutations": [
+        { "op": "remove", "path": "/items/1" },
+        { "op": "replace", "path": "/run/totalItems", "value": 1 },
+        { "op": "replace", "path": "/run/completedItems", "value": 1 },
+        { "op": "recompute-dataset-digest" },
+        { "op": "recompute-evidence-digest" }
+      ]
+    },
+    {
+      "name": "eval-run-identity-mismatch",
+      "structural": "accept",
+      "semantic": "reject",
+      "expectedEvalRunId": "different-eval-run",
+      "errorIncludes": "evalRunId mismatch",
+      "mutations": []
+    },
+    {
+      "name": "skill-version-identity-mismatch",
+      "structural": "accept",
+      "semantic": "reject",
+      "expectedSkillVersionId": "different-skill-version",
+      "errorIncludes": "skillVersionId mismatch",
+      "mutations": []
+    }
+  ]
+}

@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Config } from '../src/config.js';
+import { decideExitCode, EXIT_RUN_ERROR } from '../src/report.js';
 import { runShadow } from '../src/runner.js';
 
 interface JudgeRequest {
@@ -38,6 +39,10 @@ describe('end-to-end with mock HTTP candidate and judge', () => {
   let judgeUrl: string;
   /** Ids that should fail on their first candidate request (to exercise retry). */
   const flakyOnce = new Set<string>();
+  /** Inputs whose judge request should hang until the client timeout aborts it. */
+  const hangingJudgeInputs = new Set<string>();
+  /** Inputs whose judge response should violate the gate contract. */
+  const invalidJudgeInputs = new Set<string>();
   const judgeCalls: JudgeRequest[] = [];
 
   beforeAll(async () => {
@@ -59,6 +64,13 @@ describe('end-to-end with mock HTTP candidate and judge', () => {
     judgeServer = createServer(async (req, res) => {
       const body = JSON.parse(await readBody(req)) as JudgeRequest;
       judgeCalls.push(body);
+      if (hangingJudgeInputs.has(body.input)) return;
+      if (invalidJudgeInputs.has(body.input)) {
+        res
+          .writeHead(200, { 'content-type': 'application/json' })
+          .end(JSON.stringify({ pass: true }));
+        return;
+      }
       const pass = body.candidate_output === body.input.toUpperCase();
       res.writeHead(200, { 'content-type': 'application/json' }).end(
         JSON.stringify({
@@ -78,6 +90,8 @@ describe('end-to-end with mock HTTP candidate and judge', () => {
   });
 
   afterAll(() => {
+    candidateServer.closeAllConnections();
+    judgeServer.closeAllConnections();
     candidateServer.close();
     judgeServer.close();
   });
@@ -110,7 +124,7 @@ describe('end-to-end with mock HTTP candidate and judge', () => {
     ]);
     const report = await runShadow(makeConfig(inputsPath));
 
-    expect(report.schemaVersion).toBe(1);
+    expect(report.schemaVersion).toBe(3);
     expect(report.verdict).toBe('promote');
     expect(report.totals).toMatchObject({ total: 3, passed: 3, failed: 0, regressions: 0 });
     expect(report.items.map((i) => i.id)).toEqual(['a', 'b', 'c']);
@@ -130,6 +144,17 @@ describe('end-to-end with mock HTTP candidate and judge', () => {
     expect(report.verdict).toBe('promote');
     expect(report.items[0]?.error).toBeUndefined();
     expect(report.items[0]?.candidate_output).toBe('FLAKY');
+    expect(report.items[0]?.attempts.candidate).toEqual([
+      {
+        attempt: 1,
+        outcome: 'error',
+        errorKind: 'http',
+        httpStatus: 500,
+        retryable: true,
+        delayBeforeNextMs: 100,
+      },
+      { attempt: 2, outcome: 'success' },
+    ]);
   });
 
   it('counts a persistently failing candidate as a failure (never skipped) and blocks', async () => {
@@ -150,16 +175,93 @@ describe('end-to-end with mock HTTP candidate and judge', () => {
       passed: 0,
       failed: 1,
       errored: 1,
-      regressions: 1,
+      candidateErrored: 1,
+      judgeErrored: 0,
+      evaluated: 0,
+      regressions: 0,
       allErrored: true,
     });
-    expect(report.items[0]?.error).toMatch(/candidate failed after retry/);
+    expect(report.items[0]).toMatchObject({
+      outcome: 'error',
+      errorStage: 'candidate',
+      regression: false,
+    });
+    expect(report.items[0]?.error).toMatch(/candidate failed after 2 attempt\(s\)/);
+  });
+
+  it('is inconclusive when one judge times out even if threshold slack would promote', async () => {
+    hangingJudgeInputs.add('judge-hangs');
+    const inputsPath = await writeInputs([
+      { id: 'a', input: 'alpha', baseline_output: 'ALPHA' },
+      { id: 'b', input: 'beta', baseline_output: 'BETA' },
+      { id: 'c', input: 'gamma', baseline_output: 'GAMMA' },
+      { id: 'd', input: 'judge-hangs', baseline_output: 'JUDGE-HANGS' },
+    ]);
+    const report = await runShadow(
+      makeConfig(inputsPath, {
+        thresholds: { minPassRate: 0.75, maxRegressions: 1 },
+        timeoutMs: 50,
+      }),
+    );
+
+    expect(report.verdict).toBe('inconclusive');
+    expect(decideExitCode(report)).toBe(EXIT_RUN_ERROR);
+    expect(report.totals).toMatchObject({
+      total: 4,
+      passed: 3,
+      failed: 1,
+      errored: 1,
+      candidateErrored: 0,
+      judgeErrored: 1,
+      evaluated: 3,
+      evaluationCoverage: 0.75,
+      passRate: 0.75,
+      regressions: 0,
+      allErrored: false,
+    });
+    expect(report.items[3]).toMatchObject({
+      outcome: 'error',
+      errorStage: 'judge',
+      errorKind: 'timeout',
+      pass: false,
+      regression: false,
+    });
+  });
+
+  it('is inconclusive when the judge response violates the gate contract', async () => {
+    invalidJudgeInputs.add('invalid-judge-contract');
+    const inputsPath = await writeInputs([
+      { id: 'good', input: 'alpha', baseline_output: 'ALPHA' },
+      { id: 'invalid', input: 'invalid-judge-contract', baseline_output: 'INVALID' },
+    ]);
+    const report = await runShadow(
+      makeConfig(inputsPath, {
+        thresholds: { minPassRate: 0.5, maxRegressions: 1 },
+      }),
+    );
+
+    expect(report.verdict).toBe('inconclusive');
+    expect(report.totals).toMatchObject({
+      passed: 1,
+      errored: 1,
+      judgeErrored: 1,
+      protocolErrored: 1,
+      evaluated: 1,
+      evaluationCoverage: 0.5,
+      regressions: 0,
+    });
+    expect(report.items[1]).toMatchObject({
+      outcome: 'error',
+      errorStage: 'judge',
+      errorKind: 'protocol',
+      regression: false,
+    });
   });
 
   it('blocks when the judge fails items beyond thresholds and reports regressions', async () => {
     const inputsPath = await writeInputs([
-      { id: 'good', input: 'alpha', baseline_output: 'ALPHA' },
-      { id: 'bad-1', input: 'beta', baseline_output: 'unreachable-baseline' },
+      { id: 'good', input: 'alpha', baseline_label: 'pass', baseline_output: 'ALPHA' },
+      { id: 'bad-1', input: 'beta', baseline_label: 'pass', baseline_output: 'unreachable-baseline' },
     ]);
     // Judge passes only uppercased-input matches; make it fail by giving the
     // candidate a body the judge will reject: use a template that sends a

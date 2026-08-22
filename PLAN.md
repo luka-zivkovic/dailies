@@ -1,43 +1,83 @@
-# PLAN
+# Dailies plan
 
-> Named **dailies** (2026-08-12): before doors open you run the real set on the real rig and an engineer signs off — shadow evaluation with a judge, before anything goes live. (Earlier candidate "dailies" is name-held on npm by a 2021 park-and-unpublish.)
+Status: **documentation-first target plan**
+
+Last reviewed: 2026-08-22
+
+`PRODUCT.md` defines the product. This plan sequences work; it does not expand
+scope. The accepted ADRs are binding inputs to runtime implementation planning.
+The concrete cross-product order and batch exit gates are vendored in
+[`docs/implementation-batches.md`](docs/implementation-batches.md).
 
 ## Thesis
 
-**CI/CD for model behavior.** Teams ship AI changes — prompt edits, model swaps, config tweaks — with less rigor than they ship code, because the failure mode isn't a compile error, it's a behavior regression that no existing pipeline can see. The release layer makes shipping an AI change as disciplined as shipping code: every candidate change is evaluated in shadow against real traffic, judged against the production baseline, and promoted through explicit, reversible stages.
+AI releases fail in ways that code compilation cannot see. Dailies makes the
+release decision reproducible: run or coordinate the candidate evaluation,
+retain evidence scope, provenance, trust, and incompleteness, apply
+customer-owned policy, and emit `promote`, `block`, or `inconclusive`.
 
-The full product is two halves:
+Coeval may provide governed assessment evidence, but it does not decide the
+release. Casefile may provide deterministic artifact-trust evidence, but it
+does not decide the release. Dailies owns the consequence of applying release
+policy to those inputs.
 
-- **Control plane (hosted):** rollout definitions, judge-gate configs, the promotion state machine (`shadow → 1% → 10% → 100%`), and auto-rollback rules. It holds the desired state of every AI release and the evidence that justified each promotion.
-- **Customer-side data plane:** SDK middleware or a sidecar running inside the customer's infrastructure. It enforces the rollout spec from a locally-cached copy (no hard runtime dependency on us) and asynchronously mirrors traffic to shadow candidates. **Never a hosted proxy.** Customer traffic, prompts, and outputs do not flow through our servers on the serving path — that is both a latency/availability non-starter and a trust non-starter for the customers we want.
+## Current wedge
 
-## Judge-agnostic gate contract
+The local CLI is the current product surface. It:
 
-Promotion decisions are delegated to a judge behind a minimal HTTP contract:
+- runs command or HTTP candidates over historical inputs;
+- supports exact-match, HTTP, and Coeval evidence paths;
+- records typed retry and failure evidence;
+- compares explicit baseline labels with candidate assessments; and
+- emits a versioned, tri-state release report.
 
-```
-POST /judge
-{ "input": ..., "candidate_output": ..., "baseline_output": ... }   // baseline_output optional
-→ { "score": number, "pass": boolean, "reason": "optional string" }
-```
+The CLI is also the demand probe. Improve the integrity and usefulness of this
+loop before committing to a hosted control plane or serving integration.
 
-- **Coeval is the first-class judge** — it already owns rubric-based evaluation — but the contract is deliberately pluggable: any endpoint that speaks it can gate a rollout (in-house judges, other eval vendors, a regex).
-- **Trace-store-agnostic** on the input side: historical inputs can come from anywhere. **Ironside is first-class** — pull replay inputs via its raw-events endpoint, and write shadow results back tagged with the `environment: 'shadow'` convention so shadow traffic never pollutes production analytics.
+## Documentation gate — closed
 
-## v0 wedge (built now): dailies CLI
+Founder review accepted the following constraints on 2026-08-22:
 
-A standalone CLI: **run a candidate against historical inputs, judge candidate vs. production, emit a promote/block report.**
+1. Enforce the evidence trust classes in ADR-0001; self-reported evidence is
+   insufficient for automated promotion by default.
+2. Preserve release/provider execution ownership from ADR-0002.
+3. Bind every decision to the evidence scopes in ADR-0003.
+4. Apply mandatory, advisory, blocking, and non-compensatory criterion policy
+   in Dailies as defined by ADR-0004.
+5. Consume Coeval's separate policy-free criterion evidence rather than asking
+   Coeval for a suite release verdict.
 
-- No serving-path changes, no SDK integration, no hosted anything. A team can adopt it in an afternoon.
-- It exercises the two contracts that matter (judge gate, replay inputs) so the interfaces are proven before the expensive parts exist.
-- **The CLI is itself the demand probe.** Usage of the manual loop is the signal that the automated loop is worth building.
+## Inputs to implementation batching
 
-## Build trigger for the full product
+The next planning pass may divide work into batches, but it must cover:
 
-The control plane + data plane (canary percentages, auto-rollback, promotion state machine) is **demand-gated and not built now**. Build it when **≥3 design partners** are either (a) running the manual dailies loop as part of their real release process, or (b) explicitly asking for auto-blocking / staged rollout. Until then, every feature request routes back to making the CLI loop sharper.
+1. first-class evidence scopes and their identity in configuration, items,
+   reports, and decision claims;
+2. trust class through item results, aggregation, reports, and policy, with the
+   safe default enforced;
+3. criterion and suite-policy mapping without implicit compensation;
+4. conformance fixtures for scope, trust, incomplete, tampered, and conflicting
+   multi-criterion evidence;
+5. adversarial decision tests for false promotion, false blocking,
+   inconclusive handling, determinism, and retry behavior; and
+6. Coeval calibration consumption only after a versioned cross-product
+   transport contract exists.
 
-## Why standalone (not a feature of Ironside or Coeval)
+## Demand-gated future
 
-- **Ironside must stay a passive record.** The moment the trace store can block or mutate deployments, it stops being the neutral system of record customers trust it to be.
-- **Coeval must stay judge-not-deployer.** A judge that also executes promotions has a conflict of interest baked into its product; separation is what makes its verdicts credible.
-- The release layer is the actor that *consumes* both: reads history from the record, asks the judge for verdicts, and owns the deployment consequences. Three roles, three products, clean trust boundaries.
+A hosted release control plane, staged rollout (`shadow → canary → broader
+traffic`), deployment integrations, and rollback automation are possible
+delivery layers. They are not current commitments and must be justified by
+design partners using the manual release-decision loop.
+
+Dailies must not become a hosted inference proxy. Customer prompts and outputs
+do not need to pass through Dailies on the serving path.
+
+## Explicit deferrals
+
+- Rubric authoring and human-truth adjudication belong to Coeval.
+- Static capability scanning belongs to Casefile.
+- Semantic clustering is deferred.
+- Production sampling/drift execution, cost/latency gates, and
+  multi-turn/RAG/tool-stage collection wait until the core evidence model is
+  stable. The evidence-scope vocabulary itself is not deferred.

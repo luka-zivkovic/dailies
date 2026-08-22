@@ -1,0 +1,72 @@
+{
+  "contract": "coeval/assessment-receipt/v1",
+  "candidates": [
+    {
+      "id": "a",
+      "input": "question-a",
+      "output": "answer-a"
+    },
+    {
+      "id": "b",
+      "input": "question-b",
+      "output": "answer-b"
+    }
+  ],
+  "receipt": {
+    "schemaVersion": 1,
+    "receiptId": "receipt-contract-run-1",
+    "evalRunId": "contract-run-1",
+    "projectId": "project-contract",
+    "skillId": "skill-contract",
+    "skillVersionId": "skill-version-contract-1",
+    "status": "complete",
+    "run": {
+      "status": "completed",
+      "totalItems": 2,
+      "completedItems": 2,
+      "failedItems": 0,
+      "agreedItems": 0
+    },
+    "requestedModelBinding": {
+      "provider": "mock",
+      "modelId": "mock-v1",
+      "modelVersion": "1",
+      "temperature": 0
+    },
+    "skillDigest": "sha256:6b1e3628992f7592c672279711b02ea2a432d244201a0decfd0ae9b38a28529d",
+    "datasetDigest": "sha256:06960dac32c002c32261a477d99f60890da16b56d6a3bf8a321e3f6a48973931",
+    "items": [
+      {
+        "clientItemId": "a",
+        "caseId": "case-contract-a",
+        "status": "completed",
+        "judgedLabel": "pass",
+        "verdictId": "verdict-contract-a",
+        "error": null,
+        "contentDigest": "sha256:1339d14bc212a46f7deeedec3355924c32fd94824c14fcf3a02649a67c65e18d",
+        "providerMetadata": {
+          "model": "mock-v1",
+          "requestId": "req-a",
+          "responseId": "resp-a",
+          "systemFingerprint": null
+        }
+      },
+      {
+        "clientItemId": "b",
+        "caseId": "case-contract-b",
+        "status": "completed",
+        "judgedLabel": "fail",
+        "verdictId": "verdict-contract-b",
+        "error": null,
+        "contentDigest": "sha256:2210a5dd3f23f18b826999f928949ddded4c00df7cdcceecb8e15d35664bacd4",
+        "providerMetadata": {
+          "model": "mock-v1",
+          "requestId": "req-b",
+          "responseId": "resp-b",
+          "systemFingerprint": null
+        }
+      }
+    ],
+    "evidenceDigest": "sha256:0383c705e1b26569d37e4f152a1198d9003f2a670fc5021952748bb09f037125"
+  }
+}
