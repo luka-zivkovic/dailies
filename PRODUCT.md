@@ -97,11 +97,12 @@ The products share explicit evidence contracts, not product ownership.
 
 Current Dailies is a local shadow-run CLI with command/HTTP candidates,
 exact-match and HTTP judges, a Coeval batch-evidence path, retries, and
-tri-state reports. The current report does not yet persist an explicit evidence
-scope, suite policy, or enforced trust class. The generic HTTP judge response
-has little provenance and must not silently be treated as equivalent to
-verified Coeval evidence. Staged rollout and hosted control-plane ideas remain
-demand-gated.
+tri-state reports. Schema v4 requires an exact-byte input identity and one
+declared evidence scope, derives and enforces the evidence trust class, retains
+explicitly unavailable producer provenance, and binds the decision claim to
+that scope. Generic HTTP evidence remains visibly self-reported and is
+inadmissible without a reasoned customer override. Multi-criterion suite policy,
+staged rollout, and hosted control-plane ideas remain demand-gated.
 
 ## Product principles
 

@@ -29,7 +29,11 @@ The local CLI is the current product surface. It:
 - supports exact-match, HTTP, and Coeval evidence paths;
 - records typed retry and failure evidence;
 - compares explicit baseline labels with candidate assessments; and
-- emits a versioned, tri-state release report.
+- requires exact-byte JSONL identity and a declared evidence scope;
+- derives deterministic, verified, or self-reported trust and enforces the
+  safe admissibility default; and
+- emits a scope-bound v4 tri-state release report while retaining a separate
+  read-only v3 inspection parser.
 
 The CLI is also the demand probe. Improve the integrity and usefulness of this
 loop before committing to a hosted control plane or serving integration.

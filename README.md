@@ -14,7 +14,7 @@ the documentation-first roadmap. The time-sensitive
 [positioning note](docs/positioning.md) records the intended wedge without
 turning competitor features into product authority.
 
-**What exists today (v0 wedge):** the `dailies` CLI ("shadow-run" mode) runs a candidate AI change against historical inputs, judges each result against an explicit baseline label, and emits a tri-state report. The input file is effectively a regression-corpus scope today, but that scope is not yet a first-class report field. No serving-path changes are required.
+**What exists today (v0 wedge):** the `dailies` CLI ("shadow-run" mode) runs a candidate AI change against exact, digest-pinned JSONL bytes, judges each result, binds the result to a customer-declared evidence scope, enforces evidence trust, and emits a tri-state report. No serving-path changes are required.
 
 ## Quickstart
 
@@ -26,7 +26,7 @@ npm run build
 node dist/cli.js --config fixtures/shadow.config.json
 ```
 
-That runs the bundled example: five historical inputs (`fixtures/example-inputs.jsonl`), a trivial `echo` command as the "candidate", and the zero-dependency `exact-match` judge that compares candidate output to each item's `baseline_output`. It writes `shadow-out/report.json` and `shadow-out/report.md`, prints the verdict, and exits with:
+That runs the bundled example: five historical inputs (`fixtures/example-inputs.jsonl`), a trivial `echo` command as the "candidate", and the zero-dependency `exact-match` judge that compares candidate output to each item's `baseline_output`. It writes `shadow-out/report.json` and `shadow-out/report.md`, prints the decision, and exits with:
 
 - `0` — promote
 - `1` — block
@@ -42,12 +42,32 @@ One example item intentionally regresses, so the report shows a failing example 
 
 ```jsonc
 {
+  "schemaVersion": 4,
+
   // Historical inputs: one JSON object per line:
   // {"id": "...", "input": "...", "baseline_label": "pass|fail",
   //  "baseline_output": "optional production output"}
   // baseline_label is optional, but only explicitly labeled rows are paired
   // comparisons. baseline_output is judge context, never an implicit pass.
-  "inputs": { "type": "jsonl", "path": "example-inputs.jsonl" },
+  // digest identifies the exact bytes Dailies will read and parse. A newline,
+  // whitespace, encoding, or key-order change intentionally changes identity.
+  "inputs": {
+    "type": "jsonl",
+    "path": "example-inputs.jsonl",
+    "digest": "sha256:584495cf64d0c8e4e5de4e8c8ae37500991382dd2118503f168192592aa5626d"
+  },
+
+  "scope": {
+    "id": "bundled-regression-example",
+    "kind": "regression_corpus",
+    "expectedItems": 5,
+    "collectionProcedure": "Authored examples bundled with Dailies.",
+    "population": "The five documented example behaviors in this repository.",
+    "timeWindow": {
+      "kind": "not_applicable",
+      "reason": "This static corpus is not sampled from a time window."
+    }
+  },
 
   // The candidate under test — either a shell command...
   "candidate": { "type": "command", "template": "my-cli --prompt {input}" },
@@ -60,6 +80,13 @@ One example item intentionally regresses, so the report shows a failing example 
   //   "headers": { "authorization": "Bearer ..." },
   //   "bodyTemplate": "{\"prompt\": {input}}"
   // },
+
+  // verified Coeval evidence and deterministic checks are admissible by
+  // default. To admit a generic HTTP judge, list self_reported and retain a
+  // non-empty override reason; this admits the evidence without upgrading it.
+  "trustPolicy": {
+    "admissibleClasses": ["verified", "deterministic"]
+  },
 
   // The judge — either any HTTP endpoint implementing the self-reported gate contract:
   //   POST {input, candidate_output, baseline_output?}
@@ -107,7 +134,8 @@ Semantics:
 - A required candidate execution error blocks. A judge error, candidate/judge protocol error, or otherwise incomplete evaluation is `inconclusive`; threshold slack cannot turn it into `promote`.
 - `baseline_label` is the only comparison baseline. Comparisons are `regression` (`pass → fail`), `improvement` (`fail → pass`), `stable_pass`, `stable_fail`, or `unpaired`. Missing labels and errored items are unpaired. `baseline_output` alone never implies that production passed, and unevaluated errors are never fabricated into regressions.
 - Pass rate still covers every required input, including stable failures and unpaired items. A stable or unpaired failure therefore lowers pass rate and blocks under the default strict threshold; a looser `minPassRate` is an explicit choice to tolerate it. Unpaired passes are fully judged candidate evidence, but do not claim a historical improvement or regression.
-- With complete evidence, verdict is `promote` iff `passRate >= minPassRate` **and** `regressions <= maxRegressions`; otherwise it is `block`.
+- With complete admissible evidence, the decision is `promote` iff `passRate >= minPassRate` **and** `regressions <= maxRegressions`; otherwise it is `block`. Complete but inadmissible evidence is `inconclusive`.
+- Scope identity is mandatory. Dailies hashes and parses the same one-read byte snapshot, verifies the declared digest and expected item count before candidate/provider calls, and records observed byte length and coverage. A `production_sample` requires a bounded, ordered time range; static scopes can give an explicit `not_applicable` reason.
 - Exact-match inputs are preflighted for baselines, and duplicate input IDs are rejected before execution. Coeval input IDs are also preflighted before candidate work to enforce its 240-character `clientItemId` limit; otherwise IDs are preserved verbatim, including whitespace.
 - For a Coeval judge, Dailies submits all successful candidate traces in one `release_evidence` batch, polls the eval run, and fetches its v1 assessment receipt. Dailies independently verifies the pinned skill version, exact item coverage and code-unit ordering, per-item content digests, dataset digest, run counters, and whole-receipt evidence digest. A digest-valid incomplete receipt is retained and explicitly classified `incomplete`; a mismatch or unsupported label is a `protocol` error. Either case, and any provider failure, is judge-stage `inconclusive`.
 - Receipt digests prove internal consistency, not authenticity. The current CLI
@@ -116,10 +144,10 @@ Semantics:
   `skillDigest`. An untrusted or compromised endpoint is therefore outside the
   current automated-promotion trust boundary.
 - Receipt v1 is a closed contract. Dailies vendors its schema and golden fixture in [`contracts/`](contracts/); even additive fields require a deliberate coordinated v2. The transport for future calibration evidence is intentionally unresolved and will not be improvised as a v1 field.
-- Exact-match, verified Coeval evidence, and the minimal HTTP judge do not provide equivalent provenance. The accepted [evidence trust-class ADR](docs/decisions/0001-evidence-trust-classes.md) requires that distinction to remain explicit and makes self-reported evidence insufficient for automated promotion by default. The current CLI has not yet implemented that target policy.
+- Exact-match (`deterministic`, `exact_match_v1`), fully verified Coeval receipt evidence (`verified`, `coeval_receipt_v1`), and generic HTTP responses (`self_reported`, `http_judge_v1`) do not provide equivalent provenance. Trust is derived from the integration path; provider payloads cannot assert or upgrade it. Completed items retain that class, errored items do not fabricate one, and self-reported evidence is insufficient for a release decision unless the report retains a reasoned customer override.
 - Coeval is the judge and evidence provider, not the release actor: its receipt contains per-item `pass`/`fail` labels but no threshold or deploy decision. Dailies alone applies `minPassRate` and `maxRegressions` to produce `promote` or `block`.
 - Target release decisions are bound to declared evidence scopes. A successful run over a curated regression corpus means the candidate satisfied that corpus policy; it does not by itself claim representative production quality. See [ADR-0003](docs/decisions/0003-scope-bound-release-decisions.md).
-- `report.json` uses a versioned schema (`schemaVersion: 3`) with an explicit `judgeType` and, for Coeval evidence, Dailies' pinned `skillVersionId` plus the batch-submitted `evalRunId`. Its exported parser re-derives totals and verdict, validates item/attempt consistency, and re-verifies retained Coeval evidence against that independent run identity, the pinned skill, and exact submitted candidate outputs. Coeval reports with submitted items cannot omit the evidence audit, and non-Coeval reports cannot add one. `report.md` summarizes the comparison mix, evidence identity, and failing examples.
+- `report.json` uses schema v4 with `decision` (never `verdict`), the declared scope, separate declared/observed exact-input digests, coverage, derived trust, policy, and a deterministic statement that names the scope and digest. Producer dataset revision, exposure, and review provenance are explicitly `not_provided` for current integrations and receipt v1; Dailies does not infer them from unrelated fields. The parser re-derives totals, trust, admissibility, decision, item/attempt consistency, and Coeval linkage. `parseReportForInspection` also validates frozen v3 reports as read-only historical objects without upgrading them; v1, v2, unversioned, and unknown versions are rejected. See [`docs/report-v4.md`](docs/report-v4.md).
 
 ## Development
 

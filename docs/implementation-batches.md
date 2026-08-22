@@ -145,6 +145,10 @@ correction creates a linked successor.
 
 ## Batch 1B — Dailies scope and trust
 
+Decision gate 3 was accepted on 2026-08-22 and is recorded in Dailies
+ADR-0005. Operational/protocol integrity failure remains `inconclusive`, while
+a complete admissible blocking result outranks unrelated missing evidence.
+
 Introduce report/config schema v4 with first-class evidence scope and enforced
 trust class:
 
@@ -427,8 +431,8 @@ historical semantics and must be accepted before their runtime batch:
    persisted Coeval receipt bytes (Coeval ADR-0006).
 2. **Resolved for Batch 1A:** historical v1 one-time freeze and
    divergence-reporting behavior (Coeval ADR-0006).
-3. The simultaneous blocking-failure plus mandatory-incomplete precedence table
-   in Dailies.
+3. **Resolved:** the simultaneous blocking-failure plus mandatory-incomplete
+   precedence table is fixed in Dailies ADR-0005.
 4. Calibration artifact transport, canonicalization, and compatibility window;
    the recommended default is a separate artifact v1.
 5. Independent owners, sampling frames, budgets, and stopping rules for the two

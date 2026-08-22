@@ -6,8 +6,8 @@ Before planning, auditing, or changing Dailies, read:
 2. `docs/glossary.md` — shared terminology;
 3. `docs/decisions/README.md` and the relevant ADRs;
 4. `docs/implementation-batches.md` — independently audited work sequencing;
-   Batch 0 is authorized, while each later batch waits for its named decision
-   gates;
+   Batches 0 and 1A are complete, and Batch 1B's precedence gate is resolved in
+   ADR-0005;
 5. `README.md` and `PLAN.md` — current implementation and local sequencing;
 6. code and tests — current behavior.
 
