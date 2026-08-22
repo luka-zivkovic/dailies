@@ -117,6 +117,11 @@ by both producer and consumer, and no untracked authority document remains.
 
 ## Batch 1A — Coeval immutable receipts
 
+Decision gates 1, 2, and 6 were accepted on 2026-08-22 and are recorded in
+Coeval ADR-0006. Exact-byte `bytea` storage, idempotent historical freeze with
+divergence records, and the post-Dailies-v4 legacy write-removal window are
+binding for this batch.
+
 Persist the exact canonical bytes and digest of every externally consumable
 terminal receipt:
 
@@ -418,16 +423,19 @@ independent evidence rather than the authored regression corpora.
 These gates do not reopen product ownership, but several have user-visible or
 historical semantics and must be accepted before their runtime batch:
 
-1. Exact schema and storage representation for persisted Coeval receipt bytes.
-2. Historical v1 one-time freeze and divergence-reporting behavior.
+1. **Resolved for Batch 1A:** exact schema and storage representation for
+   persisted Coeval receipt bytes (Coeval ADR-0006).
+2. **Resolved for Batch 1A:** historical v1 one-time freeze and
+   divergence-reporting behavior (Coeval ADR-0006).
 3. The simultaneous blocking-failure plus mandatory-incomplete precedence table
    in Dailies.
 4. Calibration artifact transport, canonicalization, and compatibility window;
    the recommended default is a separate artifact v1.
 5. Independent owners, sampling frames, budgets, and stopping rules for the two
    comparative benchmarks.
-6. Deprecation window for Coeval's product-release gate surfaces; the
-   evaluator-version regression gate remains in Coeval.
+6. **Resolved:** deprecated product-release writes remain through the Dailies
+   v4 migration and become `410 Gone` in Batch 2; historical reads remain.
+   The evaluator-version regression gate remains in Coeval (Coeval ADR-0006).
 7. Collection and independent-review plan for the first genuinely sealed
    validation revision.
 8. Ownership and isolation of the neutral benchmark workspace so comparator
