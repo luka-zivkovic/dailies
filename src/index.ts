@@ -1,5 +1,6 @@
 export {
   configSchema,
+  CONFIG_SCHEMA_VERSION,
   DEFAULT_COEVAL_POLL_INTERVAL_MS,
   DEFAULT_COEVAL_POLL_TIMEOUT_MS,
   DEFAULT_TIMEOUT_MS,
@@ -7,11 +8,20 @@ export {
   MAX_COEVAL_POLL_INTERVAL_MS,
   MAX_COEVAL_POLL_TIMEOUT_MS,
   parseConfig,
+  scopeConfigSchema,
+  scopeKindSchema,
+  SHA256_DIGEST_PATTERN,
+  timeWindowSchema,
+  trustClassSchema,
+  trustPolicySchema,
   type CandidateConfig,
   type CoevalJudgeConfig,
   type Config,
   type InputItem,
   type JudgeConfig,
+  type ScopeConfig,
+  type TrustClass,
+  type TrustPolicy,
 } from './config.js';
 export {
   canonicalJson,
@@ -44,9 +54,16 @@ export {
 } from './errors.js';
 export { judgeItem, judgeResultSchema, type JudgeResult } from './judge.js';
 export {
+  loadInputArtifact,
+  loadInputs,
+  type InputArtifact,
+} from './inputs.js';
+export {
   aggregate,
+  buildDecisionStatement,
   compareOutcome,
   comparisonSchema,
+  decideDecision,
   decideExitCode,
   decideVerdict,
   EXIT_BLOCK,
@@ -55,14 +72,23 @@ export {
   errorKindSchema,
   errorStageSchema,
   itemOutcomeSchema,
+  itemResultSchema,
+  itemResultV3Schema,
+  LEGACY_REPORT_SCHEMA_VERSION,
+  parseReportForInspection,
   renderMarkdown,
   REPORT_SCHEMA_VERSION,
   reportSchema,
+  reportV3Schema,
+  type Decision,
   type ErrorStage,
   type Comparison,
   type ItemOutcome,
   type ItemResult,
+  type ItemResultV3,
   type Report,
+  type ReportInspection,
+  type ReportV3,
   type Totals,
   type Verdict,
 } from './report.js';

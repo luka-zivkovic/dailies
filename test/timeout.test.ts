@@ -8,6 +8,7 @@ import type { Config } from '../src/config.js';
 import { judgeItem } from '../src/judge.js';
 import { decideExitCode, EXIT_BLOCK } from '../src/report.js';
 import { runShadow } from '../src/runner.js';
+import { v4ContractForPath } from './v4-fixture.js';
 
 /** A server that accepts requests but never responds (simulates a hung endpoint). */
 let hangingServer: Server;
@@ -58,7 +59,7 @@ describe('timeouts', () => {
       'utf8',
     );
     const config: Config = {
-      inputs: { type: 'jsonl', path: inputsPath },
+      ...v4ContractForPath(inputsPath),
       candidate: { type: 'command', template: 'sleep 30' },
       judge: { type: 'exact-match' },
       thresholds: { minPassRate: 1, maxRegressions: 0 },
@@ -79,7 +80,7 @@ describe('timeouts', () => {
       evaluated: 0,
       allErrored: true,
     });
-    expect(report.verdict).toBe('block');
+    expect(report.decision).toBe('block');
     expect(decideExitCode(report)).toBe(EXIT_BLOCK);
     expect(report.items[0]?.pass).toBe(false);
     expect(report.items[0]).toMatchObject({

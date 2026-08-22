@@ -1,5 +1,21 @@
 {
-  "inputs": { "type": "jsonl", "path": "example-inputs.jsonl" },
+  "schemaVersion": 4,
+  "inputs": {
+    "type": "jsonl",
+    "path": "example-inputs.jsonl",
+    "digest": "sha256:584495cf64d0c8e4e5de4e8c8ae37500991382dd2118503f168192592aa5626d"
+  },
+  "scope": {
+    "id": "bundled-regression-example",
+    "kind": "regression_corpus",
+    "expectedItems": 5,
+    "collectionProcedure": "Authored examples bundled with Dailies.",
+    "population": "The five documented example behaviors in this repository.",
+    "timeWindow": {
+      "kind": "not_applicable",
+      "reason": "This static regression corpus is not sampled from a time window."
+    }
+  },
   "candidate": { "type": "command", "template": "echo {input}" },
   "judge": { "type": "exact-match" },
   "thresholds": { "minPassRate": 0.75, "maxRegressions": 1 },

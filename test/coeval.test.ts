@@ -14,6 +14,7 @@ import {
 import { parseConfig, type Config } from '../src/config.js';
 import { decideExitCode, reportSchema, type Report } from '../src/report.js';
 import { runShadow } from '../src/runner.js';
+import { v4ContractForPath } from './v4-fixture.js';
 
 type MockMode =
   | 'valid'
@@ -281,7 +282,7 @@ function makeConfig(
   pollTimeoutMs = 500,
 ): Config {
   return parseConfig({
-    inputs: { type: 'jsonl', path: inputsPath },
+    ...v4ContractForPath(inputsPath),
     candidate: { type: 'command', template: 'printf %s {input}' },
     judge: {
       type: 'coeval',
@@ -393,10 +394,21 @@ describe('Coeval release-evidence boundary', () => {
       expect(receipt).not.toHaveProperty('thresholds');
       expect(receipt).not.toHaveProperty('verdict');
       expect(receipt).not.toHaveProperty('deployDecision');
-      expect(strict.verdict).toBe('block');
+      expect(strict.decision).toBe('block');
       expect(decideExitCode(strict)).toBe(1);
-      expect(permissive.verdict).toBe('promote');
+      expect(permissive.decision).toBe('promote');
       expect(decideExitCode(permissive)).toBe(0);
+      expect(strict.trust).toEqual({
+        class: 'verified',
+        derivation: 'coeval_receipt_v1',
+        admissible: true,
+      });
+      expect(strict.items.every((item) => item.trustClass === 'verified')).toBe(true);
+      expect(strict.scope.producerProvenance).toEqual({
+        datasetRevision: 'not_provided',
+        exposure: 'not_provided',
+        review: 'not_provided',
+      });
       expect(strict.evidence?.receipt.evidenceDigest).toBe(
         permissive.evidence?.receipt.evidenceDigest,
       );
@@ -432,8 +444,8 @@ describe('Coeval release-evidence boundary', () => {
       const invalidThreshold = structuredClone(valid);
       invalidThreshold.thresholds.minPassRate = -0.01;
 
-      const wrongVerdict = structuredClone(valid);
-      wrongVerdict.verdict = 'promote';
+      const wrongDecision = structuredClone(valid);
+      wrongDecision.decision = 'promote';
 
       const missingEvidence = JSON.parse(JSON.stringify(valid)) as Record<string, unknown>;
       delete missingEvidence.evidence;
@@ -495,7 +507,7 @@ describe('Coeval release-evidence boundary', () => {
         ['rate bound', outOfRangeRate],
         ['counter bound', negativeCounter],
         ['threshold bound', invalidThreshold],
-        ['verdict', wrongVerdict],
+        ['decision', wrongDecision],
         ['missing evidence', missingEvidence],
         ['judge identity', wrongJudgeIdentity],
         ['pinned skill identity', wrongPinnedSkill],
@@ -525,7 +537,7 @@ describe('Coeval release-evidence boundary', () => {
     ]);
     try {
       const report = await runShadow(makeConfig(path, mock.url));
-      expect(report.verdict).toBe('promote');
+      expect(report.decision).toBe('promote');
       expect(report.evidence?.receipt.items.map((item) => item.clientItemId)).toEqual([
         ' a ',
         'Z',
@@ -545,7 +557,7 @@ describe('Coeval release-evidence boundary', () => {
     ]);
     try {
       const report = await runShadow(makeConfig(path, mock.url));
-      expect(report.verdict).toBe('promote');
+      expect(report.decision).toBe('promote');
       expect(mock.requests[0]?.items).toHaveLength(2);
       expect(report.evidence?.receipt.items).toHaveLength(2);
       expect(report.evidence?.receipt.items[0]?.contentDigest).toBe(
@@ -573,7 +585,7 @@ describe('Coeval release-evidence boundary', () => {
       expect(mock.requests[0]?.items).toEqual([
         { clientItemId: 'pass-good', input: 'good', output: 'good' },
       ]);
-      expect(report.verdict).toBe('block');
+      expect(report.decision).toBe('block');
       expect(report.totals).toMatchObject({
         candidateErrored: 1,
         judgeErrored: 0,
@@ -596,7 +608,7 @@ describe('Coeval release-evidence boundary', () => {
     config.candidate = { type: 'command', template: 'exit 3' };
     try {
       const report = await runShadow(config);
-      expect(report).toMatchObject({ judgeType: 'coeval', verdict: 'block' });
+      expect(report).toMatchObject({ judgeType: 'coeval', decision: 'block' });
       expect(report.evidence).toBeUndefined();
       expect(mock.callCounts.submit).toBe(0);
       expect(report.items[0]).toMatchObject({
@@ -632,7 +644,7 @@ describe('Coeval release-evidence boundary', () => {
         const report = await runShadow(
           makeConfig(path, mock.url, { minPassRate: 0, maxRegressions: 99 }),
         );
-        expect(report.verdict).toBe('inconclusive');
+        expect(report.decision).toBe('inconclusive');
         expect(decideExitCode(report)).toBe(2);
         expect(report.evidence).toMatchObject({ provider: 'coeval', status: 'failed' });
         expect(report.evidence?.receipt).toBeUndefined();
@@ -670,7 +682,7 @@ describe('Coeval release-evidence boundary', () => {
       const report = await runShadow(
         makeConfig(path, mock.url, { minPassRate: 0, maxRegressions: 99 }),
       );
-      expect(report.verdict).toBe('inconclusive');
+      expect(report.decision).toBe('inconclusive');
       expect(report.evidence).toMatchObject({
         status: 'incomplete',
         receipt: { status: 'incomplete', run: { failedItems: 1 } },
@@ -686,7 +698,10 @@ describe('Coeval release-evidence boundary', () => {
         evaluated: 0,
       });
       expect(report.items.every(
-        (item) => item.errorKind === 'incomplete' && item.comparison === 'unpaired',
+        (item) =>
+          item.errorKind === 'incomplete' &&
+          item.comparison === 'unpaired' &&
+          item.trustClass === undefined,
       )).toBe(true);
 
       const nonterminalReceipt = structuredClone(report);
@@ -713,7 +728,7 @@ describe('Coeval release-evidence boundary', () => {
     const { path } = await writeInputs([{ id: 'pass-a', input: 'alpha' }]);
     try {
       const report = await runShadow(makeConfig(path, mock.url));
-      expect(report.verdict).toBe('inconclusive');
+      expect(report.decision).toBe('inconclusive');
       expect(mock.callCounts).toMatchObject({ submit: 1, poll: 0, receipt: 0 });
       expect(report.evidence?.operations.at(-1)).toEqual({
         phase: 'poll',
@@ -732,7 +747,7 @@ describe('Coeval release-evidence boundary', () => {
     const { path } = await writeInputs([{ id: 'pass-a', input: 'alpha' }]);
     try {
       const report = await runShadow(makeConfig(path, mock.url));
-      expect(report.verdict).toBe('promote');
+      expect(report.decision).toBe('promote');
       expect(mock.callCounts.poll).toBe(3);
       expect(report.evidence?.operations.map((operation) => operation.phase)).toEqual([
         'submit', 'poll', 'poll', 'receipt',
@@ -760,13 +775,13 @@ describe('Coeval release-evidence boundary', () => {
     const { path } = await writeInputs([{ id: 'pass-a', input: 'alpha' }]);
     try {
       const recovered = await runShadow(makeConfig(path, receiptMock.url));
-      expect(recovered.verdict).toBe('promote');
+      expect(recovered.decision).toBe('promote');
       expect(recovered.evidence?.evalRunId).toBe('run-1');
       expect(receiptMock.callCounts.receipt).toBe(2);
       expect(recovered.evidence?.operations.at(-1)?.attempts).toHaveLength(2);
 
       const suppressed = await runShadow(makeConfig(path, submitMock.url));
-      expect(suppressed.verdict).toBe('inconclusive');
+      expect(suppressed.decision).toBe('inconclusive');
       expect(suppressed.evidence?.evalRunId).toBeUndefined();
       expect(submitMock.callCounts.submit).toBe(1);
       expect(suppressed.evidence?.operations).toEqual([
@@ -793,7 +808,7 @@ describe('Coeval release-evidence boundary', () => {
     const { path } = await writeInputs([{ id: 'pass-a', input: 'alpha' }]);
     try {
       const report = await runShadow(makeConfig(path, mock.url));
-      expect(report.verdict).toBe('inconclusive');
+      expect(report.decision).toBe('inconclusive');
       expect(report.items[0]).toMatchObject({ errorStage: 'judge', errorKind: 'incomplete' });
       expect(mock.callCounts.receipt).toBe(2);
       expect(report.evidence?.operations.at(-1)?.attempts).toHaveLength(2);
@@ -810,7 +825,7 @@ describe('Coeval release-evidence boundary', () => {
       if (config.judge.type !== 'coeval') throw new Error('expected Coeval judge');
       config.judge.pollIntervalMs = 100;
       const report = await runShadow(config);
-      expect(report.verdict).toBe('inconclusive');
+      expect(report.decision).toBe('inconclusive');
       expect(report.items[0]).toMatchObject({ errorStage: 'judge', errorKind: 'incomplete' });
       expect(report.evidence).toMatchObject({ status: 'failed' });
       expect(report.evidence?.operations.at(-1)).toEqual({
@@ -843,9 +858,9 @@ describe('Coeval full CLI contract', () => {
           JSON.parse(await readFile(join(outputDir, 'report.json'), 'utf8')),
         ) as Report;
         expect(cli.code).toBe(expectedCode);
-        expect(report.verdict).toBe(expectedVerdict);
+        expect(report.decision).toBe(expectedVerdict);
         expect(cli.code).toBe(decideExitCode(report));
-        expect(cli.stdout).toContain(`verdict: ${expectedVerdict}`);
+        expect(cli.stdout).toContain(`decision: ${expectedVerdict}`);
       } finally {
         closeServer(mock.server);
       }

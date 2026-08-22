@@ -6,6 +6,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
 import { decideExitCode, reportSchema, type Report } from '../src/report.js';
+import { selfReportedTestPolicy, v4ContractForBytes } from './v4-fixture.js';
 
 const projectRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const cliPath = join(projectRoot, 'dist', 'cli.js');
@@ -40,14 +41,12 @@ async function writeRun(
 ): Promise<{ configPath: string; outputDir: string }> {
   const dir = await mkdtemp(join(tmpdir(), 'dailies-cli-'));
   tempDirs.push(dir);
-  await writeFile(
-    join(dir, 'inputs.jsonl'),
-    inputs.map((input) => JSON.stringify(input)).join('\n') + '\n',
-    'utf8',
-  );
+  const inputBytes = inputs.map((input) => JSON.stringify(input)).join('\n') + '\n';
+  await writeFile(join(dir, 'inputs.jsonl'), inputBytes, 'utf8');
   const outputDir = join(dir, 'out');
   const config = {
-    inputs: { type: 'jsonl', path: 'inputs.jsonl' },
+    ...v4ContractForBytes('inputs.jsonl', inputBytes, inputs.length),
+    trustPolicy: selfReportedTestPolicy,
     candidate: { type: 'command', template: 'printf %s {input}' },
     judge: { type: 'exact-match' },
     thresholds: { minPassRate: 1, maxRegressions: 0 },
@@ -99,9 +98,9 @@ describe('CLI decision and report agreement', () => {
     const report = await readReport(outputDir);
 
     expect(cli.code).toBe(0);
-    expect(report.verdict).toBe('promote');
+    expect(report.decision).toBe('promote');
     expect(cli.code).toBe(decideExitCode(report));
-    expect(cli.stdout).toContain('verdict: promote');
+    expect(cli.stdout).toContain('decision: promote');
     expect(await readFile(join(outputDir, 'report.md'), 'utf8')).toContain(
       '# Shadow run report: PROMOTE',
     );
@@ -116,10 +115,10 @@ describe('CLI decision and report agreement', () => {
     const report = await readReport(outputDir);
 
     expect(cli.code).toBe(1);
-    expect(report.verdict).toBe('block');
+    expect(report.decision).toBe('block');
     expect(report.items[0]).toMatchObject({ outcome: 'fail', regression: true });
     expect(cli.code).toBe(decideExitCode(report));
-    expect(cli.stdout).toContain('verdict: block');
+    expect(cli.stdout).toContain('decision: block');
     expect(await readFile(join(outputDir, 'report.md'), 'utf8')).toContain(
       '# Shadow run report: BLOCK',
     );
@@ -154,7 +153,7 @@ describe('CLI decision and report agreement', () => {
       const report = await readReport(outputDir);
 
       expect(cli.code).toBe(2);
-      expect(report.verdict).toBe('inconclusive');
+      expect(report.decision).toBe('inconclusive');
       expect(report.totals).toMatchObject({
         passed: 3,
         errored: 1,
@@ -166,7 +165,7 @@ describe('CLI decision and report agreement', () => {
         regressions: 0,
       });
       expect(cli.code).toBe(decideExitCode(report));
-      expect(cli.stdout).toContain('verdict: inconclusive');
+      expect(cli.stdout).toContain('decision: inconclusive');
       expect(cli.stderr).toContain('dailies inconclusive:');
       expect(await readFile(join(outputDir, 'report.md'), 'utf8')).toContain(
         '# Shadow run report: INCONCLUSIVE',
@@ -190,7 +189,7 @@ describe('CLI decision and report agreement', () => {
     const report = await readReport(outputDir);
 
     expect(cli.code).toBe(1);
-    expect(report.verdict).toBe('block');
+    expect(report.decision).toBe('block');
     expect(report.items[0]).toMatchObject({
       outcome: 'error',
       errorStage: 'candidate',
@@ -198,7 +197,7 @@ describe('CLI decision and report agreement', () => {
       regression: false,
     });
     expect(cli.code).toBe(decideExitCode(report));
-    expect(cli.stdout).toContain('verdict: block');
+    expect(cli.stdout).toContain('decision: block');
   });
 
   it('retries a transient judge 503 and records deterministic attempts in the CLI report', async () => {
@@ -271,6 +270,35 @@ describe('CLI decision and report agreement', () => {
     } finally {
       judgeServer.closeAllConnections();
       judgeServer.close();
+    }
+  });
+
+  it('rejects a non-v4 config before candidate or judge calls', async () => {
+    let candidateCalls = 0;
+    const candidateServer = createServer((_req, res) => {
+      candidateCalls += 1;
+      res.writeHead(200, { 'content-type': 'application/json' }).end('{"output":"x"}');
+    });
+    const port = await listen(candidateServer);
+    try {
+      const { configPath } = await writeRun(
+        [{ id: 'must-not-run', input: 'x', baseline_output: 'x' }],
+        {
+          schemaVersion: 3,
+          candidate: {
+            type: 'http',
+            url: `http://127.0.0.1:${port}/candidate`,
+            bodyTemplate: '{"prompt": {input}}',
+          },
+        },
+      );
+      const cli = await runCli(configPath);
+      expect(cli.code).toBe(2);
+      expect(cli.stderr).toContain('expected 4');
+      expect(candidateCalls).toBe(0);
+    } finally {
+      candidateServer.closeAllConnections();
+      candidateServer.close();
     }
   });
 });

@@ -1,7 +1,7 @@
 {
   "name": "dailies",
   "version": "0.1.0",
-  "description": "Review the footage before the release: shadow-run an AI change against historical inputs, judge every result vs the production baseline, emit a promote/block report.",
+  "description": "Scope-bound, trust-aware release decisions for AI changes: promote, block, or inconclusive.",
   "license": "MIT",
   "type": "module",
   "engines": {

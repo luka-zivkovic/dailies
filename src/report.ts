@@ -4,11 +4,21 @@ import {
   coevalEvidenceOperationSchema,
   verifyCoevalReceipt,
 } from './coeval.js';
+import {
+  scopeConfigSchema,
+  scopeKindSchema,
+  timeWindowSchema,
+  trustClassSchema,
+  trustPolicySchema,
+  type ScopeConfig,
+  type TrustClass,
+} from './config.js';
 import { ERROR_KINDS, type ErrorKind } from './errors.js';
 import { judgeResultSchema } from './judge.js';
 import { attemptLedgerSchema } from './retry.js';
 
-export const REPORT_SCHEMA_VERSION = 3;
+export const LEGACY_REPORT_SCHEMA_VERSION = 3;
+export const REPORT_SCHEMA_VERSION = 4;
 
 export const itemOutcomeSchema = z.enum(['pass', 'fail', 'error']);
 export const comparisonSchema = z.enum([
@@ -30,7 +40,7 @@ export function compareOutcome(
   return outcome === 'pass' ? 'improvement' : 'stable_fail';
 }
 
-export const itemResultSchema = z.object({
+const itemResultFields = {
   id: z.string(),
   input: z.string(),
   baseline_label: z.enum(['pass', 'fail']).optional(),
@@ -55,7 +65,25 @@ export const itemResultSchema = z.object({
     candidate: attemptLedgerSchema,
     judge: attemptLedgerSchema.optional(),
   }).strict(),
-}).strict().superRefine((item, ctx) => {
+};
+
+const itemResultBaseSchema = z.object(itemResultFields).strict();
+// V3 used Zod's default object behavior for judge payloads. Keep that exact
+// inspection behavior even though current HTTP responses are strict.
+const judgeResultV3Schema = z.object({
+  score: z.number(),
+  pass: z.boolean(),
+  reason: z.string().optional(),
+});
+const itemResultV3BaseSchema = z.object({
+  ...itemResultFields,
+  judge: judgeResultV3Schema.optional(),
+}).strict();
+
+function refineItemResult(
+  item: z.infer<typeof itemResultBaseSchema>,
+  ctx: z.RefinementCtx,
+): void {
   const expectedComparison = compareOutcome(item.baseline_label, item.outcome);
   if (item.comparison !== expectedComparison) {
     ctx.addIssue({ code: 'custom', message: `comparison must be ${expectedComparison}` });
@@ -132,64 +160,78 @@ export const itemResultSchema = z.object({
   ) {
     ctx.addIssue({ code: 'custom', message: 'completed items require candidate success and any judge ledger to end successful' });
   }
-});
+}
 
-const reportShapeSchema = z.object({
-  schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
+/** Frozen v3 item contract, available only for historical inspection. */
+export const itemResultV3Schema = itemResultV3BaseSchema.superRefine(refineItemResult);
+
+/** Current v4 item contract. Trust is attached only to completed evidence. */
+export const itemResultSchema = itemResultBaseSchema.extend({
+  trustClass: trustClassSchema.optional(),
+}).strict().superRefine(refineItemResult);
+
+const thresholdsSchema = z.object({
+  minPassRate: z.number().min(0).max(1),
+  maxRegressions: z.number().int().nonnegative(),
+}).strict();
+
+const totalsSchema = z.object({
+  total: z.number().int().nonnegative(),
+  passed: z.number().int().nonnegative(),
+  failed: z.number().int().nonnegative(),
+  /** Subset of `failed` where the candidate or judge errored after retry. */
+  errored: z.number().int().nonnegative(),
+  /** Required candidate executions that failed before judging. */
+  candidateErrored: z.number().int().nonnegative(),
+  /** Judge executions that failed, leaving release evidence unknown. */
+  judgeErrored: z.number().int().nonnegative(),
+  /** Protocol errors at either stage; these indicate a broken evidence contract. */
+  protocolErrored: z.number().int().nonnegative(),
+  /** Items that received a completed judge result (pass or fail). */
+  evaluated: z.number().int().nonnegative(),
+  /** Fraction of all items that received a completed judge result. */
+  evaluationCoverage: z.number().min(0).max(1),
+  passRate: z.number().min(0).max(1),
+  regressions: z.number().int().nonnegative(),
+  comparisonCounts: z.object({
+    regression: z.number().int().nonnegative(),
+    improvement: z.number().int().nonnegative(),
+    stable_pass: z.number().int().nonnegative(),
+    stable_fail: z.number().int().nonnegative(),
+    unpaired: z.number().int().nonnegative(),
+  }).strict(),
+  /** True when every item errored. */
+  allErrored: z.boolean(),
+}).strict();
+
+const coevalEvidenceSchema = z.object({
+  provider: z.literal('coeval'),
+  /** Dailies-owned pinned judge identity, checked against any retained receipt. */
+  skillVersionId: z.string().min(1),
+  /** Eval run returned by the batch submit, independent of any retained receipt. */
+  evalRunId: z.string().min(1).optional(),
+  status: z.enum(['complete', 'incomplete', 'failed']),
+  operations: z.array(coevalEvidenceOperationSchema).min(1).max(10_000),
+  receipt: coevalAssessmentReceiptSchema.optional(),
+}).strict();
+
+const commonReportFields = {
   judgeType: z.enum(['exact-match', 'http', 'coeval']),
   startedAt: z.string(),
   finishedAt: z.string(),
-  thresholds: z.object({
-    minPassRate: z.number().min(0).max(1),
-    maxRegressions: z.number().int().nonnegative(),
-  }).strict(),
-  totals: z.object({
-    total: z.number().int().nonnegative(),
-    passed: z.number().int().nonnegative(),
-    failed: z.number().int().nonnegative(),
-    /** Subset of `failed` where the candidate or judge errored after retry. */
-    errored: z.number().int().nonnegative(),
-    /** Required candidate executions that failed before judging. */
-    candidateErrored: z.number().int().nonnegative(),
-    /** Judge executions that failed, leaving release evidence unknown. */
-    judgeErrored: z.number().int().nonnegative(),
-    /** Protocol errors at either stage; these indicate a broken evidence contract. */
-    protocolErrored: z.number().int().nonnegative(),
-    /** Items that received a completed judge result (pass or fail). */
-    evaluated: z.number().int().nonnegative(),
-    /** Fraction of all items that received a completed judge result. */
-    evaluationCoverage: z.number().min(0).max(1),
-    passRate: z.number().min(0).max(1),
-    regressions: z.number().int().nonnegative(),
-    comparisonCounts: z.object({
-      regression: z.number().int().nonnegative(),
-      improvement: z.number().int().nonnegative(),
-      stable_pass: z.number().int().nonnegative(),
-      stable_fail: z.number().int().nonnegative(),
-      unpaired: z.number().int().nonnegative(),
-    }).strict(),
-    /**
-     * True when every item errored. The typed stages determine whether this is
-     * a candidate block or an inconclusive judging failure.
-     */
-    allErrored: z.boolean(),
-  }).strict(),
+  thresholds: thresholdsSchema,
+  totals: totalsSchema,
+  evidence: coevalEvidenceSchema.optional(),
+};
+
+const reportV3ShapeSchema = z.object({
+  schemaVersion: z.literal(LEGACY_REPORT_SCHEMA_VERSION),
+  ...commonReportFields,
   verdict: z.enum(['promote', 'block', 'inconclusive']),
-  /** Coeval evidence and operation audit. It contains no Dailies release decision. */
-  evidence: z.object({
-    provider: z.literal('coeval'),
-    /** Dailies-owned pinned judge identity, checked against any retained receipt. */
-    skillVersionId: z.string().min(1),
-    /** Eval run returned by the batch submit, independent of any retained receipt. */
-    evalRunId: z.string().min(1).optional(),
-    status: z.enum(['complete', 'incomplete', 'failed']),
-    operations: z.array(coevalEvidenceOperationSchema).min(1).max(10_000),
-    receipt: coevalAssessmentReceiptSchema.optional(),
-  }).strict().optional(),
-  items: z.array(itemResultSchema),
+  items: z.array(itemResultV3Schema),
 }).strict();
 
-export const reportSchema = reportShapeSchema.superRefine((report, ctx) => {
+export const reportV3Schema = reportV3ShapeSchema.superRefine((report, ctx) => {
   const expectedTotals = aggregate(report.items);
   if (JSON.stringify(report.totals) !== JSON.stringify(expectedTotals)) {
     ctx.addIssue({
@@ -442,13 +484,226 @@ export const reportSchema = reportShapeSchema.superRefine((report, ctx) => {
   }
 });
 
+const reportTrustPolicySchema = z.object({
+  admissibleClasses: z.array(trustClassSchema).min(1),
+  selfReportedOverride: z.object({
+    reason: z.string().min(1).refine((value) => value.trim().length > 0),
+  }).strict().optional(),
+}).strict().superRefine((policy, ctx) => {
+  const parsed = trustPolicySchema.safeParse(policy);
+  if (!parsed.success) {
+    for (const issue of parsed.error.issues) {
+      ctx.addIssue({ ...issue, path: issue.path });
+    }
+  }
+});
+
+const reportScopeSchema = z.object({
+  id: z.string().min(1).refine((value) => value.trim().length > 0),
+  kind: scopeKindSchema,
+  collectionProcedure: z.string().min(1).refine((value) => value.trim().length > 0),
+  population: z.string().min(1).refine((value) => value.trim().length > 0),
+  timeWindow: timeWindowSchema,
+  inputArtifact: z.object({
+    type: z.literal('jsonl'),
+    /** Digest observed from the one byte snapshot that was parsed. */
+    digest: z.string().regex(/^sha256:[0-9a-f]{64}$/),
+    /** Customer-declared digest retained separately so drift is detectable. */
+    declaredDigest: z.string().regex(/^sha256:[0-9a-f]{64}$/),
+    byteLength: z.number().int().nonnegative(),
+    itemCount: z.number().int().positive(),
+  }).strict(),
+  coverage: z.object({
+    expectedItems: z.number().int().positive(),
+    observedItems: z.number().int().nonnegative(),
+    evaluatedItems: z.number().int().nonnegative(),
+  }).strict(),
+  producerProvenance: z.object({
+    datasetRevision: z.literal('not_provided'),
+    exposure: z.literal('not_provided'),
+    review: z.literal('not_provided'),
+  }).strict(),
+}).strict().superRefine((scope, ctx) => {
+  const declared: ScopeConfig = {
+    id: scope.id,
+    kind: scope.kind,
+    expectedItems: scope.coverage.expectedItems,
+    collectionProcedure: scope.collectionProcedure,
+    population: scope.population,
+    timeWindow: scope.timeWindow,
+  };
+  const parsed = scopeConfigSchema.safeParse(declared);
+  if (!parsed.success) {
+    for (const issue of parsed.error.issues) {
+      ctx.addIssue({ ...issue, path: issue.path });
+    }
+  }
+});
+
+const trustSummarySchema = z.object({
+  class: trustClassSchema,
+  derivation: z.enum(['exact_match_v1', 'coeval_receipt_v1', 'http_judge_v1']),
+  admissible: z.boolean(),
+}).strict();
+
+const reportV4ShapeSchema = z.object({
+  schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
+  ...commonReportFields,
+  scope: reportScopeSchema,
+  trustPolicy: reportTrustPolicySchema,
+  trust: trustSummarySchema,
+  decision: z.enum(['promote', 'block', 'inconclusive']),
+  decisionStatement: z.string().min(1),
+  items: z.array(itemResultSchema),
+}).strict();
+
+function expectedTrust(judgeType: 'exact-match' | 'http' | 'coeval'): {
+  class: TrustClass;
+  derivation: 'exact_match_v1' | 'coeval_receipt_v1' | 'http_judge_v1';
+} {
+  if (judgeType === 'exact-match') {
+    return { class: 'deterministic', derivation: 'exact_match_v1' };
+  }
+  if (judgeType === 'coeval') {
+    return { class: 'verified', derivation: 'coeval_receipt_v1' };
+  }
+  return { class: 'self_reported', derivation: 'http_judge_v1' };
+}
+
+export const reportSchema = reportV4ShapeSchema.superRefine((report, ctx) => {
+  // Reuse the frozen v3 integrity and Coeval-linkage contract without allowing
+  // the v4 trust fields to mutate its semantics.
+  const legacyItems = report.items.map(({ trustClass: _trustClass, ...item }) => item);
+  const legacyCandidate = {
+    schemaVersion: LEGACY_REPORT_SCHEMA_VERSION,
+    judgeType: report.judgeType,
+    startedAt: report.startedAt,
+    finishedAt: report.finishedAt,
+    thresholds: report.thresholds,
+    totals: report.totals,
+    verdict: decideVerdict(report.totals, report.thresholds),
+    ...(report.evidence === undefined ? {} : { evidence: report.evidence }),
+    items: legacyItems,
+  };
+  const legacy = reportV3Schema.safeParse(legacyCandidate);
+  if (!legacy.success) {
+    for (const issue of legacy.error.issues) {
+      ctx.addIssue({ ...issue, path: issue.path });
+    }
+  }
+
+  const expected = expectedTrust(report.judgeType);
+  if (report.trust.class !== expected.class || report.trust.derivation !== expected.derivation) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['trust'],
+      message: `trust must be derived as ${expected.class}/${expected.derivation}`,
+    });
+  }
+  const admissible = report.trustPolicy.admissibleClasses.includes(expected.class);
+  if (report.trust.admissible !== admissible) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['trust', 'admissible'],
+      message: `trust admissibility must be ${admissible}`,
+    });
+  }
+
+  for (const [index, item] of report.items.entries()) {
+    const expectedItemTrust = item.outcome === 'error' ? undefined : expected.class;
+    if (item.trustClass !== expectedItemTrust) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['items', index, 'trustClass'],
+        message: item.outcome === 'error'
+          ? 'errored items cannot carry a trust class'
+          : `completed items require ${expected.class} trust`,
+      });
+    }
+  }
+
+  const { inputArtifact, coverage } = report.scope;
+  if (inputArtifact.digest !== inputArtifact.declaredDigest) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['scope', 'inputArtifact'],
+      message: 'observed input digest must match the declared digest',
+    });
+  }
+  if (
+    coverage.expectedItems !== coverage.observedItems ||
+    coverage.observedItems !== inputArtifact.itemCount ||
+    inputArtifact.itemCount !== report.items.length ||
+    report.items.length !== report.totals.total
+  ) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['scope', 'coverage'],
+      message: 'expected, observed, artifact, item, and total counts must agree',
+    });
+  }
+  if (coverage.evaluatedItems !== report.totals.evaluated) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['scope', 'coverage', 'evaluatedItems'],
+      message: 'evaluated coverage must equal totals.evaluated',
+    });
+  }
+
+  const expectedDecision = decideDecision(report.totals, report.thresholds, admissible);
+  if (report.decision !== expectedDecision) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['decision'],
+      message: `decision must be ${expectedDecision}`,
+    });
+  }
+  const expectedStatement = buildDecisionStatement(
+    expectedDecision,
+    report.scope.kind,
+    report.scope.id,
+    inputArtifact.digest,
+  );
+  if (report.decisionStatement !== expectedStatement) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['decisionStatement'],
+      message: 'decision statement must exactly bind the decision to scope and input digest',
+    });
+  }
+});
+
 export type ItemResult = z.infer<typeof itemResultSchema>;
+export type ItemResultV3 = z.infer<typeof itemResultV3Schema>;
 export type Report = z.infer<typeof reportSchema>;
+export type ReportV3 = z.infer<typeof reportV3Schema>;
 export type ItemOutcome = z.infer<typeof itemOutcomeSchema>;
 export type Comparison = z.infer<typeof comparisonSchema>;
 export type ErrorStage = z.infer<typeof errorStageSchema>;
 export type { ErrorKind };
-export type Verdict = Report['verdict'];
+export type Verdict = ReportV3['verdict'];
+export type Decision = Report['decision'];
+
+export type ReportInspection =
+  | { schemaVersion: 3; readOnly: true; report: ReportV3 }
+  | { schemaVersion: 4; readOnly: false; report: Report };
+
+/** Parse historical v3 reports without normalizing or upgrading them. */
+export function parseReportForInspection(raw: unknown): ReportInspection {
+  if (typeof raw !== 'object' || raw === null || !('schemaVersion' in raw)) {
+    throw new Error('unsupported report schema version: missing');
+  }
+  const version = (raw as { schemaVersion?: unknown }).schemaVersion;
+  if (version === LEGACY_REPORT_SCHEMA_VERSION) {
+    reportV3Schema.parse(raw);
+    return { schemaVersion: 3, readOnly: true, report: raw as ReportV3 };
+  }
+  if (version === REPORT_SCHEMA_VERSION) {
+    reportSchema.parse(raw);
+    return { schemaVersion: 4, readOnly: false, report: raw as Report };
+  }
+  throw new Error(`unsupported report schema version: ${String(version)}`);
+}
 
 export interface Totals {
   total: number;
@@ -529,8 +784,33 @@ export function decideVerdict(
   }
   return totals.passRate >= thresholds.minPassRate &&
     totals.regressions <= thresholds.maxRegressions
+      ? 'promote'
+      : 'block';
+}
+
+/** Apply the Batch 1B trust gate after the frozen v3 evidence precedence. */
+export function decideDecision(
+  totals: Totals,
+  thresholds: { minPassRate: number; maxRegressions: number },
+  trustAdmissible: boolean,
+): Decision {
+  if (totals.judgeErrored > 0 || totals.protocolErrored > 0) return 'inconclusive';
+  if (totals.candidateErrored > 0) return 'block';
+  if (totals.evaluated < totals.total || totals.evaluationCoverage < 1) return 'inconclusive';
+  if (!trustAdmissible) return 'inconclusive';
+  return totals.passRate >= thresholds.minPassRate &&
+      totals.regressions <= thresholds.maxRegressions
     ? 'promote'
     : 'block';
+}
+
+export function buildDecisionStatement(
+  decision: Decision,
+  scopeKind: ScopeConfig['kind'],
+  scopeId: string,
+  inputDigest: string,
+): string {
+  return `Decision ${decision} for ${scopeKind} scope ${JSON.stringify(scopeId)} over exact JSONL input ${inputDigest}.`;
 }
 
 export const EXIT_PROMOTE = 0;
@@ -541,9 +821,9 @@ export const EXIT_RUN_ERROR = 2;
  * Map a finished report to the CLI exit code. Inconclusive evidence is a run
  * error, not a product-quality verdict.
  */
-export function decideExitCode(report: Pick<Report, 'verdict' | 'totals'>): number {
-  if (report.verdict === 'inconclusive') return EXIT_RUN_ERROR;
-  return report.verdict === 'promote' ? EXIT_PROMOTE : EXIT_BLOCK;
+export function decideExitCode(report: Pick<Report, 'decision' | 'totals'>): number {
+  if (report.decision === 'inconclusive') return EXIT_RUN_ERROR;
+  return report.decision === 'promote' ? EXIT_PROMOTE : EXIT_BLOCK;
 }
 
 const MAX_FAILING_EXAMPLES = 10;
@@ -555,12 +835,15 @@ function truncate(s: string, max = 200): string {
 export function renderMarkdown(report: Report): string {
   const { totals, thresholds } = report;
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
-  const heading = report.verdict.toUpperCase();
+  const heading = report.decision.toUpperCase();
 
   const lines: string[] = [
     `# Shadow run report: ${heading}`,
     '',
-    `- Verdict: **${report.verdict}**`,
+    `- Decision: **${report.decision}**`,
+    `- Scope: **${report.scope.kind}** (${report.scope.id})`,
+    `- Exact input: \`${report.scope.inputArtifact.digest}\``,
+    `- Trust: **${report.trust.class}** (${report.trust.derivation}; ${report.trust.admissible ? 'admissible' : 'not admissible'})`,
     `- Pass rate: **${pct(totals.passRate)}** (${totals.passed}/${totals.total}) — threshold: ≥ ${pct(thresholds.minPassRate)}`,
     `- Regressions vs baseline: **${totals.regressions}** — threshold: ≤ ${thresholds.maxRegressions}`,
     `- Comparisons: ${totals.comparisonCounts.regression} regressions, ${totals.comparisonCounts.improvement} improvements, ${totals.comparisonCounts.stable_pass} stable passes, ${totals.comparisonCounts.stable_fail} stable fails, ${totals.comparisonCounts.unpaired} unpaired`,
@@ -570,6 +853,8 @@ export function renderMarkdown(report: Report): string {
     `- Evaluation coverage: **${pct(totals.evaluationCoverage)}** (${totals.evaluated}/${totals.total})`,
     `- Started: ${report.startedAt}`,
     `- Finished: ${report.finishedAt}`,
+    '',
+    report.decisionStatement,
     '',
   ];
 

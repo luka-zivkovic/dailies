@@ -8,7 +8,7 @@ export const judgeResultSchema = z.object({
   score: z.number(),
   pass: z.boolean(),
   reason: z.string().optional(),
-});
+}).strict();
 
 export type JudgeResult = z.infer<typeof judgeResultSchema>;
 

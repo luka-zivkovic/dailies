@@ -151,13 +151,13 @@ describe('decideExitCode', () => {
   };
 
   it('maps an inconclusive run to exit 2', () => {
-    expect(decideExitCode({ verdict: 'inconclusive', totals: baseTotals })).toBe(EXIT_RUN_ERROR);
+    expect(decideExitCode({ decision: 'inconclusive', totals: baseTotals })).toBe(EXIT_RUN_ERROR);
   });
 
   it('maps a block with at least one non-errored item to exit 1', () => {
     expect(
       decideExitCode({
-        verdict: 'block',
+        decision: 'block',
         totals: {
           ...baseTotals,
           errored: 1,
@@ -174,7 +174,7 @@ describe('decideExitCode', () => {
   it('maps a promote to exit 0', () => {
     expect(
       decideExitCode({
-        verdict: 'promote',
+        decision: 'promote',
         totals: {
           ...baseTotals,
           passed: 2,

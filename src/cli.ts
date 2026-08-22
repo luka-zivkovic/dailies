@@ -43,18 +43,18 @@ async function main(): Promise<number> {
 
   const { totals } = report;
   console.log(
-    `verdict: ${report.verdict} | pass rate ${(totals.passRate * 100).toFixed(1)}% ` +
+    `decision: ${report.decision} | pass rate ${(totals.passRate * 100).toFixed(1)}% ` +
       `(${totals.passed}/${totals.total}), regressions ${totals.regressions}, ` +
       `evaluated ${totals.evaluated}/${totals.total}, errored ${totals.errored}`,
   );
   console.log(`report: ${jsonPath}`);
   console.log(`report: ${mdPath}`);
 
-  if (report.verdict === 'inconclusive') {
+  if (report.decision === 'inconclusive') {
     console.error(
       `dailies inconclusive: ${totals.errored} of ${totals.total} items errored and ` +
         `${totals.evaluated}/${totals.total} were fully evaluated. Incomplete evidence is not ` +
-        `a verdict on the candidate. Exiting ${EXIT_RUN_ERROR} (run error).`,
+        `a decision on the candidate. Exiting ${EXIT_RUN_ERROR} (run error).`,
     );
   }
   return decideExitCode(report);
