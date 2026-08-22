@@ -98,6 +98,92 @@
       ]
     },
     {
+      "name": "tampered-item-content-digest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "contentDigest mismatch",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/0/contentDigest",
+          "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        { "op": "recompute-dataset-digest" },
+        { "op": "recompute-evidence-digest" }
+      ]
+    },
+    {
+      "name": "tampered-dataset-digest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "datasetDigest mismatch",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/datasetDigest",
+          "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        { "op": "recompute-evidence-digest" }
+      ]
+    },
+    {
+      "name": "duplicate-client-item-id",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "clientItemId values must be unique",
+      "mutations": [
+        { "op": "replace", "path": "/items/1/clientItemId", "value": "a" },
+        { "op": "recompute-dataset-digest" },
+        { "op": "recompute-evidence-digest" }
+      ]
+    },
+    {
+      "name": "run-total-counter-mismatch",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "run counters are inconsistent",
+      "mutations": [
+        { "op": "replace", "path": "/run/totalItems", "value": 3 },
+        { "op": "recompute-evidence-digest" }
+      ]
+    },
+    {
+      "name": "agreed-counter-exceeds-completed",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "run counters are inconsistent",
+      "mutations": [
+        { "op": "replace", "path": "/run/agreedItems", "value": 3 },
+        { "op": "recompute-evidence-digest" }
+      ]
+    },
+    {
+      "name": "complete-claim-with-failed-item",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "claims complete",
+      "mutations": [
+        { "op": "replace", "path": "/items/1/status", "value": "failed" },
+        { "op": "replace", "path": "/items/1/judgedLabel", "value": null },
+        { "op": "replace", "path": "/items/1/verdictId", "value": null },
+        { "op": "replace", "path": "/items/1/error", "value": "provider unavailable" },
+        { "op": "replace", "path": "/run/completedItems", "value": 1 },
+        { "op": "replace", "path": "/run/failedItems", "value": 1 },
+        { "op": "recompute-evidence-digest" }
+      ]
+    },
+    {
+      "name": "incomplete-claim-with-complete-evidence",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "claims incomplete",
+      "mutations": [
+        { "op": "replace", "path": "/status", "value": "incomplete" },
+        { "op": "recompute-evidence-digest" }
+      ]
+    },
+
+    {
       "name": "candidate-coverage-gap",
       "structural": "accept",
       "semantic": "reject",

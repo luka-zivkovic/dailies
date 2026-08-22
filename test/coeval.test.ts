@@ -487,6 +487,9 @@ describe('Coeval release-evidence boundary', () => {
       receiptRemovedAfterSuccess.evidence.status = 'failed';
       delete receiptRemovedAfterSuccess.evidence.receipt;
 
+      const syntheticPerItemJudge = structuredClone(valid);
+      syntheticPerItemJudge.items[0]!.attempts.judge = [{ attempt: 1, outcome: 'success' }];
+
       for (const [name, tampered] of [
         ['totals', wrongTotals],
         ['rate bound', outOfRangeRate],
@@ -503,6 +506,7 @@ describe('Coeval release-evidence boundary', () => {
         ['poll sequence', pollRemoved],
         ['poll/receipt status linkage', pollStatusUnlinked],
         ['receipt removal', receiptRemovedAfterSuccess],
+        ['synthetic per-item Coeval judge attempt', syntheticPerItemJudge],
       ] as const) {
         expect(reportSchema.safeParse(tampered).success, name).toBe(false);
       }
@@ -744,7 +748,7 @@ describe('Coeval release-evidence boundary', () => {
         },
         { attempt: 2, outcome: 'success' },
       ]);
-      expect(report.items[0]?.attempts.judge).toEqual([{ attempt: 1, outcome: 'success' }]);
+      expect(report.items[0]?.attempts.judge).toBeUndefined();
     } finally {
       closeServer(mock.server);
     }

@@ -7,11 +7,14 @@ document defines canonical bytes and semantic linkage.
 ## Canonical JSON and digests
 
 Canonical JSON accepts JSON values only. It serializes `null`, booleans,
-strings, and finite numbers using JSON's standard representation. Arrays retain
-their existing order. Object keys are sorted recursively by exact UTF-16 code
-unit order, equivalent to JavaScript string `<` and `>` comparisons, then
-serialized without insignificant whitespace. No Unicode normalization or
-locale-aware sorting is applied.
+strings, and finite numbers exactly as ECMAScript `JSON.stringify` does. This
+is the RFC 8785 string/number representation: control characters are escaped,
+non-ASCII characters are otherwise emitted without Unicode normalization, and
+finite numbers use ECMAScript's shortest round-trippable spelling. Arrays
+retain their existing order. Object keys are sorted recursively by exact
+UTF-16 code unit order, equivalent to JavaScript string `<` and `>`
+comparisons, then serialized without insignificant whitespace. No locale-aware
+sorting is applied.
 
 A digest is SHA-256 over the UTF-8 bytes of that canonical JSON, rendered as
 `sha256:` followed by 64 lowercase hexadecimal characters.
@@ -57,4 +60,4 @@ The pinned SHA-256 file digests are:
 - positive fixture:
   `530e7322feb5bc16d025daaef14bec8d73488a168a602d82b37fae2a06d12274`;
 - conformance corpus:
-  `68063300ab99c1ebade883050421fcb25ef8c34862f839d92d26d0d0d6fae225`.
+  `9a9ba86d54e78a6cc8d63d592712791f21984e68f09bbbe011d8903296af3e07`.

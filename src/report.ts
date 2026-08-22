@@ -96,18 +96,20 @@ export const itemResultSchema = z.object({
     ) {
       ctx.addIssue({ code: 'custom', message: 'candidate errorKind must match final attempt' });
     }
-    if (item.errorStage === 'judge' && item.attempts.judge === undefined) {
-      ctx.addIssue({ code: 'custom', message: 'judge failures require judge attempts' });
-    }
     if (item.errorStage === 'judge' && item.candidate_output === undefined) {
       ctx.addIssue({ code: 'custom', message: 'judge failures require candidate_output' });
     }
     if (item.errorStage === 'judge' && (
-      candidateFinal?.outcome !== 'success' || judgeFinal?.outcome !== 'error'
+      candidateFinal?.outcome !== 'success' ||
+      (judgeFinal !== undefined && judgeFinal.outcome !== 'error')
     )) {
-      ctx.addIssue({ code: 'custom', message: 'judge failure requires candidate success and final judge failure' });
+      ctx.addIssue({ code: 'custom', message: 'judge failure requires candidate success and any judge ledger to end failed' });
     }
-    if (item.errorStage === 'judge' && judgeFinal?.errorKind !== item.errorKind) {
+    if (
+      item.errorStage === 'judge' &&
+      judgeFinal !== undefined &&
+      judgeFinal.errorKind !== item.errorKind
+    ) {
       ctx.addIssue({ code: 'custom', message: 'judge errorKind must match final attempt' });
     }
     return;
@@ -124,11 +126,11 @@ export const itemResultSchema = z.object({
   } else if (item.judge.pass !== item.pass) {
     ctx.addIssue({ code: 'custom', message: 'judge pass must agree with item outcome' });
   }
-  if (item.attempts.judge === undefined) {
-    ctx.addIssue({ code: 'custom', message: 'completed items require judge attempts' });
-  }
-  if (candidateFinal?.outcome !== 'success' || judgeFinal?.outcome !== 'success') {
-    ctx.addIssue({ code: 'custom', message: 'completed items require final successful attempts' });
+  if (
+    candidateFinal?.outcome !== 'success' ||
+    (judgeFinal !== undefined && judgeFinal.outcome !== 'success')
+  ) {
+    ctx.addIssue({ code: 'custom', message: 'completed items require candidate success and any judge ledger to end successful' });
   }
 });
 
@@ -181,7 +183,7 @@ const reportShapeSchema = z.object({
     /** Eval run returned by the batch submit, independent of any retained receipt. */
     evalRunId: z.string().min(1).optional(),
     status: z.enum(['complete', 'incomplete', 'failed']),
-    operations: z.array(coevalEvidenceOperationSchema).min(1),
+    operations: z.array(coevalEvidenceOperationSchema).min(1).max(10_000),
     receipt: coevalAssessmentReceiptSchema.optional(),
   }).strict().optional(),
   items: z.array(itemResultSchema),
@@ -206,6 +208,24 @@ export const reportSchema = reportShapeSchema.superRefine((report, ctx) => {
   }
 
   const evidence = report.evidence;
+  const itemsNeedingJudgeEvidence = report.items.filter(
+    (item) => item.outcome !== 'error' || item.errorStage === 'judge',
+  );
+  if (report.judgeType === 'coeval') {
+    if (report.items.some((item) => item.attempts.judge !== undefined)) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['items'],
+        message: 'Coeval items cannot fabricate per-item judge attempts; use evidence.operations',
+      });
+    }
+  } else if (itemsNeedingJudgeEvidence.some((item) => item.attempts.judge === undefined)) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['items'],
+      message: 'non-Coeval completed and judge-error items require judge attempts',
+    });
+  }
   const submittedItems = report.items.filter(
     (item) => item.attempts.candidate.at(-1)?.outcome === 'success',
   );

@@ -67,7 +67,7 @@ One example item intentionally regresses, so the report shows a failing example 
   // "judge": { "type": "http", "url": "http://localhost:9090/judge" },
   // ...or the built-in zero-dependency baseline comparator:
   "judge": { "type": "exact-match" },
-  // ...or a pinned Coeval skill that returns independently verifiable evidence:
+  // ...or a pinned Coeval skill whose receipt structure and digests Dailies verifies:
   // "judge": {
   //   "type": "coeval",
   //   "url": "https://coeval.example.com",
@@ -93,14 +93,28 @@ One example item intentionally regresses, so the report shows a failing example 
 Semantics:
 
 - Every input runs through the candidate, then the judge. Candidate calls and ordinary per-item judge calls make at most two attempts. Only transient failures retry: HTTP `429`, HTTP `5xx`, transport errors, and timeouts. `Retry-After` is honored when present; otherwise the first retry waits 100 ms, and every delay is capped at 5 seconds. Authentication/request `4xx`, deterministic command failures, and malformed successful payloads do not retry.
-- Every item records timestamp-free candidate and judge attempt ledgers with attempt number, outcome, typed error, HTTP status, retryability, and scheduled delay where applicable. This makes retry behavior auditable while keeping output deterministic. For Coeval, those per-item judge entries describe the single logical assessment; the report-level `evidence.operations` ledger records actual submit, poll, and receipt HTTP attempts by phase. A cross-origin/preflight rejection or exhausted deadline is recorded separately as a zero-request `termination`, never fabricated into an HTTP attempt.
+- Every item records timestamp-free candidate attempts and, for per-item judges,
+  actual judge attempts with attempt number, outcome, typed error, HTTP status,
+  retryability, and scheduled delay where applicable. Coeval has no per-item
+  judge call, so its items omit `attempts.judge`; the report-level
+  `evidence.operations` ledger records the actual submit, poll, and receipt
+  HTTP attempts by phase. A cross-origin/preflight rejection or exhausted
+  deadline is recorded separately as a zero-request `termination`, never
+  fabricated into an HTTP attempt.
 - A Coeval release-evidence batch POST is submitted exactly once to avoid accidentally creating duplicate eval runs. Idempotent poll and receipt GETs retry bounded transient `429`/`5xx`/transport/timeout failures within the poll deadline. The operation ledger records `single_non_idempotent` versus `retry_transient` explicitly, including when a retryable POST failure was deliberately suppressed.
+- Coeval evidence ledgers are capped at 10,000 operations; a run that exceeds
+  the cap terminates as incomplete instead of growing the report without bound.
 - A required candidate execution error blocks. A judge error, candidate/judge protocol error, or otherwise incomplete evaluation is `inconclusive`; threshold slack cannot turn it into `promote`.
 - `baseline_label` is the only comparison baseline. Comparisons are `regression` (`pass → fail`), `improvement` (`fail → pass`), `stable_pass`, `stable_fail`, or `unpaired`. Missing labels and errored items are unpaired. `baseline_output` alone never implies that production passed, and unevaluated errors are never fabricated into regressions.
 - Pass rate still covers every required input, including stable failures and unpaired items. A stable or unpaired failure therefore lowers pass rate and blocks under the default strict threshold; a looser `minPassRate` is an explicit choice to tolerate it. Unpaired passes are fully judged candidate evidence, but do not claim a historical improvement or regression.
 - With complete evidence, verdict is `promote` iff `passRate >= minPassRate` **and** `regressions <= maxRegressions`; otherwise it is `block`.
 - Exact-match inputs are preflighted for baselines, and duplicate input IDs are rejected before execution. Coeval input IDs are also preflighted before candidate work to enforce its 240-character `clientItemId` limit; otherwise IDs are preserved verbatim, including whitespace.
 - For a Coeval judge, Dailies submits all successful candidate traces in one `release_evidence` batch, polls the eval run, and fetches its v1 assessment receipt. Dailies independently verifies the pinned skill version, exact item coverage and code-unit ordering, per-item content digests, dataset digest, run counters, and whole-receipt evidence digest. A digest-valid incomplete receipt is retained and explicitly classified `incomplete`; a mismatch or unsupported label is a `protocol` error. Either case, and any provider failure, is judge-stage `inconclusive`.
+- Receipt digests prove internal consistency, not authenticity. The current CLI
+  relies on authenticated transport to the configured Coeval endpoint and pins
+  `skillVersionId`; it does not yet accept a separately trusted expected
+  `skillDigest`. An untrusted or compromised endpoint is therefore outside the
+  current automated-promotion trust boundary.
 - Receipt v1 is a closed contract. Dailies vendors its schema and golden fixture in [`contracts/`](contracts/); even additive fields require a deliberate coordinated v2. The transport for future calibration evidence is intentionally unresolved and will not be improvised as a v1 field.
 - Exact-match, verified Coeval evidence, and the minimal HTTP judge do not provide equivalent provenance. The accepted [evidence trust-class ADR](docs/decisions/0001-evidence-trust-classes.md) requires that distinction to remain explicit and makes self-reported evidence insufficient for automated promotion by default. The current CLI has not yet implemented that target policy.
 - Coeval is the judge and evidence provider, not the release actor: its receipt contains per-item `pass`/`fail` labels but no threshold or deploy decision. Dailies alone applies `minPassRate` and `maxRegressions` to produce `promote` or `block`.

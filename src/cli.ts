@@ -25,7 +25,7 @@ async function main(): Promise<number> {
   const program = new Command()
     .name('dailies')
     .description(
-      'Run a candidate AI change against historical inputs, judge it vs production, emit a promote/block report',
+      'Run a candidate AI change against historical inputs and emit a promote/block/inconclusive report',
     )
     .requiredOption('--config <path>', 'path to shadow.config.json')
     .parse();

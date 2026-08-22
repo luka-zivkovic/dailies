@@ -18,6 +18,7 @@ import {
 
 const digestSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
 export const COEVAL_CLIENT_ITEM_ID_MAX_LENGTH = 240;
+export const MAX_COEVAL_EVIDENCE_OPERATIONS = 10_000;
 const evalRunStatusSchema = z.enum(['pending', 'running', 'completed', 'failed', 'canceled']);
 const evalRunItemStatusSchema = z.enum(['pending', 'completed', 'failed', 'skipped']);
 
@@ -565,6 +566,18 @@ export async function collectCoevalAssessment(
     if (remainingMs <= 0) {
       const timeout = new OperationError(
         `Coeval polling timed out after ${judge.pollTimeoutMs}ms`,
+        'timeout',
+      );
+      throw new CoevalCollectionError(
+        timeout,
+        [...operations, terminatedEvidenceOperation('poll', 'deadline')],
+        undefined,
+        batch.evalRunId,
+      );
+    }
+    if (operations.length >= MAX_COEVAL_EVIDENCE_OPERATIONS - 1) {
+      const timeout = new OperationError(
+        `Coeval polling exceeded the ${MAX_COEVAL_EVIDENCE_OPERATIONS}-operation evidence limit`,
         'timeout',
       );
       throw new CoevalCollectionError(

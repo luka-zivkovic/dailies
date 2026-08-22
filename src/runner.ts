@@ -147,12 +147,6 @@ function coevalJudgeFailure(execution: CandidateSuccess, err: unknown): ItemResu
     regression: false,
     attempts: {
       candidate: execution.candidateAttempts,
-      judge: [{
-        attempt: 1,
-        outcome: 'error',
-        errorKind: logicalKind,
-        retryable: false,
-      }],
     },
   };
 }
@@ -178,7 +172,6 @@ function coevalJudgedResult(
     regression: comparison === 'regression',
     attempts: {
       candidate: execution.candidateAttempts,
-      judge: [{ attempt: 1, outcome: 'success' }],
     },
   };
 }

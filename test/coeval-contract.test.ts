@@ -43,9 +43,9 @@ interface ConformanceCorpus {
 const contractRoot = new URL('../contracts/', import.meta.url);
 const pinnedFileDigests = {
   schema: 'ca18a7b3bfa4610ff56ab88d60044f4357df2d035ac5e072356becc20250e9e7',
-  specification: 'a81c814bacb4dfcf34e3af6aabda7f31c75124a8dc446bddccf664890531c65f',
+  specification: '85c4a502709a4a6a8c27b96634262fa2b583bbafce98558c99de475528df8802',
   fixture: '530e7322feb5bc16d025daaef14bec8d73488a168a602d82b37fae2a06d12274',
-  conformance: '68063300ab99c1ebade883050421fcb25ef8c34862f839d92d26d0d0d6fae225',
+  conformance: '9a9ba86d54e78a6cc8d63d592712791f21984e68f09bbbe011d8903296af3e07',
 } as const;
 
 function fileBytes(relativePath: string): Buffer {
