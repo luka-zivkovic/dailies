@@ -1,6 +1,6 @@
 # Portfolio implementation batches
 
-Status: **independently audited; Batches 0 through 4 complete; Batch 5 contract gate remains open**
+Status: **independently audited through Coeval Batch 5B; Batch 5A contract and cross-runtime conformance complete; Coeval single-trial runtime complete; Dailies policy consumption pending**
 
 Last reviewed: 2026-08-23
 
@@ -352,13 +352,23 @@ ADR-0009 accepts the separate immutable, aggregate-only
 `coeval/binary-calibration/v1` artifact referenced by exact evaluator,
 criterion, truth revision, exposure, selection, and execution identities. The
 closed schema, canonical builder/parser/verifier, exact transport fixtures,
-adversarial corpus, and Wilson reference implementation are Batch 5A. It is
-not inserted into closed receipt v1. Batch 5B begins only after those bytes are
-reviewed and frozen.
+adversarial corpus, and Wilson reference implementation were completed,
+independently reviewed, and frozen in Batch 5A. Dailies vendors those exact
+bytes and passes the shared conformance corpus in its own JavaScript runtime.
+The artifact is not inserted into closed receipt v1.
 
-### Coeval
+### Coeval (single-trial Batch 5B runtime complete and independently reviewed)
 
-For binary evaluators, emit:
+The current Postgres runtime lets a project owner launch one explicit
+`{ kind: "single", trialsPerItem: 1 }` run over an exact complete governed
+sealed-validation revision. It durably leases the revision, supplies the
+worker only the protected payload, records call start before the one physical
+provider dispatch, disables hidden provider retries and parameter-changing
+fallbacks, and rejects unsupported non-null `topP` before dispatch. A stranded
+started attempt becomes permanent `outcome_unknown` and is never recalled.
+
+At terminalization the repository rechecks exposure and deterministically
+mints a public-contract artifact containing:
 
 - declared positive class and explicit false-pass/false-fail definitions;
 - full confusion matrix;
@@ -368,27 +378,38 @@ For binary evaluators, emit:
 - versioned confidence-interval method and uncertainty;
 - evaluator, criterion, truth revision, exposure, metric, trial, and observed
   provider provenance; and
-- repeated-trial distributions without hiding variance in an unqualified mean.
+- exact canonical bytes that exclude item identity, protected payloads,
+  per-item labels, rationale, and provider request/response identifiers.
 
 Undefined and weakly supported metrics remain explicit. Coeval does not issue a
-universal calibrated/un-calibrated release verdict.
+universal calibrated/un-calibrated release verdict. Current admissibility is
+separate from immutable artifact bytes. The private salted ledger has no read
+API or export surface. The frozen artifact contract also supports
+repeated-trial distributions without hiding variance in an unqualified mean,
+but the current producer runtime does not execute repeated trials.
 
-### Dailies (TARGET; not implemented in Coeval Batch 5A)
+### Dailies (contract verification CURRENT; policy consumption TARGET)
 
-Dailies must independently verify the calibration artifact and allow customer policy to
-require per-criterion calibration metrics, support, confidence, coverage, and
-freshness for verified Coeval evidence. Calibration uses a separate Dailies
-calibration scope. It does not upgrade the candidate execution scope:
-assessment receipt v1 candidate `producerProvenance` remains `not_provided`.
-Missing, stale, swapped, or unverifiable required calibration is
-`inconclusive` for that required criterion. Thresholds and release
-consequences remain in Dailies.
+Dailies currently vendors the frozen contract and adversarial corpus and
+independently verifies exact canonical bytes, identity bindings, digest,
+counts, metrics, intervals, trial distributions, and unknown-field behavior.
+No Dailies config, policy, report, runner, or CLI path yet consumes calibration
+evidence.
 
-Exit gate: the producer and consumer pass shared positive and adversarial
-fixtures for revision, exposure, coverage, metric, and evaluator identity,
-while the same calibration evidence supports different customer policies.
-This cross-product exit gate remains open until Dailies vendors and passes the
-frozen corpus; the ready Coeval producer contract alone does not close it.
+The future local-file calibration input must let customer policy require
+per-criterion metrics, support, confidence, coverage, and freshness for
+verified Coeval evidence. Calibration uses a separate Dailies calibration
+scope and does not upgrade the candidate execution scope: assessment receipt
+v1 candidate `producerProvenance` remains `not_provided`. Missing, stale,
+swapped, or unverifiable required calibration is `inconclusive` for that
+required criterion. Thresholds and release consequences remain in Dailies.
+
+The byte-level producer/consumer conformance gate is closed: both runtimes pass
+the shared positive and adversarial fixtures for revision, exposure, coverage,
+metric, and evaluator identity. The Batch 5 product exit gate remains open
+until the Dailies policy consumer proves that the same calibration evidence
+supports different customer policies and that missing, stale, swapped, or
+unverifiable required evidence cannot promote a candidate.
 
 ## Batch 6 — Analyze workflow and comparative evidence
 
@@ -477,8 +498,9 @@ historical semantics and must be accepted before their runtime batch:
    divergence-reporting behavior (Coeval ADR-0006).
 3. **Resolved:** the simultaneous blocking-failure plus mandatory-incomplete
    precedence table is fixed in Dailies ADR-0005.
-4. Calibration artifact transport, canonicalization, and compatibility window;
-   the recommended default is a separate artifact v1.
+4. **Resolved for Batch 5A:** calibration transport, canonicalization, and
+   compatibility are fixed by Coeval ADR-0009 as a separate artifact v1;
+   assessment receipt v1 remains unchanged.
 5. Independent owners, sampling frames, budgets, and stopping rules for the two
    comparative benchmarks.
 6. **Resolved:** deprecated product-release writes remain through the Dailies
