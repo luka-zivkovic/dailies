@@ -1,8 +1,8 @@
 # Portfolio implementation batches
 
-Status: **independently audited; Batches 0, 1A, 1B, 1C, and 2 complete; later gates remain open**
+Status: **independently audited; Batches 0 through 4 complete; Batch 5 contract gate remains open**
 
-Last reviewed: 2026-08-22
+Last reviewed: 2026-08-23
 
 This file is intentionally vendored in Coeval, Dailies, and Casefile. Update
 all three copies together.
@@ -317,6 +317,12 @@ blocking-fail evidence, and no criterion is silently compensated.
 
 ## Batch 4 — governed human truth
 
+Implementation status: **complete and independently reviewed on 2026-08-23**.
+
+Decision gate 7 was accepted on 2026-08-23 and is recorded in Coeval
+ADR-0008. Governed review uses a separate append-only evidence path; legacy
+verdicts and queues are never upgraded to blind or representative truth.
+
 Coeval makes review a first-class governed workflow:
 
 - full relevant trace and criterion instructions;
@@ -472,8 +478,9 @@ historical semantics and must be accepted before their runtime batch:
 6. **Resolved:** deprecated product-release writes remain through the Dailies
    v4 migration and become `410 Gone` in Batch 2; historical reads remain.
    The evaluator-version regression gate remains in Coeval (Coeval ADR-0006).
-7. Collection and independent-review plan for the first genuinely sealed
-   validation revision.
+7. **Resolved for Batch 4:** the collection, independent-review, abstention,
+   resolution, selection, and separation-of-duty plan for the first genuinely
+   sealed validation revision is fixed by Coeval ADR-0008.
 8. **Resolved for Batch 1C:** ownership and isolation of the neutral benchmark
    workspace is fixed by Casefile ADR-0002; comparator execution never becomes
    Casefile product behavior.
