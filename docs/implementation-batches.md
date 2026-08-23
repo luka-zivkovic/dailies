@@ -1,6 +1,6 @@
 # Portfolio implementation batches
 
-Status: **Batch 5 complete and independently audited: frozen cross-runtime contract, Coeval sealed single-trial runtime, and Dailies local policy consumer are current**
+Status: **Batch 6 underway: Coeval Analyze contract accepted; Dailies invariant gate and neutral blind-contract foundation complete; comparative execution remains gated**
 
 Last reviewed: 2026-08-23
 
@@ -418,6 +418,8 @@ or unverifiable required evidence cannot falsely promote a candidate.
 
 ### Coeval
 
+Contract status: **accepted in Coeval ADR-0010; runtime pending**.
+
 Complete the non-clustering Analyze → Measure loop:
 
 - sample representative traces with recorded selection provenance;
@@ -426,17 +428,25 @@ Complete the non-clustering Analyze → Measure loop:
 - turn a narrow failure mode into a criterion, review task, evaluator, and
   calibration workflow; and
 - measure task completion, reviewer disagreement, taxonomy churn, evaluator
-  error direction, and time-to-trusted-evaluator.
+  error direction, time to the first completed calibration artifact, and time
+  to the first currently admissible calibration artifact.
+
+The first slice uses a frozen finite trace population, server-executed simple
+random sampling, append-only multi-label coding, flat human-authored taxonomy
+revisions, and explicit candidate-evaluator lifecycle. Analysis and authoring
+data never become sealed calibration truth, and Coeval does not invent a
+universal trusted-evaluator threshold.
 
 Coeval uses internal and customer-task validation rather than a forced
 competitor leaderboard.
 
 ### Dailies invariant and comparative evidence
 
-First, run a Dailies-only invariant suite covering timeout, transport,
-protocol, partial coverage, tamper, mixed-trust, scope mismatch,
-nondeterminism, and multi-criterion conflicts. It requires zero false
-promotions and is a correctness gate, not a competitor claim.
+The Dailies-only authored invariant suite is current. It covers timeout,
+transport, protocol, partial coverage, tamper, mixed trust, scope mismatch,
+nondeterminism, multi-criterion conflicts, exact call counts, report parsing,
+and concurrent ordering. It requires zero false promotions and zero false
+blocks and remains a correctness gate, not a competitor claim.
 
 Second, use an independently authored, partially blind study titled **CI
 release-gate robustness under infrastructure faults** for tools such as
@@ -458,6 +468,12 @@ Blind comparative results are reported with uncertainty and framed as release
 gate robustness, not evaluator quality or universal product superiority.
 
 ### Casefile blind benchmark
+
+The neutral benchmark workspace now has public pre-gate contracts for frozen
+applicability, execution settings, label-independent corpus strata,
+preregistration, raw-manifest coverage, post-attempt truth release, metrics,
+and claim-free reports. It deliberately has no blind runner and cannot mint the
+private byte-verified evidence capability required for scoring before Gate 5.
 
 Freeze labels, adjudication, sample size/stopping rule, Casefile and comparator
 versions, configurations, and environments before unsealing. Run the common
@@ -518,5 +534,9 @@ historical semantics and must be accepted before their runtime batch:
 9. **Resolved for Batch 2:** the directional compatibility, declassification,
    sealed-successor, exact-input identity, and public sealed-intake boundary
    are fixed by Coeval ADR-0007.
+10. **Resolved for Batch 6:** representative finite-frame sampling,
+    append-only open coding, flat taxonomy revision, failure-code promotion,
+    candidate evaluator lifecycle, and honest component measurements are fixed
+    by Coeval ADR-0010.
 
 Resolve each in the contract phase of its owning batch before runtime code.
