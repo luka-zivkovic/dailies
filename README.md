@@ -150,7 +150,7 @@ Semantics:
   `skillVersionId`; it does not yet accept a separately trusted expected
   `skillDigest`. An untrusted or compromised endpoint is therefore outside the
   current automated-promotion trust boundary.
-- Receipt v1 is a closed contract. Dailies vendors its schema and golden fixture in [`contracts/`](contracts/); even additive fields require a deliberate coordinated v2. Binary calibration is a separate frozen public artifact: Dailies now vendors its exact bytes and independently verifies its 96-case conformance corpus, but no config, policy, report, runner, or CLI path consumes it yet. The producer's private calibration ledger remains intentionally inaccessible.
+- Receipt v1 is a closed contract. Dailies vendors its schema and golden fixture in [`contracts/`](contracts/); even additive fields require a deliberate coordinated v2. Binary calibration remains a separate frozen public artifact. Schema v6 reads only explicitly configured local files, verifies their exact bytes and full expected identity, applies customer calibration policy per trial, and emits a separate calibration-aware report. It never fetches a latest artifact or status, and the producer's private calibration ledger remains intentionally inaccessible.
 - Exact-match (`deterministic`, `exact_match_v1`), fully verified Coeval receipt evidence (`verified`, `coeval_receipt_v1`), and generic HTTP responses (`self_reported`, `http_judge_v1`) do not provide equivalent provenance. Trust is derived from the integration path; provider payloads cannot assert or upgrade it. Completed items retain that class, errored items do not fabricate one, and self-reported evidence is insufficient for a release decision unless the report retains a reasoned customer override. If no item has completed evidence, the report records the intended derivation path but marks trust `unavailable` and not admissible; a failed Coeval call never displays as achieved verified evidence.
 - Coeval is the judge and evidence provider, not the release actor: its receipt contains per-item `pass`/`fail` labels but no threshold or deploy decision. Dailies alone applies `minPassRate` and `maxRegressions` to produce `promote` or `block`.
 - Target release decisions are bound to declared evidence scopes. A successful run over a curated regression corpus means the candidate satisfied that corpus policy; it does not by itself claim representative production quality. See [ADR-0003](docs/decisions/0003-scope-bound-release-decisions.md).
@@ -190,6 +190,42 @@ The first v5 transport reads exact canonical manifest bytes from a local file
 and supports `trialPlan: null`. A public Coeval manifest-fetch route and
 repeated-trial reduction remain explicit future contracts. See
 [`docs/report-v5.md`](docs/report-v5.md) for the schema and invariants.
+
+## Calibration-aware suite mode (v6)
+
+V6 additively extends suite mode with one ordered calibration-evidence binding
+per manifest criterion and customer policy v2. Each binding is either explicit
+absence or one local file with a pinned exact-byte digest and the full expected
+Coeval artifact identity. Dailies performs no calibration network request,
+latest lookup, status fetch, retry, or private-ledger access.
+
+Before any candidate or Coeval receipt call, the runner validates the closed
+config and policy, exact input and suite snapshots, and reads each configured
+calibration file exactly once in manifest order. UTF-8, BOM, 16 MiB, canonical
+JSON, byte digest, semantic contract, evaluator, criterion, suite, sealed truth,
+exposure, trial, and provider identities are checked by the frozen verifier.
+Explicitly unconfigured evidence remains typed incomplete. A configured
+not-found, read failure, malformed artifact, digest mismatch, or identity swap
+is a typed integrity failure; required integrity prevents candidate/provider
+calls and still produces a v6 `inconclusive` report. Ordinary threshold
+insufficiency, staleness, or explicitly missing evidence remains visible but
+does not stop candidate assessment, because an independently calibrated block
+may still determine the release under ADR-0005.
+
+Policy evaluates every calibration trial independently—never by pooling or an
+unqualified mean—and can require freshness, truth support, provider identity
+strength, classified coverage, point estimates, Wilson lower bounds, and a
+minimum trial count. Calibration truth scope stays separate from candidate
+release scope and does not upgrade receipt-v1 candidate provenance. A blocking
+assessment can block only when that criterion's own calibration requirement is
+satisfied; a calibrated block still outranks unrelated missing mandatory
+evidence under ADR-0005.
+
+The v6 CLI retains the tri-state exit contract: `0` promote, `1` block, and `2`
+inconclusive. Its `report.json` is exact canonical report-v6 bytes and its
+Markdown view shows collection, trust, scope, freshness, per-trial failures,
+policy reasons, and effective release admissibility. See
+[`docs/report-v6.md`](docs/report-v6.md).
 
 ## Development
 

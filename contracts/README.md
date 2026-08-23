@@ -56,8 +56,10 @@ The contract is vendored rather than imported as a runtime dependency so
 Coeval and Dailies retain independent release cadences. Producer and consumer
 tests pin identical schema and fixture file digests.
 
-Passing the vendored corpus closes only Dailies' public contract-conformance
-checkpoint. Config v6, policy v2, report v6, artifact retrieval, freshness and
-revocation checks, runtime admissibility, and release-decision integration are
-not implemented by this slice, so the Batch 5 runtime and cross-product exit
-gate remain open.
+Passing the vendored corpus closes Dailies' public contract-conformance
+checkpoint. The additive config-v6, policy-v2, report-v6, runner, and CLI path
+now consumes explicitly configured local artifact bytes, verifies freshness
+and runtime admissibility, and applies customer release policy. It performs no
+network latest-artifact or current-revocation lookup and has no private-ledger
+access. The frozen local cross-product exit gate is closed; live status and
+revocation reads remain outside this slice.

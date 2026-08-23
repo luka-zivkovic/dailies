@@ -34,6 +34,18 @@ export {
   type SuiteProviderConfig,
 } from './config-v5.js';
 export {
+  calibrationEvidenceBindingSchema,
+  calibrationEvidenceFileSourceSchema,
+  expectedBinaryCalibrationIdentitySchema,
+  parseSuiteConfigV6,
+  suiteConfigV6Schema,
+  SUITE_CONFIG_V6_SCHEMA_VERSION,
+  type CalibrationEvidenceBinding,
+  type CalibrationEvidenceFileSource,
+  type ExpectedBinaryCalibrationIdentityConfig,
+  type SuiteConfigV6,
+} from './config-v6.js';
+export {
   binaryCalibrationArtifactByteDigest,
   binaryCalibrationArtifactSchema,
   binaryCalibrationEvidenceDigest,
@@ -52,6 +64,40 @@ export {
   type ExactRational,
   type ExpectedBinaryCalibrationIdentity,
 } from './binary-calibration.js';
+export {
+  CALIBRATION_POLICY_REASON_ORDER,
+  calibrationCollectionIncompleteReasonSchema,
+  calibrationCollectionIntegrityReasonSchema,
+  calibrationCollectionResultSchema,
+  calibrationEvidenceScopeSchema,
+  calibrationEvidenceSetDigest,
+  calibrationPolicyReasonSchema,
+  calibrationPolicyResultSchema,
+  calibrationReleaseAdmissibilityReason,
+  calibrationRequirementCheckSchema,
+  calibrationTrialPolicyResultSchema,
+  canonicalCalibrationCollectionResult,
+  collectCalibrationEvidence,
+  criterionCalibrationAdmissible,
+  deriveCalibrationEvidenceScope,
+  evaluateCalibrationRequirement,
+  worstCalibrationReason,
+  type CalibrationCollectionIncompleteReason,
+  type CalibrationCollectionIntegrityReason,
+  type CalibrationCollectionResult,
+  type CalibrationEvidenceScope,
+  type CalibrationPolicyReason,
+  type CalibrationPolicyResult,
+  type CalibrationRequirementCheck,
+  type CalibrationTrialPolicyResult,
+  type CollectCalibrationEvidenceInput,
+} from './calibration-policy.js';
+export {
+  CalibrationFileReadError,
+  readCalibrationFileOnce,
+  type CalibrationFileReadFailureCode,
+  type ReadCalibrationFileOptions,
+} from './calibration-file.js';
 export {
   canonicalJson,
   COEVAL_CLIENT_ITEM_ID_MAX_LENGTH,
@@ -109,6 +155,24 @@ export {
   type ReleasePolicyV1,
 } from './policy.js';
 export {
+  applyReleasePolicyV2,
+  binaryCalibrationRequirementV1Schema,
+  calibrationMetricNameSchema,
+  criterionPolicyV2Schema,
+  providerIdentityStrengthSchema,
+  releasePolicyV2Digest,
+  releasePolicyV2CandidateProjection,
+  releasePolicyV2Schema,
+  verifyReleasePolicyV2,
+  type BinaryCalibrationRequirementV1,
+  type CalibrationMetricName,
+  type CriterionPolicyResultV2,
+  type CriterionPolicyV2,
+  type PolicyDecisionV2,
+  type ProviderIdentityStrength,
+  type ReleasePolicyV2,
+} from './policy-v2.js';
+export {
   aggregate,
   buildDecisionStatement,
   compareOutcome,
@@ -159,6 +223,19 @@ export {
   type SuiteReport,
 } from './report-v5.js';
 export {
+  buildCalibrationDecisionStatement,
+  buildCalibrationReportV6,
+  CALIBRATION_REPORT_SCHEMA_VERSION,
+  parseCanonicalCalibrationReportV6Bytes,
+  renderCalibrationReportMarkdown,
+  reportV6Schema,
+  serializeCalibrationReportV6,
+  type BuildCalibrationReportV6Input,
+  type CalibrationCandidateAssessment,
+  type CalibrationReportCriterion,
+  type CalibrationSuiteReport,
+} from './report-v6.js';
+export {
   attemptRecordSchema,
   attemptLedgerSchema,
   DEFAULT_MAX_ATTEMPTS,
@@ -174,7 +251,21 @@ export {
   type RetryResult,
 } from './retry.js';
 export { runShadow, type RunShadowOptions } from './runner.js';
-export { runSuiteRelease, type RunSuiteOptions } from './suite-runner.js';
+export {
+  preflightSuiteRelease,
+  runPreflightedSuiteRelease,
+  runSuiteRelease,
+  suiteReleaseScope,
+  type PreflightedSuiteRelease,
+  type RunSuiteOptions,
+} from './suite-runner.js';
+export {
+  preflightCalibrationSuiteRelease,
+  runCalibrationSuiteRelease,
+  type PreflightCalibrationSuiteOptions,
+  type PreflightedCalibrationSuiteRelease,
+  type RunCalibrationSuiteOptions,
+} from './suite-runner-v6.js';
 export {
   evaluatorSuiteCriterionDigest,
   evaluatorSuiteManifestDigest,

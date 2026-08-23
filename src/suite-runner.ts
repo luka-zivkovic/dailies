@@ -9,7 +9,10 @@ import {
   type CoevalEvidenceOperation,
 } from './coeval.js';
 import { classifyOperationError } from './errors.js';
-import { loadInputArtifactWithSchema } from './inputs.js';
+import {
+  loadInputArtifactWithSchema,
+  type ParsedInputArtifact,
+} from './inputs.js';
 import { mapPool } from './pool.js';
 import {
   applyReleasePolicy,
@@ -320,12 +323,49 @@ export interface RunSuiteOptions {
   now?: () => Date;
 }
 
-export async function runSuiteRelease(
+export interface PreflightedSuiteRelease {
+  inputArtifact: ParsedInputArtifact<SuiteInputItem>;
+  manifest: EvaluatorSuiteManifest;
+  policy: ReturnType<typeof verifyReleasePolicy>;
+}
+
+export function suiteReleaseScope(
   config: SuiteConfig,
-  options: RunSuiteOptions = {},
-): Promise<SuiteReport> {
-  const now = options.now ?? (() => new Date());
-  const startedAt = now().toISOString();
+  inputArtifact: ParsedInputArtifact<SuiteInputItem>,
+): SuiteReport['scope'] {
+  return {
+    id: config.scope.id,
+    kind: config.scope.kind,
+    collectionProcedure: config.scope.collectionProcedure,
+    population: config.scope.population,
+    timeWindow: config.scope.timeWindow,
+    inputArtifact: {
+      type: 'jsonl',
+      digest: inputArtifact.digest,
+      declaredDigest: config.inputs.digest,
+      byteLength: inputArtifact.byteLength,
+      itemCount: inputArtifact.items.length,
+    },
+    coverage: {
+      expectedItems: config.scope.expectedItems,
+      observedItems: inputArtifact.items.length,
+    },
+    producerProvenance: {
+      datasetRevision: 'not_provided',
+      exposure: 'not_provided',
+      review: 'not_provided',
+    },
+  };
+}
+
+/**
+ * Load and verify every local v5 suite input before any candidate or evidence
+ * provider work starts. The returned snapshot is then consumed without
+ * reopening the input or manifest path.
+ */
+export async function preflightSuiteRelease(
+  config: SuiteConfig,
+): Promise<PreflightedSuiteRelease> {
   const inputArtifact = await loadInputArtifactWithSchema(
     config.inputs.path,
     suiteInputItemSchema,
@@ -368,6 +408,17 @@ export async function runSuiteRelease(
       }
     }
   }
+
+  return { inputArtifact, manifest, policy };
+}
+
+async function executePreflightedSuiteRelease(
+  config: SuiteConfig,
+  preflight: PreflightedSuiteRelease,
+  now: () => Date,
+  startedAt: string,
+): Promise<SuiteReport> {
+  const { inputArtifact, manifest, policy } = preflight;
 
   const executions = await mapPool(inputArtifact.items, config.concurrency, (item) =>
     executeCandidate(config, item));
@@ -429,29 +480,7 @@ export async function runSuiteRelease(
     schemaVersion: SUITE_REPORT_SCHEMA_VERSION,
     startedAt,
     finishedAt: now().toISOString(),
-    scope: {
-      id: config.scope.id,
-      kind: config.scope.kind,
-      collectionProcedure: config.scope.collectionProcedure,
-      population: config.scope.population,
-      timeWindow: config.scope.timeWindow,
-      inputArtifact: {
-        type: 'jsonl',
-        digest: inputArtifact.digest,
-        declaredDigest: config.inputs.digest,
-        byteLength: inputArtifact.byteLength,
-        itemCount: inputArtifact.items.length,
-      },
-      coverage: {
-        expectedItems: config.scope.expectedItems,
-        observedItems: inputArtifact.items.length,
-      },
-      producerProvenance: {
-        datasetRevision: 'not_provided',
-        exposure: 'not_provided',
-        review: 'not_provided',
-      },
-    },
+    scope: suiteReleaseScope(config, inputArtifact),
     trustPolicy: config.trustPolicy,
     manifest,
     policy,
@@ -486,4 +515,24 @@ export async function runSuiteRelease(
     ),
   };
   return reportV5Schema.parse(report);
+}
+
+/** Execute one already-preflighted v5 suite snapshot without reopening files. */
+export async function runPreflightedSuiteRelease(
+  config: SuiteConfig,
+  preflight: PreflightedSuiteRelease,
+  options: RunSuiteOptions = {},
+): Promise<SuiteReport> {
+  const now = options.now ?? (() => new Date());
+  return executePreflightedSuiteRelease(config, preflight, now, now().toISOString());
+}
+
+export async function runSuiteRelease(
+  config: SuiteConfig,
+  options: RunSuiteOptions = {},
+): Promise<SuiteReport> {
+  const now = options.now ?? (() => new Date());
+  const startedAt = now().toISOString();
+  const preflight = await preflightSuiteRelease(config);
+  return executePreflightedSuiteRelease(config, preflight, now, startedAt);
 }

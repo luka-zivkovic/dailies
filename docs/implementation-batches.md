@@ -1,6 +1,6 @@
 # Portfolio implementation batches
 
-Status: **independently audited through Coeval Batch 5B; Batch 5A contract and cross-runtime conformance complete; Coeval single-trial runtime complete; Dailies policy consumption pending**
+Status: **Batch 5 complete and independently audited: frozen cross-runtime contract, Coeval sealed single-trial runtime, and Dailies local policy consumer are current**
 
 Last reviewed: 2026-08-23
 
@@ -388,28 +388,31 @@ API or export surface. The frozen artifact contract also supports
 repeated-trial distributions without hiding variance in an unqualified mean,
 but the current producer runtime does not execute repeated trials.
 
-### Dailies (contract verification CURRENT; policy consumption TARGET)
+### Dailies (contract verification and local policy consumption CURRENT)
 
-Dailies currently vendors the frozen contract and adversarial corpus and
-independently verifies exact canonical bytes, identity bindings, digest,
-counts, metrics, intervals, trial distributions, and unknown-field behavior.
-No Dailies config, policy, report, runner, or CLI path yet consumes calibration
-evidence.
+Dailies vendors the frozen contract and adversarial corpus, independently
+verifies exact canonical bytes, identity bindings, digest, counts, metrics,
+intervals, trial distributions, and unknown-field behavior, and consumes
+explicitly configured local artifacts through additive config v6, policy v2,
+report v6, runner, and CLI paths. It performs no latest-artifact, network
+status, or private-ledger lookup.
 
-The future local-file calibration input must let customer policy require
-per-criterion metrics, support, confidence, coverage, and freshness for
-verified Coeval evidence. Calibration uses a separate Dailies calibration
-scope and does not upgrade the candidate execution scope: assessment receipt
-v1 candidate `producerProvenance` remains `not_provided`. Missing, stale,
-swapped, or unverifiable required calibration is `inconclusive` for that
-required criterion. Thresholds and release consequences remain in Dailies.
+Customer policy can require per-criterion metrics, support, confidence,
+coverage, freshness, provider identity strength, and every repeated trial to
+meet its checks. Calibration uses a separate Dailies calibration scope and
+does not upgrade the candidate execution scope: assessment receipt v1
+candidate `producerProvenance` remains `not_provided`. A configured required
+integrity failure is `inconclusive` before candidate/provider execution;
+missing, stale, or insufficient calibration cannot admit that criterion's
+block, while an unrelated complete calibrated block may still win under the
+accepted precedence. Thresholds and release consequences remain in Dailies.
 
-The byte-level producer/consumer conformance gate is closed: both runtimes pass
-the shared positive and adversarial fixtures for revision, exposure, coverage,
-metric, and evaluator identity. The Batch 5 product exit gate remains open
-until the Dailies policy consumer proves that the same calibration evidence
-supports different customer policies and that missing, stale, swapped, or
-unverifiable required evidence cannot promote a candidate.
+The Batch 5 product exit gate is closed. Both runtimes pass the shared positive
+and adversarial fixtures for revision, exposure, coverage, metric, and
+evaluator identity. Dailies proves that identical calibration evidence can
+produce different valid results under different customer policies, that every
+trial is evaluated without pooling, and that missing, stale, swapped, future,
+or unverifiable required evidence cannot falsely promote a candidate.
 
 ## Batch 6 — Analyze workflow and comparative evidence
 

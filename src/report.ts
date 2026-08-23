@@ -21,6 +21,11 @@ import {
   SUITE_REPORT_SCHEMA_VERSION,
   type SuiteReport,
 } from './report-v5.js';
+import {
+  CALIBRATION_REPORT_SCHEMA_VERSION,
+  reportV6Schema,
+  type CalibrationSuiteReport,
+} from './report-v6.js';
 
 export const LEGACY_REPORT_SCHEMA_VERSION = 3;
 export const REPORT_SCHEMA_VERSION = 4;
@@ -762,9 +767,10 @@ export type Decision = Report['decision'];
 export type ReportInspection =
   | { schemaVersion: 3; readOnly: true; report: ReportV3 }
   | { schemaVersion: 4; readOnly: false; report: Report }
-  | { schemaVersion: 5; readOnly: false; report: SuiteReport };
+  | { schemaVersion: 5; readOnly: false; report: SuiteReport }
+  | { schemaVersion: 6; readOnly: false; report: CalibrationSuiteReport };
 
-/** Parse v3, v4, or v5 reports without normalizing or upgrading versions. */
+/** Parse v3 through v6 reports without normalizing or upgrading versions. */
 export function parseReportForInspection(raw: unknown): ReportInspection {
   if (typeof raw !== 'object' || raw === null || !('schemaVersion' in raw)) {
     throw new Error('unsupported report schema version: missing');
@@ -781,6 +787,17 @@ export function parseReportForInspection(raw: unknown): ReportInspection {
   if (version === SUITE_REPORT_SCHEMA_VERSION) {
     reportV5Schema.parse(raw);
     return { schemaVersion: 5, readOnly: false, report: raw as SuiteReport };
+  }
+  if (version === CALIBRATION_REPORT_SCHEMA_VERSION) {
+    try {
+      const report = reportV6Schema.parse(raw);
+      return { schemaVersion: 6, readOnly: false, report };
+    } catch (error) {
+      throw new Error(
+        `invalid report schema version 6: ${error instanceof Error ? error.message : String(error)}`,
+        { cause: error },
+      );
+    }
   }
   throw new Error(`unsupported report schema version: ${String(version)}`);
 }

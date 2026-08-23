@@ -104,8 +104,12 @@ policy-free suite manifest and separate receipt-v1 evidence, preserves
 criterion/suite/scope/trust identity, and applies explicit mandatory,
 blocking, advisory, or same-unit compensatory customer policy. Generic HTTP
 evidence remains visibly self-reported and inadmissible without a reasoned
-customer override. Repeated-trial reduction, staged rollout, and hosted
-control-plane ideas remain demand-gated.
+customer override. Additive schema v6 consumes exact local
+`coeval/binary-calibration/v1` artifacts under customer policy v2, preserves a
+separate sealed calibration scope, evaluates repeated calibration trials
+without pooling, and emits a canonical calibration-aware report while keeping
+receipt v1 unchanged. Repeated candidate-assessment execution, staged rollout,
+and hosted control-plane ideas remain demand-gated.
 
 ## Product principles
 
