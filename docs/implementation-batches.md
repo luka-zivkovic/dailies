@@ -1,6 +1,6 @@
 # Portfolio implementation batches
 
-Status: **Batch 6 underway: Coeval Analyze contract accepted; Dailies invariant gate and neutral blind-contract foundation complete; comparative execution remains gated**
+Status: **Batch 6 underway: Coeval finite-frame sampling and governed coding are implemented; Dailies invariant gate and neutral blind-contract foundation are complete; comparative execution remains gated**
 
 Last reviewed: 2026-08-23
 
@@ -418,7 +418,7 @@ or unverifiable required evidence cannot falsely promote a candidate.
 
 ### Coeval
 
-Contract status: **accepted in Coeval ADR-0010; runtime pending**.
+Contract status: **accepted in Coeval ADR-0010; finite population/draw and governed coding/taxonomy runtime implemented; promotion, candidate lifecycle, and measurement pending**.
 
 Complete the non-clustering Analyze → Measure loop:
 
