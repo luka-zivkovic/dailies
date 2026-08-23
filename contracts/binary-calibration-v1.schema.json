@@ -1,0 +1,683 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://coeval.dev/contracts/binary-calibration-v1.schema.json",
+  "title": "Coeval binary calibration artifact v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "schemaVersion",
+    "canonicalizationVersion",
+    "artifactId",
+    "calibrationRunId",
+    "projectId",
+    "lineage",
+    "status",
+    "incompleteReasons",
+    "createdAt",
+    "startedAt",
+    "completedAt",
+    "criterion",
+    "evaluator",
+    "suiteBinding",
+    "truth",
+    "exposure",
+    "execution",
+    "positiveClass",
+    "errorDirectionDefinitions",
+    "metricDefinitionVersion",
+    "intervalDefinitionVersion",
+    "trialPlan",
+    "truthSupport",
+    "privateLedger",
+    "trials",
+    "evidenceDigest"
+  ],
+  "properties": {
+    "contract": { "const": "coeval/binary-calibration/v1" },
+    "schemaVersion": { "const": 1 },
+    "canonicalizationVersion": { "const": "coeval-canonical-json/v1" },
+    "artifactId": { "$ref": "#/$defs/nonEmptyString" },
+    "calibrationRunId": { "$ref": "#/$defs/nonEmptyString" },
+    "projectId": { "$ref": "#/$defs/nonEmptyString" },
+    "lineage": { "$ref": "#/$defs/lineage" },
+    "status": { "enum": ["complete", "incomplete"] },
+    "incompleteReasons": {
+      "type": "array",
+      "maxItems": 3,
+      "items": { "$ref": "#/$defs/incompleteReason" }
+    },
+    "createdAt": { "$ref": "#/$defs/utcMilliseconds" },
+    "startedAt": { "$ref": "#/$defs/utcMilliseconds" },
+    "completedAt": { "$ref": "#/$defs/utcMilliseconds" },
+    "criterion": { "$ref": "#/$defs/criterion" },
+    "evaluator": { "$ref": "#/$defs/evaluator" },
+    "suiteBinding": {
+      "oneOf": [
+        { "type": "null" },
+        { "$ref": "#/$defs/suiteBinding" }
+      ]
+    },
+    "truth": { "$ref": "#/$defs/truth" },
+    "exposure": { "$ref": "#/$defs/exposure" },
+    "execution": { "$ref": "#/$defs/execution" },
+    "positiveClass": { "enum": ["pass", "fail"] },
+    "errorDirectionDefinitions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["falsePass", "falseFail"],
+      "properties": {
+        "falsePass": { "const": "evaluator_pass_when_truth_fail" },
+        "falseFail": { "const": "evaluator_fail_when_truth_pass" }
+      }
+    },
+    "metricDefinitionVersion": { "const": "binary-classification/v1" },
+    "intervalDefinitionVersion": { "const": "wilson-score/v1" },
+    "trialPlan": { "$ref": "#/$defs/trialPlan" },
+    "truthSupport": { "$ref": "#/$defs/truthSupport" },
+    "privateLedger": { "$ref": "#/$defs/privateLedger" },
+    "trials": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 10,
+      "items": { "$ref": "#/$defs/trial" }
+    },
+    "evidenceDigest": { "$ref": "#/$defs/sha256Digest" }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 4096,
+      "pattern": "^[^\\uD800-\\uDFFF]+$"
+    },
+    "sha256Digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "binary64Bits": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{16}$"
+    },
+    "utcMilliseconds": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}:\\d{2}\\.\\d{3}Z$"
+    },
+    "canonicalDecimal": {
+      "type": "string",
+      "maxLength": 32,
+      "pattern": "^(?:0|[1-9][0-9]*)(?:\\.[0-9]*[1-9])?$"
+    },
+    "safeInteger": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "count": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 5000
+    },
+    "positiveCount": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 5000
+    },
+    "metricComponent": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 10000
+    },
+    "incompleteReason": {
+      "enum": [
+        "trial_incomplete",
+        "completion_exposure_exposed",
+        "completion_exposure_ineligible"
+      ]
+    },
+    "lineage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["artifactRevision", "predecessorArtifactId", "correctionReason"],
+      "properties": {
+        "artifactRevision": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 9007199254740991
+        },
+        "predecessorArtifactId": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/nonEmptyString" }]
+        },
+        "correctionReason": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/nonEmptyString" }]
+        }
+      }
+    },
+    "criterion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["criterionId", "criterionVersionId", "criterionDigest"],
+      "properties": {
+        "criterionId": { "$ref": "#/$defs/nonEmptyString" },
+        "criterionVersionId": { "$ref": "#/$defs/nonEmptyString" },
+        "criterionDigest": { "$ref": "#/$defs/sha256Digest" }
+      }
+    },
+    "requestedModelBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "modelId",
+        "modelVersion",
+        "temperatureDecimal",
+        "topPDecimal",
+        "endpointKind",
+        "baseUrlDigest",
+        "requestedBindingDigest"
+      ],
+      "properties": {
+        "provider": { "$ref": "#/$defs/nonEmptyString" },
+        "modelId": { "$ref": "#/$defs/nonEmptyString" },
+        "modelVersion": { "$ref": "#/$defs/nonEmptyString" },
+        "temperatureDecimal": { "$ref": "#/$defs/canonicalDecimal" },
+        "topPDecimal": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/canonicalDecimal" }]
+        },
+        "endpointKind": { "enum": ["managed", "custom"] },
+        "baseUrlDigest": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/sha256Digest" }]
+        },
+        "requestedBindingDigest": { "$ref": "#/$defs/sha256Digest" }
+      }
+    },
+    "evaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "skillId",
+        "skillVersionId",
+        "skillDigest",
+        "outputContractDigest",
+        "requestedModelBinding"
+      ],
+      "properties": {
+        "skillId": { "$ref": "#/$defs/nonEmptyString" },
+        "skillVersionId": { "$ref": "#/$defs/nonEmptyString" },
+        "skillDigest": { "$ref": "#/$defs/sha256Digest" },
+        "outputContractDigest": { "$ref": "#/$defs/sha256Digest" },
+        "requestedModelBinding": { "$ref": "#/$defs/requestedModelBinding" }
+      }
+    },
+    "suiteBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["manifestId", "manifestDigest", "memberPosition"],
+      "properties": {
+        "manifestId": { "$ref": "#/$defs/nonEmptyString" },
+        "manifestDigest": { "$ref": "#/$defs/sha256Digest" },
+        "memberPosition": { "type": "integer", "minimum": 0, "maximum": 99 }
+      }
+    },
+    "truthOrigin": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "governedReviewBatchId",
+        "governedReviewBatchDigest",
+        "reviewInstructionVersionId",
+        "reviewInstructionDigest",
+        "populationId",
+        "populationDigest",
+        "drawDigest"
+      ],
+      "properties": {
+        "governedReviewBatchId": { "$ref": "#/$defs/nonEmptyString" },
+        "governedReviewBatchDigest": { "$ref": "#/$defs/sha256Digest" },
+        "reviewInstructionVersionId": { "$ref": "#/$defs/nonEmptyString" },
+        "reviewInstructionDigest": { "$ref": "#/$defs/sha256Digest" },
+        "populationId": { "$ref": "#/$defs/nonEmptyString" },
+        "populationDigest": { "$ref": "#/$defs/sha256Digest" },
+        "drawDigest": { "$ref": "#/$defs/sha256Digest" }
+      }
+    },
+    "truth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "datasetRevisionId",
+        "revisionDigest",
+        "contentDigest",
+        "itemCount",
+        "role",
+        "sourceKind",
+        "provenanceLevel",
+        "semanticLeakageDetection",
+        "representativeOfPopulationId",
+        "representativeIneligibleReasons",
+        "selectionMethod",
+        "origin"
+      ],
+      "properties": {
+        "datasetRevisionId": { "$ref": "#/$defs/nonEmptyString" },
+        "revisionDigest": { "$ref": "#/$defs/sha256Digest" },
+        "contentDigest": { "$ref": "#/$defs/sha256Digest" },
+        "itemCount": { "$ref": "#/$defs/positiveCount" },
+        "role": { "const": "sealed_validation" },
+        "sourceKind": { "const": "sealed_intake" },
+        "provenanceLevel": { "const": "governed_blind" },
+        "semanticLeakageDetection": { "const": "unsupported" },
+        "representativeOfPopulationId": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/nonEmptyString" }]
+        },
+        "representativeIneligibleReasons": {
+          "type": "array",
+          "maxItems": 11,
+          "items": {
+            "enum": [
+              "selection_method_not_eligible",
+              "population_frame_incomplete",
+              "collection_provenance_unverified",
+              "draw_not_server_executed",
+              "draw_not_reproducible",
+              "fixed_budget_mismatch",
+              "strata_incomplete",
+              "review_coverage_incomplete",
+              "deferred_assignments",
+              "cannot_determine_present",
+              "unresolved_items"
+            ]
+          }
+        },
+        "selectionMethod": {
+          "enum": [
+            "simple_random",
+            "systematic",
+            "stratified_random",
+            "convenience",
+            "uncertainty",
+            "failure_hunting",
+            "manual"
+          ]
+        },
+        "origin": { "$ref": "#/$defs/truthOrigin" }
+      }
+    },
+    "exposureSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "snapshotDigest", "eventId", "recordedAt"],
+      "properties": {
+        "state": { "enum": ["protected", "exposed"] },
+        "snapshotDigest": { "$ref": "#/$defs/sha256Digest" },
+        "eventId": { "$ref": "#/$defs/nonEmptyString" },
+        "recordedAt": { "$ref": "#/$defs/utcMilliseconds" }
+      }
+    },
+    "completionEligibility": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["result", "reasons"],
+      "properties": {
+        "result": { "enum": ["eligible", "ineligible"] },
+        "reasons": {
+          "type": "array",
+          "maxItems": 4,
+          "items": {
+            "enum": [
+              "authorization_snapshot_changed",
+              "development_exposure_detected",
+              "evaluator_reuse_ineligible",
+              "exposure_state_unknown"
+            ]
+          }
+        }
+      }
+    },
+    "completionExposureSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "snapshotDigest", "eventId", "recordedAt", "eligibility"],
+      "properties": {
+        "state": { "enum": ["protected", "exposed"] },
+        "snapshotDigest": { "$ref": "#/$defs/sha256Digest" },
+        "eventId": { "$ref": "#/$defs/nonEmptyString" },
+        "recordedAt": { "$ref": "#/$defs/utcMilliseconds" },
+        "eligibility": { "$ref": "#/$defs/completionEligibility" }
+      }
+    },
+    "exposure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authorization", "completion"],
+      "properties": {
+        "authorization": {
+          "allOf": [
+            { "$ref": "#/$defs/exposureSnapshot" },
+            {
+              "type": "object",
+              "properties": { "state": { "const": "protected" } }
+            }
+          ]
+        },
+        "completion": { "$ref": "#/$defs/completionExposureSnapshot" }
+      }
+    },
+    "providerDataHandling": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["executionEnvironment", "policyId", "policyDigest", "payloadTransmission"],
+      "properties": {
+        "executionEnvironment": {
+          "enum": ["external_provider", "self_hosted_provider", "local_provider"]
+        },
+        "policyId": { "$ref": "#/$defs/nonEmptyString" },
+        "policyDigest": { "$ref": "#/$defs/sha256Digest" },
+        "payloadTransmission": { "const": "sealed_payload_to_pinned_provider" }
+      }
+    },
+    "execution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["definitionVersion", "providerDataHandling"],
+      "properties": {
+        "definitionVersion": { "const": "sealed-binary-calibration-execution/v1" },
+        "providerDataHandling": { "$ref": "#/$defs/providerDataHandling" }
+      }
+    },
+    "trialPlan": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "trialsPerItem"],
+          "properties": {
+            "kind": { "const": "single" },
+            "trialsPerItem": { "const": 1 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["kind", "trialsPerItem"],
+          "properties": {
+            "kind": { "const": "independent_repetitions" },
+            "trialsPerItem": { "type": "integer", "minimum": 2, "maximum": 10 }
+          }
+        }
+      ]
+    },
+    "truthSupport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "pass", "fail"],
+      "properties": {
+        "total": { "$ref": "#/$defs/positiveCount" },
+        "pass": { "$ref": "#/$defs/count" },
+        "fail": { "$ref": "#/$defs/count" }
+      }
+    },
+    "privateLedger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract", "commitmentDigest"],
+      "properties": {
+        "contract": { "const": "coeval/binary-calibration-private-ledger/v1" },
+        "commitmentDigest": { "$ref": "#/$defs/sha256Digest" }
+      }
+    },
+    "outcomeCounts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["classified", "abstained", "errored", "unevaluated"],
+      "properties": {
+        "classified": { "$ref": "#/$defs/count" },
+        "abstained": { "$ref": "#/$defs/count" },
+        "errored": { "$ref": "#/$defs/count" },
+        "unevaluated": { "$ref": "#/$defs/count" }
+      }
+    },
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "count"],
+      "properties": {
+        "code": {
+          "enum": [
+            "provider_unavailable",
+            "provider_authentication",
+            "provider_rate_limit",
+            "provider_timeout",
+            "provider_transport",
+            "provider_protocol",
+            "invalid_evaluator_output",
+            "outcome_unknown",
+            "internal"
+          ]
+        },
+        "count": { "$ref": "#/$defs/positiveCount" }
+      }
+    },
+    "outcomes": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "planned",
+        "classified",
+        "abstained",
+        "errored",
+        "unevaluated",
+        "providerCalls",
+        "byTruth",
+        "errors"
+      ],
+      "properties": {
+        "planned": { "$ref": "#/$defs/positiveCount" },
+        "classified": { "$ref": "#/$defs/count" },
+        "abstained": { "$ref": "#/$defs/count" },
+        "errored": { "$ref": "#/$defs/count" },
+        "unevaluated": { "$ref": "#/$defs/count" },
+        "providerCalls": { "$ref": "#/$defs/safeInteger" },
+        "byTruth": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["pass", "fail"],
+          "properties": {
+            "pass": { "$ref": "#/$defs/outcomeCounts" },
+            "fail": { "$ref": "#/$defs/outcomeCounts" }
+          }
+        },
+        "errors": {
+          "type": "array",
+          "maxItems": 9,
+          "items": { "$ref": "#/$defs/error" }
+        }
+      }
+    },
+    "matrix": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "truthPassEvaluatorPass",
+        "truthPassEvaluatorFail",
+        "truthFailEvaluatorPass",
+        "truthFailEvaluatorFail"
+      ],
+      "properties": {
+        "truthPassEvaluatorPass": { "$ref": "#/$defs/count" },
+        "truthPassEvaluatorFail": { "$ref": "#/$defs/count" },
+        "truthFailEvaluatorPass": { "$ref": "#/$defs/count" },
+        "truthFailEvaluatorFail": { "$ref": "#/$defs/count" }
+      }
+    },
+    "definedWilsonRate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "numerator", "denominator", "interval"],
+      "properties": {
+        "state": { "const": "defined" },
+        "numerator": { "$ref": "#/$defs/count" },
+        "denominator": { "$ref": "#/$defs/positiveCount" },
+        "interval": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["method", "confidenceBasisPoints", "lowerBinary64", "upperBinary64"],
+          "properties": {
+            "method": { "const": "wilson-score/v1" },
+            "confidenceBasisPoints": { "const": 9500 },
+            "lowerBinary64": { "$ref": "#/$defs/binary64Bits" },
+            "upperBinary64": { "$ref": "#/$defs/binary64Bits" }
+          }
+        }
+      }
+    },
+    "undefinedWilsonRate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "numerator", "denominator", "undefinedReason", "interval"],
+      "properties": {
+        "state": { "const": "undefined" },
+        "numerator": { "const": 0 },
+        "denominator": { "const": 0 },
+        "undefinedReason": { "const": "zero_denominator" },
+        "interval": { "type": "null" }
+      }
+    },
+    "wilsonRate": {
+      "oneOf": [
+        { "$ref": "#/$defs/definedWilsonRate" },
+        { "$ref": "#/$defs/undefinedWilsonRate" }
+      ]
+    },
+    "definedExactRate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "numerator", "denominator"],
+      "properties": {
+        "state": { "const": "defined" },
+        "numerator": { "$ref": "#/$defs/metricComponent" },
+        "denominator": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 10000
+        }
+      }
+    },
+    "undefinedExactRate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["state", "numerator", "denominator", "undefinedReason"],
+      "properties": {
+        "state": { "const": "undefined" },
+        "numerator": { "$ref": "#/$defs/metricComponent" },
+        "denominator": { "$ref": "#/$defs/metricComponent" },
+        "undefinedReason": { "enum": ["zero_denominator", "no_positive_truth_support"] }
+      }
+    },
+    "exactRate": {
+      "oneOf": [
+        { "$ref": "#/$defs/definedExactRate" },
+        { "$ref": "#/$defs/undefinedExactRate" }
+      ]
+    },
+    "metrics": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "accuracy",
+        "truthPassRecall",
+        "truthFailRecall",
+        "positiveClassPrecision",
+        "positiveClassRecall",
+        "positiveClassF1",
+        "classifiedCoverage"
+      ],
+      "properties": {
+        "accuracy": { "$ref": "#/$defs/wilsonRate" },
+        "truthPassRecall": { "$ref": "#/$defs/wilsonRate" },
+        "truthFailRecall": { "$ref": "#/$defs/wilsonRate" },
+        "positiveClassPrecision": { "$ref": "#/$defs/wilsonRate" },
+        "positiveClassRecall": { "$ref": "#/$defs/wilsonRate" },
+        "positiveClassF1": { "$ref": "#/$defs/exactRate" },
+        "classifiedCoverage": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["overall", "truthPass", "truthFail"],
+          "properties": {
+            "overall": { "$ref": "#/$defs/wilsonRate" },
+            "truthPass": { "$ref": "#/$defs/wilsonRate" },
+            "truthFail": { "$ref": "#/$defs/wilsonRate" }
+          }
+        }
+      }
+    },
+    "providerIdentityGroup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "observedModel",
+        "observedVersion",
+        "systemFingerprint",
+        "identityStrength",
+        "observationCount"
+      ],
+      "properties": {
+        "provider": { "$ref": "#/$defs/nonEmptyString" },
+        "observedModel": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/nonEmptyString" }]
+        },
+        "observedVersion": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/nonEmptyString" }]
+        },
+        "systemFingerprint": {
+          "oneOf": [{ "type": "null" }, { "$ref": "#/$defs/nonEmptyString" }]
+        },
+        "identityStrength": {
+          "enum": [
+            "observed_version",
+            "observed_fingerprint",
+            "observed_model",
+            "requested_only"
+          ]
+        },
+        "observationCount": { "$ref": "#/$defs/positiveCount" }
+      }
+    },
+    "trial": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "trialIndex",
+        "status",
+        "outcomes",
+        "confusionMatrix",
+        "errorDirections",
+        "metrics",
+        "providerIdentityGroups"
+      ],
+      "properties": {
+        "trialIndex": { "type": "integer", "minimum": 0, "maximum": 9 },
+        "status": { "enum": ["complete", "incomplete"] },
+        "outcomes": { "$ref": "#/$defs/outcomes" },
+        "confusionMatrix": { "$ref": "#/$defs/matrix" },
+        "errorDirections": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["falsePass", "falseFail"],
+          "properties": {
+            "falsePass": { "$ref": "#/$defs/count" },
+            "falseFail": { "$ref": "#/$defs/count" }
+          }
+        },
+        "metrics": { "$ref": "#/$defs/metrics" },
+        "providerIdentityGroups": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 5000,
+          "items": { "$ref": "#/$defs/providerIdentityGroup" }
+        }
+      }
+    }
+  }
+}

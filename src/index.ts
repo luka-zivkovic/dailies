@@ -34,6 +34,25 @@ export {
   type SuiteProviderConfig,
 } from './config-v5.js';
 export {
+  binaryCalibrationArtifactByteDigest,
+  binaryCalibrationArtifactSchema,
+  binaryCalibrationEvidenceDigest,
+  BinaryCalibrationIntegrityError,
+  compareBinary64ToCanonicalDecimal,
+  compareExactRationals,
+  decodeNonnegativeBinary64Rational,
+  expectedBinaryCalibrationIdentity,
+  parseCanonicalBinaryCalibrationBytes,
+  parseCanonicalDecimalRational,
+  verifyBinaryCalibrationArtifact,
+  wilsonScoreBinary64,
+  type BinaryCalibrationArtifact,
+  type BinaryCalibrationIntegrityCode,
+  type BinaryCalibrationTrial,
+  type ExactRational,
+  type ExpectedBinaryCalibrationIdentity,
+} from './binary-calibration.js';
+export {
   canonicalJson,
   COEVAL_CLIENT_ITEM_ID_MAX_LENGTH,
   coevalAssessmentReceiptSchema,

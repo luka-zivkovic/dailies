@@ -1,0 +1,1400 @@
+{
+  "contract": "coeval/binary-calibration/v1",
+  "baseFixture": "binary-calibration-v1.complete.json",
+  "expectedIdentityByFixture": {
+    "binary-calibration-v1.complete.json": {
+      "artifactId": "calibration-artifact-complete-1",
+      "calibrationRunId": "calibration-run-complete-1",
+      "projectId": "project-fixture",
+      "criterionId": "criterion-safety",
+      "criterionVersionId": "criterion-version-7",
+      "criterionDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "skillId": "skill-safety",
+      "skillVersionId": "skill-version-11",
+      "skillDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "outputContractDigest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "requestedBindingDigest": "sha256:76555ab18b9000590c3d969580d2ef96846e9efbd26759982e87f128894cc312",
+      "datasetRevisionId": "dataset-revision-sealed-4",
+      "revisionDigest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+      "contentDigest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+      "itemCount": 2,
+      "governedReviewBatchId": "review-batch-4",
+      "governedReviewBatchDigest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+      "reviewInstructionVersionId": "review-instruction-3",
+      "reviewInstructionDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+      "populationId": "population-production-2026q3",
+      "populationDigest": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+      "drawDigest": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+      "representativeOfPopulationId": "population-production-2026q3",
+      "selectionMethod": "simple_random",
+      "exposureAuthorizationSnapshotDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "exposureAuthorizationEventId": "exposure-auth-1",
+      "exposureCompletionSnapshotDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "exposureCompletionEventId": "exposure-complete-1",
+      "exposureCompletionState": "protected",
+      "exposureCompletionEligibility": "eligible",
+      "executionEnvironment": "external_provider",
+      "providerDataHandlingPolicyId": "provider-policy-2",
+      "providerDataHandlingPolicyDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "positiveClass": "pass",
+      "trialPlanKind": "single",
+      "trialsPerItem": 1,
+      "suiteManifestId": "suite-manifest-2",
+      "suiteManifestDigest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
+      "suiteMemberPosition": 0
+    },
+    "binary-calibration-v1.repeated.json": {
+      "artifactId": "calibration-artifact-repeated-1",
+      "calibrationRunId": "calibration-run-repeated-1",
+      "projectId": "project-fixture",
+      "criterionId": "criterion-safety",
+      "criterionVersionId": "criterion-version-7",
+      "criterionDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "skillId": "skill-safety",
+      "skillVersionId": "skill-version-11",
+      "skillDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "outputContractDigest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "requestedBindingDigest": "sha256:76555ab18b9000590c3d969580d2ef96846e9efbd26759982e87f128894cc312",
+      "datasetRevisionId": "dataset-revision-sealed-4",
+      "revisionDigest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+      "contentDigest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+      "itemCount": 2,
+      "governedReviewBatchId": "review-batch-4",
+      "governedReviewBatchDigest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+      "reviewInstructionVersionId": "review-instruction-3",
+      "reviewInstructionDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+      "populationId": "population-production-2026q3",
+      "populationDigest": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+      "drawDigest": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+      "representativeOfPopulationId": "population-production-2026q3",
+      "selectionMethod": "simple_random",
+      "exposureAuthorizationSnapshotDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "exposureAuthorizationEventId": "exposure-auth-1",
+      "exposureCompletionSnapshotDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "exposureCompletionEventId": "exposure-complete-1",
+      "exposureCompletionState": "protected",
+      "exposureCompletionEligibility": "eligible",
+      "executionEnvironment": "external_provider",
+      "providerDataHandlingPolicyId": "provider-policy-2",
+      "providerDataHandlingPolicyDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "positiveClass": "fail",
+      "trialPlanKind": "independent_repetitions",
+      "trialsPerItem": 2,
+      "suiteManifestId": null,
+      "suiteManifestDigest": null,
+      "suiteMemberPosition": null
+    },
+    "binary-calibration-v1.incomplete.json": {
+      "artifactId": "calibration-artifact-incomplete-1",
+      "calibrationRunId": "calibration-run-incomplete-1",
+      "projectId": "project-fixture",
+      "criterionId": "criterion-safety",
+      "criterionVersionId": "criterion-version-7",
+      "criterionDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "skillId": "skill-safety",
+      "skillVersionId": "skill-version-11",
+      "skillDigest": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+      "outputContractDigest": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+      "requestedBindingDigest": "sha256:76555ab18b9000590c3d969580d2ef96846e9efbd26759982e87f128894cc312",
+      "datasetRevisionId": "dataset-revision-sealed-4",
+      "revisionDigest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
+      "contentDigest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
+      "itemCount": 2,
+      "governedReviewBatchId": "review-batch-4",
+      "governedReviewBatchDigest": "sha256:6666666666666666666666666666666666666666666666666666666666666666",
+      "reviewInstructionVersionId": "review-instruction-3",
+      "reviewInstructionDigest": "sha256:7777777777777777777777777777777777777777777777777777777777777777",
+      "populationId": "population-production-2026q3",
+      "populationDigest": "sha256:8888888888888888888888888888888888888888888888888888888888888888",
+      "drawDigest": "sha256:9999999999999999999999999999999999999999999999999999999999999999",
+      "representativeOfPopulationId": "population-production-2026q3",
+      "selectionMethod": "simple_random",
+      "exposureAuthorizationSnapshotDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "exposureAuthorizationEventId": "exposure-auth-1",
+      "exposureCompletionSnapshotDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+      "exposureCompletionEventId": "exposure-complete-1",
+      "exposureCompletionState": "protected",
+      "exposureCompletionEligibility": "eligible",
+      "executionEnvironment": "external_provider",
+      "providerDataHandlingPolicyId": "provider-policy-2",
+      "providerDataHandlingPolicyDigest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+      "positiveClass": "pass",
+      "trialPlanKind": "single",
+      "trialsPerItem": 1,
+      "suiteManifestId": null,
+      "suiteManifestDigest": null,
+      "suiteMemberPosition": null
+    }
+  },
+  "cases": [
+    {
+      "name": "positive-control-with-explicit-abstention",
+      "structural": "accept",
+      "semantic": "accept",
+      "mutations": []
+    },
+    {
+      "name": "unknown-root-policy-field",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "add",
+          "path": "/releaseThreshold",
+          "value": "0.95"
+        }
+      ]
+    },
+    {
+      "name": "unknown-observation-commitment-field",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "add",
+          "path": "/trials/0/providerIdentityGroups/0/observationDigest",
+          "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    {
+      "name": "unsupported-schema-version",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/schemaVersion",
+          "value": 2
+        }
+      ]
+    },
+    {
+      "name": "fractional-count",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/outcomes/classified",
+          "value": 0.5
+        }
+      ]
+    },
+    {
+      "name": "unsafe-provider-call-count",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/outcomes/providerCalls",
+          "value": 9007199254740992
+        }
+      ]
+    },
+    {
+      "name": "f1-component-over-contract-cap",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/metrics/positiveClassF1/numerator",
+          "value": 10001
+        }
+      ]
+    },
+    {
+      "name": "malformed-binary64-bits",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/metrics/accuracy/interval/lowerBinary64",
+          "value": "0x3fca70353b21776f"
+        }
+      ]
+    },
+    {
+      "name": "tampered-evidence-digest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "evidenceDigest mismatch",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evidenceDigest",
+          "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    {
+      "name": "outcome-partition-does-not-conserve",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "outcomes do not conserve",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/outcomes/abstained",
+          "value": 0
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "matrix-does-not-conserve",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "classified count does not match matrix row",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/confusionMatrix/truthPassEvaluatorPass",
+          "value": 0
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "tampered-wilson-bound",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "metrics or Wilson intervals",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/metrics/accuracy/interval/lowerBinary64",
+          "value": "0000000000000000"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "negative-wilson-bound-bits",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "metrics or Wilson intervals",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/metrics/accuracy/interval/lowerBinary64",
+          "value": "bff0000000000000"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "nan-wilson-bound-bits",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "metrics or Wilson intervals",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/metrics/accuracy/interval/lowerBinary64",
+          "value": "7ff8000000000000"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "provider-observations-do-not-conserve-planned",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "do not conserve planned observations",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/providerIdentityGroups/0/observationCount",
+          "value": 1
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "provider-call-count-below-logical-minimum",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "below classified + abstained + outcome_unknown",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/outcomes/providerCalls",
+          "value": 1
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "provider-strength-not-derived",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "provider identity strength must be",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/providerIdentityGroups/0/identityStrength",
+          "value": "requested_only"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "provider-group-requested-provider-swap",
+      "baseFixture": "binary-calibration-v1.incomplete.json",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "does not match the requested provider",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/providerIdentityGroups/0/provider",
+          "value": "other-provider"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "invalid-calendar-timestamp",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "not an exact calendar timestamp",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/completedAt",
+          "value": "2026-02-30T12:00:02.000Z"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "lifecycle-out-of-order",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "not in lifecycle order",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/createdAt",
+          "value": "2026-08-23T11:59:59.000Z"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "representative-claim-with-ineligible-reason",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "cannot name ineligible reasons",
+      "mutations": [
+        {
+          "op": "add",
+          "path": "/truth/representativeIneligibleReasons/0",
+          "value": "selection_method_not_eligible"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "eligible-completion-exposed",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "eligible completion exposure must be protected",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/exposure/completion/state",
+          "value": "exposed"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "incomplete-reasons-not-derived",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "incompleteReasons mismatch",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/status",
+          "value": "incomplete"
+        },
+        {
+          "op": "add",
+          "path": "/incompleteReasons/0",
+          "value": "trial_incomplete"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "positive-class-fail-repeated-control",
+      "baseFixture": "binary-calibration-v1.repeated.json",
+      "structural": "accept",
+      "semantic": "accept",
+      "mutations": []
+    },
+    {
+      "name": "valid-nonrepresentative-control",
+      "structural": "accept",
+      "semantic": "accept",
+      "expectedOverrides": {
+        "representativeOfPopulationId": null,
+        "selectionMethod": "convenience"
+      },
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/truth/representativeOfPopulationId",
+          "value": null
+        },
+        {
+          "op": "add",
+          "path": "/truth/representativeIneligibleReasons/0",
+          "value": "selection_method_not_eligible"
+        },
+        {
+          "op": "replace",
+          "path": "/truth/selectionMethod",
+          "value": "convenience"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "astral-string-4096-code-point-boundary",
+      "structural": "accept",
+      "semantic": "accept",
+      "expectedOverrides": {
+        "artifactId": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"
+      },
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/artifactId",
+          "value": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "astral-string-4097-code-points",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/artifactId",
+          "value": "😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀😀"
+        }
+      ]
+    },
+    {
+      "name": "positive-class-swap-with-stale-metrics",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "metrics or Wilson intervals",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/positiveClass",
+          "value": "fail"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "repeated-trial-plan-count-mismatch",
+      "baseFixture": "binary-calibration-v1.repeated.json",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "trial coverage does not match",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trialPlan/trialsPerItem",
+          "value": 3
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "repeated-trials-reordered",
+      "baseFixture": "binary-calibration-v1.repeated.json",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "not ordered by contiguous trialIndex",
+      "mutations": [
+        {
+          "op": "reverse",
+          "path": "/trials"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "repeated-trial-duplicated",
+      "baseFixture": "binary-calibration-v1.repeated.json",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "not ordered by contiguous trialIndex",
+      "mutations": [
+        {
+          "op": "copy",
+          "from": "/trials/0",
+          "path": "/trials/1"
+        },
+        {
+          "op": "remove",
+          "path": "/trials/2"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "provider-groups-reordered",
+      "baseFixture": "binary-calibration-v1.repeated.json",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "provider identity groups are not in canonical order",
+      "mutations": [
+        {
+          "op": "reverse",
+          "path": "/trials/1/providerIdentityGroups"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "provider-group-duplicated",
+      "baseFixture": "binary-calibration-v1.repeated.json",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "duplicate identity",
+      "mutations": [
+        {
+          "op": "copy",
+          "from": "/trials/1/providerIdentityGroups/0",
+          "path": "/trials/1/providerIdentityGroups/1"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "errors-not-sorted",
+      "baseFixture": "binary-calibration-v1.incomplete.json",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "error breakdown is not ordered",
+      "mutations": [
+        {
+          "op": "add",
+          "path": "/trials/0/outcomes/errors/1",
+          "value": {
+            "code": "internal",
+            "count": 1
+          }
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "error-code-duplicated",
+      "baseFixture": "binary-calibration-v1.incomplete.json",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "duplicate codes",
+      "mutations": [
+        {
+          "op": "copy",
+          "from": "/trials/0/outcomes/errors/0",
+          "path": "/trials/0/outcomes/errors/1"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "truth-item-count-mismatch",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "truth support must equal",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/truth/itemCount",
+          "value": 3
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "truth-support-total-mismatch",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "truth support must equal",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/truthSupport/total",
+          "value": 3
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "valid-correction-lineage-control",
+      "structural": "accept",
+      "semantic": "accept",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/lineage/artifactRevision",
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/lineage/predecessorArtifactId",
+          "value": "calibration-artifact-complete-0"
+        },
+        {
+          "op": "replace",
+          "path": "/lineage/correctionReason",
+          "value": "Corrected aggregate transcription."
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "root-lineage-cannot-name-predecessor",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "root binary calibration artifact cannot name correction lineage",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/lineage/predecessorArtifactId",
+          "value": "other-artifact"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "correction-lineage-requires-predecessor",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "corrected binary calibration artifact must name predecessor",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/lineage/artifactRevision",
+          "value": 2
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "managed-endpoint-cannot-have-base-url",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "custom requested model bindings require exactly one baseUrlDigest",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/requestedModelBinding/baseUrlDigest",
+          "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "custom-endpoint-requires-base-url",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "custom requested model bindings require exactly one baseUrlDigest",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/requestedModelBinding/endpointKind",
+          "value": "custom"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "temperature-noncanonical-decimal",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/requestedModelBinding/temperatureDecimal",
+          "value": "0.0"
+        }
+      ]
+    },
+    {
+      "name": "temperature-exponent-forbidden",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/requestedModelBinding/temperatureDecimal",
+          "value": "1e-1"
+        }
+      ]
+    },
+    {
+      "name": "temperature-out-of-range",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "temperatureDecimal is outside its allowed range",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/requestedModelBinding/temperatureDecimal",
+          "value": "2.1"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "top-p-out-of-range",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "topPDecimal is outside its allowed range",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/requestedModelBinding/topPDecimal",
+          "value": "1.1"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "timestamp-offset-forbidden",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/createdAt",
+          "value": "2026-08-23T14:00:04.000+02:00"
+        }
+      ]
+    },
+    {
+      "name": "timestamp-milliseconds-required",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/createdAt",
+          "value": "2026-08-23T12:00:04Z"
+        }
+      ]
+    },
+    {
+      "name": "timestamp-extra-fraction-forbidden",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/createdAt",
+          "value": "2026-08-23T12:00:04.0000Z"
+        }
+      ]
+    },
+    {
+      "name": "lone-surrogate-string",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/artifactId",
+          "value": "\ud800"
+        }
+      ]
+    },
+    {
+      "name": "negative-zero-number",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "negative zero",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/outcomes/providerCalls",
+          "value": -0
+        }
+      ]
+    },
+    {
+      "name": "negative-zero-wilson-bits",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "metrics or Wilson intervals",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/metrics/accuracy/interval/lowerBinary64",
+          "value": "8000000000000000"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "infinite-wilson-bits",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "metrics or Wilson intervals",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/metrics/accuracy/interval/lowerBinary64",
+          "value": "7ff0000000000000"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "out-of-range-wilson-bits",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "metrics or Wilson intervals",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/metrics/accuracy/interval/lowerBinary64",
+          "value": "4000000000000000"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "nonrepresentative-requires-reason",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "must name at least one ineligible reason",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/truth/representativeOfPopulationId",
+          "value": null
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "semantic-leakage-claim-unsupported",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/truth/semanticLeakageDetection",
+          "value": "supported"
+        }
+      ]
+    },
+    {
+      "name": "observed-version-requires-observed-model",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "observed provider version requires an observed model",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/trials/0/providerIdentityGroups/0/observedModel",
+          "value": null
+        },
+        {
+          "op": "replace",
+          "path": "/trials/0/providerIdentityGroups/0/observedVersion",
+          "value": "provider-version-1"
+        },
+        {
+          "op": "replace",
+          "path": "/trials/0/providerIdentityGroups/0/identityStrength",
+          "value": "observed_version"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "expected-identity-swap-artifactId",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "artifactId mismatch",
+      "expectedOverrides": {
+        "artifactId": "different-artifact"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-calibrationRunId",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "calibrationRunId mismatch",
+      "expectedOverrides": {
+        "calibrationRunId": "different-run"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-projectId",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "projectId mismatch",
+      "expectedOverrides": {
+        "projectId": "different-project"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-criterionId",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "criterionId mismatch",
+      "expectedOverrides": {
+        "criterionId": "different-criterion"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-criterionVersionId",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "criterionVersionId mismatch",
+      "expectedOverrides": {
+        "criterionVersionId": "different-criterion-version"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-criterionDigest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "criterionDigest mismatch",
+      "expectedOverrides": {
+        "criterionDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-skillId",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "skillId mismatch",
+      "expectedOverrides": {
+        "skillId": "different-skill"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-skillVersionId",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "skillVersionId mismatch",
+      "expectedOverrides": {
+        "skillVersionId": "different-skill-version"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-skillDigest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "skillDigest mismatch",
+      "expectedOverrides": {
+        "skillDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-outputContractDigest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "outputContractDigest mismatch",
+      "expectedOverrides": {
+        "outputContractDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-requestedBindingDigest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "requestedBindingDigest mismatch",
+      "expectedOverrides": {
+        "requestedBindingDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-datasetRevisionId",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "datasetRevisionId mismatch",
+      "expectedOverrides": {
+        "datasetRevisionId": "different-revision"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-revisionDigest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "revisionDigest mismatch",
+      "expectedOverrides": {
+        "revisionDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-contentDigest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "contentDigest mismatch",
+      "expectedOverrides": {
+        "contentDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-itemCount",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "itemCount mismatch",
+      "expectedOverrides": {
+        "itemCount": 3
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-governedReviewBatchId",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "governedReviewBatchId mismatch",
+      "expectedOverrides": {
+        "governedReviewBatchId": "different-review-batch"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-governedReviewBatchDigest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "governedReviewBatchDigest mismatch",
+      "expectedOverrides": {
+        "governedReviewBatchDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-reviewInstructionVersionId",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "reviewInstructionVersionId mismatch",
+      "expectedOverrides": {
+        "reviewInstructionVersionId": "different-instruction"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-reviewInstructionDigest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "reviewInstructionDigest mismatch",
+      "expectedOverrides": {
+        "reviewInstructionDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-populationId",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "populationId mismatch",
+      "expectedOverrides": {
+        "populationId": "different-population"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-populationDigest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "populationDigest mismatch",
+      "expectedOverrides": {
+        "populationDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-drawDigest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "drawDigest mismatch",
+      "expectedOverrides": {
+        "drawDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-representativeOfPopulationId",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "representativeOfPopulationId mismatch",
+      "expectedOverrides": {
+        "representativeOfPopulationId": null
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-selectionMethod",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "selectionMethod mismatch",
+      "expectedOverrides": {
+        "selectionMethod": "stratified_random"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-exposureAuthorizationSnapshotDigest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "exposureAuthorizationSnapshotDigest mismatch",
+      "expectedOverrides": {
+        "exposureAuthorizationSnapshotDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-exposureAuthorizationEventId",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "exposureAuthorizationEventId mismatch",
+      "expectedOverrides": {
+        "exposureAuthorizationEventId": "different-authorization-event"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-exposureCompletionSnapshotDigest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "exposureCompletionSnapshotDigest mismatch",
+      "expectedOverrides": {
+        "exposureCompletionSnapshotDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-exposureCompletionEventId",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "exposureCompletionEventId mismatch",
+      "expectedOverrides": {
+        "exposureCompletionEventId": "different-completion-event"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-exposureCompletionState",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "exposureCompletionState mismatch",
+      "expectedOverrides": {
+        "exposureCompletionState": "exposed"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-exposureCompletionEligibility",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "exposureCompletionEligibility mismatch",
+      "expectedOverrides": {
+        "exposureCompletionEligibility": "ineligible"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-executionEnvironment",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "executionEnvironment mismatch",
+      "expectedOverrides": {
+        "executionEnvironment": "local_provider"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-providerDataHandlingPolicyId",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "providerDataHandlingPolicyId mismatch",
+      "expectedOverrides": {
+        "providerDataHandlingPolicyId": "different-provider-policy"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-providerDataHandlingPolicyDigest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "providerDataHandlingPolicyDigest mismatch",
+      "expectedOverrides": {
+        "providerDataHandlingPolicyDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-positiveClass",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "positiveClass mismatch",
+      "expectedOverrides": {
+        "positiveClass": "fail"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-trialPlanKind",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "trialPlanKind mismatch",
+      "expectedOverrides": {
+        "trialPlanKind": "independent_repetitions"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-trialsPerItem",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "trialsPerItem mismatch",
+      "expectedOverrides": {
+        "trialsPerItem": 2
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-suiteManifestId",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "suiteManifestId mismatch",
+      "expectedOverrides": {
+        "suiteManifestId": "different-suite"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-suiteManifestDigest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "suiteManifestDigest mismatch",
+      "expectedOverrides": {
+        "suiteManifestDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+      },
+      "mutations": []
+    },
+    {
+      "name": "expected-identity-swap-suiteMemberPosition",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "suiteMemberPosition mismatch",
+      "expectedOverrides": {
+        "suiteMemberPosition": 1
+      },
+      "mutations": []
+    }
+  ]
+}
