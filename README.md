@@ -233,7 +233,16 @@ policy reasons, and effective release admissibility. See
 npm test        # vitest: config validation, aggregation, judges, e2e with mock HTTP servers
 npm run build   # tsc
 npm run --silent benchmark:batch3 # internal, local-only v5 scalability probe
+npm run --silent invariant:batch6 # authored local fault/invariant correctness gate
 ```
+
+The Batch 6 invariant command exercises the real supported runner, CLI,
+report-parser, and policy seams under deterministic local faults. It requires
+zero false promotions plus exact decision, precedence, call-count, report, and
+semantic-determinism agreement. Its output is labeled
+`authored_correctness_only` with `comparativeClaim: forbidden`: it is an
+internal regression gate, not independent evidence or a competitor
+comparison. See [`docs/invariant-robustness-v1.md`](docs/invariant-robustness-v1.md).
 
 GitHub Actions runs `npm ci`, the TypeScript build, and the complete test suite on pushes and pull requests.
 

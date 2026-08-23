@@ -39,7 +39,13 @@ The local CLI is the current product surface. It:
   retains v4 execution compatibility; and
 - additively consumes exact local binary-calibration artifacts in v6, applies
   per-trial customer policy without pooling, retains calibration and candidate
-  scopes separately, and emits canonical calibration-aware tri-state reports.
+  scopes separately, and emits canonical calibration-aware tri-state reports;
+  and
+- runs an authored, local-only invariant robustness gate across the supported
+  runner, CLI, report-parser, and policy seams. The gate is internal
+  correctness evidence only, requires zero false promotions plus exact
+  Dailies-oracle agreement, and is explicitly forbidden from supporting a
+  competitor claim.
 
 The CLI is also the demand probe. Improve the integrity and usefulness of this
 loop before committing to a hosted control plane or serving integration.
@@ -73,6 +79,10 @@ The next planning pass may divide work into batches, but it must cover:
    inconclusive handling, determinism, and retry behavior; and
 6. Coeval calibration consumption through the frozen separate v1 artifact
    contract (**implemented as the local-file schema-v6 path**).
+
+The first, Dailies-only portion of Batch 6 comparative-evidence preparation is
+implemented as the authored invariant gate. Decision gate 5 remains open, so
+no comparator adapter, runtime, result, or claim belongs in the repository yet.
 
 ## Demand-gated future
 
