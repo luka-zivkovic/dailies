@@ -418,7 +418,7 @@ or unverifiable required evidence cannot falsely promote a candidate.
 
 ### Coeval
 
-Contract status: **accepted in Coeval ADR-0010; finite population/draw and governed coding/taxonomy runtime implemented; promotion, candidate lifecycle, and measurement pending**.
+Contract status: **accepted in Coeval ADR-0010; finite population/draw, governed coding/taxonomy, and exact criterion-promotion handoff runtime implemented; candidate lifecycle and measurement pending**.
 
 Complete the non-clustering Analyze → Measure loop:
 
