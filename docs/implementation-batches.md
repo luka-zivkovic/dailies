@@ -348,10 +348,13 @@ queue cannot be presented as a representative sample.
 
 ### Contract gate
 
-Before runtime work, accept a versioned cross-product calibration contract. The
-recommended implementation is a separate immutable calibration artifact
-referenced by evaluator version, criterion, truth revision, and exposure
-identity. It must not be inserted into closed receipt v1.
+ADR-0009 accepts the separate immutable, aggregate-only
+`coeval/binary-calibration/v1` artifact referenced by exact evaluator,
+criterion, truth revision, exposure, selection, and execution identities. The
+closed schema, canonical builder/parser/verifier, exact transport fixtures,
+adversarial corpus, and Wilson reference implementation are Batch 5A. It is
+not inserted into closed receipt v1. Batch 5B begins only after those bytes are
+reviewed and frozen.
 
 ### Coeval
 
@@ -370,19 +373,22 @@ For binary evaluators, emit:
 Undefined and weakly supported metrics remain explicit. Coeval does not issue a
 universal calibrated/un-calibrated release verdict.
 
-### Dailies
+### Dailies (TARGET; not implemented in Coeval Batch 5A)
 
-Independently verify the calibration artifact and allow customer policy to
+Dailies must independently verify the calibration artifact and allow customer policy to
 require per-criterion calibration metrics, support, confidence, coverage, and
-freshness for verified Coeval evidence. This is the first batch in which
-producer-supplied truth revision and exposure provenance can replace
-`not_provided` in a Dailies scope. Missing, stale, swapped, or unverifiable
-required calibration is `inconclusive`. Thresholds and release consequences
-remain in Dailies.
+freshness for verified Coeval evidence. Calibration uses a separate Dailies
+calibration scope. It does not upgrade the candidate execution scope:
+assessment receipt v1 candidate `producerProvenance` remains `not_provided`.
+Missing, stale, swapped, or unverifiable required calibration is
+`inconclusive` for that required criterion. Thresholds and release
+consequences remain in Dailies.
 
 Exit gate: the producer and consumer pass shared positive and adversarial
 fixtures for revision, exposure, coverage, metric, and evaluator identity,
 while the same calibration evidence supports different customer policies.
+This cross-product exit gate remains open until Dailies vendors and passes the
+frozen corpus; the ready Coeval producer contract alone does not close it.
 
 ## Batch 6 — Analyze workflow and comparative evidence
 
