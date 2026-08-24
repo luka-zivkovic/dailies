@@ -1,8 +1,8 @@
 # Portfolio implementation batches
 
-Status: **Batch 6 underway: Coeval finite-frame sampling and governed coding are implemented; Dailies invariant gate and neutral blind-contract foundation are complete; comparative execution remains gated**
+Status: **Batch 6 product foundations complete: Coeval Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5**
 
-Last reviewed: 2026-08-23
+Last reviewed: 2026-08-24
 
 This file is intentionally vendored in Coeval, Dailies, and Casefile. Update
 all three copies together.
@@ -418,9 +418,9 @@ or unverifiable required evidence cannot falsely promote a candidate.
 
 ### Coeval
 
-Contract status: **accepted in Coeval ADR-0010; finite population/draw, governed coding/taxonomy, and exact criterion-promotion handoff runtime implemented; candidate lifecycle and measurement pending**.
+Contract status: **accepted in Coeval ADR-0010; the finite-frame Analyze → Measure runtime is implemented through candidate lifecycle and digest-bound component measurement**.
 
-Complete the non-clustering Analyze → Measure loop:
+The implemented non-clustering Analyze → Measure loop now:
 
 - sample representative traces with recorded selection provenance;
 - open-code failures and revise a human-readable taxonomy;
@@ -439,6 +439,11 @@ universal trusted-evaluator threshold.
 
 Coeval uses internal and customer-task validation rather than a forced
 competitor leaderboard.
+
+The PostgreSQL integration gate covers promotion, independent governed truth,
+candidate creation, sealed calibration, complete retained regression,
+activation, component measurement, revocation, and the resulting read-time
+loss of current admissibility without rewriting historical evidence.
 
 ### Dailies invariant and comparative evidence
 
