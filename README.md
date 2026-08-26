@@ -3,7 +3,6 @@
 > Review the footage before the release.
 
 [![CI](https://github.com/luka-zivkovic/dailies/actions/workflows/ci.yml/badge.svg)](https://github.com/luka-zivkovic/dailies/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/dailies.svg)](https://www.npmjs.com/package/dailies)
 [![License: MIT](https://img.shields.io/badge/license-MIT-111111.svg)](LICENSE)
 
 Dailies is a local release-decision CLI for AI changes. It runs or coordinates
@@ -83,12 +82,14 @@ One item intentionally regresses. The example still promotes because its
 declared policy allows one regression. Change `maxRegressions` from `1` to `0`
 to see the same evidence produce a block.
 
-## Install the CLI
+## Run the CLI
 
 ```sh
-npm install --save-dev dailies
-npx dailies --config dailies.config.json
+node dist/cli.js --config dailies.config.json
 ```
+
+The npm registry currently carries the earlier `0.1.0` build. Until `0.2.0` is
+published, use a source checkout for the schema versions documented below.
 
 The command exits with:
 
