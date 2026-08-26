@@ -60,9 +60,9 @@ async function main(): Promise<number> {
   const program = new Command()
     .name('dailies')
     .description(
-      'Run a candidate AI change against historical inputs and emit a promote/block/inconclusive report',
+      'Evaluate an AI release candidate and emit a promote/block/inconclusive report',
     )
-    .requiredOption('--config <path>', 'path to shadow.config.json')
+    .requiredOption('--config <path>', 'path to a Dailies JSON configuration')
     .parse();
 
   const { config: configPath } = program.opts<{ config: string }>();

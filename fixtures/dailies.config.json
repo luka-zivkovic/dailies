@@ -20,5 +20,5 @@
   "judge": { "type": "exact-match" },
   "thresholds": { "minPassRate": 0.75, "maxRegressions": 1 },
   "concurrency": 4,
-  "output": { "dir": "../shadow-out" }
+  "output": { "dir": "../dailies-out" }
 }

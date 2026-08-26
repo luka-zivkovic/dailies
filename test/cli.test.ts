@@ -102,7 +102,7 @@ describe('CLI decision and report agreement', () => {
     expect(cli.code).toBe(decideExitCode(report));
     expect(cli.stdout).toContain('decision: promote');
     expect(await readFile(join(outputDir, 'report.md'), 'utf8')).toContain(
-      '# Shadow run report: PROMOTE',
+      '# Dailies release report: PROMOTE',
     );
   });
 
@@ -120,7 +120,7 @@ describe('CLI decision and report agreement', () => {
     expect(cli.code).toBe(decideExitCode(report));
     expect(cli.stdout).toContain('decision: block');
     expect(await readFile(join(outputDir, 'report.md'), 'utf8')).toContain(
-      '# Shadow run report: BLOCK',
+      '# Dailies release report: BLOCK',
     );
   });
 
@@ -168,7 +168,7 @@ describe('CLI decision and report agreement', () => {
       expect(cli.stdout).toContain('decision: inconclusive');
       expect(cli.stderr).toContain('dailies inconclusive:');
       expect(await readFile(join(outputDir, 'report.md'), 'utf8')).toContain(
-        '# Shadow run report: INCONCLUSIVE',
+        '# Dailies release report: INCONCLUSIVE',
       );
     } finally {
       judgeServer.closeAllConnections();

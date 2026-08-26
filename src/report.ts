@@ -939,7 +939,7 @@ export function renderMarkdown(report: Report): string {
   const overrideReason = report.trustPolicy.selfReportedOverride?.reason;
 
   const lines: string[] = [
-    `# Shadow run report: ${heading}`,
+    `# Dailies release report: ${heading}`,
     '',
     `- Decision: **${report.decision}**`,
     `- Scope: **${report.scope.kind}** (${report.scope.id})`,
