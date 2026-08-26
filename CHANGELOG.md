@@ -3,6 +3,13 @@
 Notable changes to Dailies are recorded here. The project follows semantic
 versioning while the public API remains pre-1.0.
 
+## 0.3.0 — 2026-08-26
+
+- Add `dailies init [directory]` to generate a runnable, digest-pinned starter
+  corpus and schema-v4 configuration without overwriting existing files.
+- Make the npm quickstart lead directly from installation to a first auditable
+  release report.
+
 ## 0.2.1 — 2026-08-26
 
 - Correct the public npm installation instructions after the `0.2.0` registry

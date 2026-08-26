@@ -18,12 +18,12 @@ interface CliResult {
   stderr: string;
 }
 
-function runCli(configPath: string): Promise<CliResult> {
+function runCliArgs(args: string[], cwd: string): Promise<CliResult> {
   return new Promise((resolve, reject) => {
     execFile(
       process.execPath,
-      [cliPath, '--config', configPath],
-      { cwd: dirname(configPath), timeout: 10_000 },
+      [cliPath, ...args],
+      { cwd, timeout: 10_000 },
       (error, stdout, stderr) => {
         if (error && typeof error.code !== 'number') {
           reject(error);
@@ -33,6 +33,10 @@ function runCli(configPath: string): Promise<CliResult> {
       },
     );
   });
+}
+
+function runCli(configPath: string): Promise<CliResult> {
+  return runCliArgs(['--config', configPath], dirname(configPath));
 }
 
 async function writeRun(
@@ -88,6 +92,27 @@ afterEach(async () => {
 });
 
 describe('CLI decision and report agreement', () => {
+  it('initializes and runs a starter project through the public CLI', async () => {
+    const parent = await mkdtemp(join(tmpdir(), 'dailies-cli-init-'));
+    tempDirs.push(parent);
+    const starter = join(parent, 'starter');
+
+    const initialized = await runCliArgs(['init', starter], parent);
+    expect(initialized.code).toBe(0);
+    expect(initialized.stdout).toContain(`created: ${join(starter, 'dailies.cases.jsonl')}`);
+    expect(initialized.stdout).toContain('next: npx dailies --config');
+
+    const run = await runCli(join(starter, 'dailies.config.json'));
+    expect(run.code).toBe(0);
+    expect(run.stdout).toContain('decision: promote');
+    expect(JSON.parse(await readFile(join(starter, 'dailies-out', 'report.json'), 'utf8')))
+      .toMatchObject({ decision: 'promote' });
+
+    const repeated = await runCliArgs(['init', starter], parent);
+    expect(repeated.code).toBe(2);
+    expect(repeated.stderr).toContain('refusing to overwrite existing file');
+  });
+
   it('writes promote and exits 0 when all evidence is complete and passing', async () => {
     const { configPath, outputDir } = await writeRun([
       { id: 'a', input: 'alpha', baseline_output: 'alpha' },

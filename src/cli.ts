@@ -22,6 +22,7 @@ import {
 import { runShadow } from './runner.js';
 import { runSuiteRelease } from './suite-runner.js';
 import { runCalibrationSuiteRelease } from './suite-runner-v6.js';
+import { initializeDailiesProject } from './init.js';
 
 function resolveFrom(baseDir: string, p: string): string {
   return isAbsolute(p) ? p : resolve(baseDir, p);
@@ -56,17 +57,7 @@ async function loadConfig(configPath: string): Promise<Config | SuiteConfig | Su
   return config;
 }
 
-async function main(): Promise<number> {
-  const program = new Command()
-    .name('dailies')
-    .description(
-      'Evaluate an AI release candidate and emit a promote/block/inconclusive report',
-    )
-    .requiredOption('--config <path>', 'path to a Dailies JSON configuration')
-    .parse();
-
-  const { config: configPath } = program.opts<{ config: string }>();
-
+async function runConfiguredRelease(configPath: string): Promise<number> {
   const config = await loadConfig(configPath);
   const report = config.schemaVersion === SUITE_CONFIG_V6_SCHEMA_VERSION
     ? await runCalibrationSuiteRelease(config)
@@ -151,6 +142,40 @@ async function main(): Promise<number> {
     }
   }
   return decideExitCode(report);
+}
+
+async function main(): Promise<number> {
+  let exitCode = 0;
+  const program = new Command()
+    .name('dailies')
+    .description(
+      'Evaluate an AI release candidate and emit a promote/block/inconclusive report',
+    )
+    .option('--config <path>', 'path to a Dailies JSON configuration');
+
+  program
+    .command('init')
+    .description('create a runnable starter configuration and regression corpus')
+    .argument('[directory]', 'directory to initialize', '.')
+    .action(async (directory: string) => {
+      const result = await initializeDailiesProject(directory);
+      console.log(`created: ${result.inputsPath}`);
+      console.log(`created: ${result.configPath}`);
+      console.log(`next: ${result.nextCommand}`);
+    });
+
+  program.action(async () => {
+    const { config: configPath } = program.opts<{ config?: string }>();
+    if (configPath === undefined) {
+      throw new Error(
+        'missing --config <path>; run `dailies init` to create a starter configuration',
+      );
+    }
+    exitCode = await runConfiguredRelease(configPath);
+  });
+
+  await program.parseAsync();
+  return exitCode;
 }
 
 main()

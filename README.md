@@ -58,9 +58,33 @@ candidate + exact evidence scope + evidence providers
 Dailies runs locally and does not sit on the serving path. It contacts only the
 candidate, judge, or Coeval endpoints that you explicitly configure.
 
-## Try the bundled example
+## Quickstart
 
 Requires Node.js 20 or newer.
+
+```sh
+npm install --save-dev dailies
+npx dailies init
+npx dailies --config dailies.config.json
+```
+
+`dailies init [directory]` creates `dailies.cases.jsonl` and a valid,
+digest-pinned `dailies.config.json`. It will never overwrite either file. The
+starter runs three demonstration cases through a deterministic exact-match
+evaluator and writes its reports to `dailies-out/`:
+
+```text
+decision: promote | pass rate 100.0% (3/3), regressions 0, evaluated 3/3, errored 0
+report: .../dailies-out/report.json
+report: .../dailies-out/report.md
+```
+
+The generated scope deliberately claims only those three demonstration
+behaviors. Replace the cases, scope description, and candidate command with
+your real release evidence before using the decision in CI. Whenever the JSONL
+bytes change, update the configured SHA-256 digest as well.
+
+To run the repository's five-case example instead:
 
 ```sh
 git clone https://github.com/luka-zivkovic/dailies.git
@@ -68,26 +92,6 @@ cd dailies
 npm ci
 npm run build
 node dist/cli.js --config fixtures/dailies.config.json
-```
-
-The example runs five pinned regression cases through a deterministic
-exact-match evaluator:
-
-```text
-decision: promote | pass rate 80.0% (4/5), regressions 1, evaluated 5/5, errored 0
-report: .../dailies-out/report.json
-report: .../dailies-out/report.md
-```
-
-One item intentionally regresses. The example still promotes because its
-declared policy allows one regression. Change `maxRegressions` from `1` to `0`
-to see the same evidence produce a block.
-
-## Install the CLI
-
-```sh
-npm install --save-dev dailies
-npx dailies --config dailies.config.json
 ```
 
 The command exits with:
@@ -231,7 +235,7 @@ npm run invariant:batch6
 npm pack --dry-run
 ```
 
-The project currently has 288 tests across configuration, execution, retries,
+The project currently has 292 tests across onboarding, configuration, execution, retries,
 evidence verification, policy, reporting, tamper cases, and deterministic
 fault injection. GitHub Actions runs the build and complete test suite on every
 push and pull request.
