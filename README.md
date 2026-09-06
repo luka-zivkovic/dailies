@@ -1,14 +1,30 @@
-# Dailies
+<h1 align="center">Dailies</h1>
 
-> Review the footage before the release.
+<p align="center"><strong>Review the evidence before the release.</strong></p>
 
-[![CI](https://github.com/luka-zivkovic/dailies/actions/workflows/ci.yml/badge.svg)](https://github.com/luka-zivkovic/dailies/actions/workflows/ci.yml)
-[![npm](https://img.shields.io/npm/v/dailies.svg)](https://www.npmjs.com/package/dailies)
-[![License: MIT](https://img.shields.io/badge/license-MIT-111111.svg)](LICENSE)
+<p align="center">
+  <a href="https://github.com/luka-zivkovic/dailies/actions/workflows/ci.yml"><img src="https://github.com/luka-zivkovic/dailies/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
+  <a href="https://www.npmjs.com/package/dailies"><img src="https://img.shields.io/npm/v/dailies?color=475569" alt="npm version"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-475569" alt="MIT license"></a>
+</p>
 
-Dailies is a local release-decision CLI for AI changes. It runs or coordinates
-evaluation over a declared evidence scope, keeps trust and missing evidence
-visible, applies your release policy, and produces an auditable decision:
+<p align="center">
+  <a href="#quickstart">Quickstart</a> · <a href="#how-it-works">How it works</a> · <a href="#minimal-configuration">Configuration</a> · <a href="#evidence-integrations">Evidence</a> · <a href="#decision-safety">Decisions</a>
+</p>
+
+Dailies helps you decide whether an AI change is ready to advance. It runs
+your candidate against declared cases, collects evaluation evidence, and
+applies your release policy. The report keeps evidence scope, trust, and
+missing results visible.
+
+<p align="center">
+  <picture>
+    <source media="(max-width: 600px)" srcset="docs/assets/workflow-mobile.svg">
+    <img src="docs/assets/workflow.svg" width="100%" alt="Dailies pins the evidence scope, collects candidate evidence, applies your policy, and records promote, block, or inconclusive.">
+  </picture>
+</p>
+
+## How it works
 
 | Decision | Meaning |
 | --- | --- |
@@ -16,44 +32,8 @@ visible, applies your release policy, and produces an auditable decision:
 | `block` | Complete, admissible evidence shows that the candidate violates policy. |
 | `inconclusive` | Required evidence is missing, failed, or cannot be verified. |
 
-The important distinction is the third state: a gate that could not judge a
-release must never approve it—or pretend the candidate failed.
-
-## Why Dailies
-
-Ordinary tests can tell you whether code runs. They cannot tell you whether an
-AI change regressed a known behavior, whether a judge result is trustworthy,
-or whether the evidence actually covers the population you intend to release
-to.
-
-Dailies makes those assumptions explicit:
-
-- **Scope-bound decisions** — every claim names the exact dataset or sample it covers.
-- **Honest incompleteness** — infrastructure and protocol failures become `inconclusive`, not synthetic passes or failures.
-- **Visible evidence trust** — deterministic, verified, and self-reported results stay distinct.
-- **Customer-owned policy** — Dailies applies your thresholds and criterion roles; an evaluator does not decide whether you ship.
-- **Reproducible reports** — exact input identity, operations, policy, evidence, and decision precedence remain auditable.
-
-## How it works
-
-```text
-candidate + exact evidence scope + evidence providers
-                       │
-                       ▼
-       execute and collect candidate evidence
-                       │
-                       ▼
-       verify identity, coverage, trust, and completeness
-                       │
-                       ▼
-              apply release policy
-                       │
-                       ▼
-          promote | block | inconclusive
-                       │
-                       ▼
-              report.json + report.md
-```
+A failed evidence channel produces `inconclusive`. Missing evidence stays
+visible, with the exact precedence documented under [Decision safety](#decision-safety).
 
 Dailies runs locally and does not sit on the serving path. It contacts only the
 candidate, judge, or Coeval endpoints that you explicitly configure.
@@ -101,6 +81,21 @@ The command exits with:
 | `0` | `promote` | Policy satisfied. |
 | `1` | `block` | Candidate should not advance. |
 | `2` | `inconclusive` | The run or required evidence failed. |
+
+## Why Dailies
+
+Ordinary tests can tell you whether code runs. They cannot tell you whether an
+AI change regressed a known behavior, whether a judge result is trustworthy,
+or whether the evidence actually covers the population you intend to release
+to.
+
+Dailies makes those assumptions explicit:
+
+- **Scope-bound decisions** — every claim names the exact dataset or sample it covers.
+- **Honest incompleteness** — infrastructure and protocol failures become `inconclusive`, not synthetic passes or failures.
+- **Visible evidence trust** — deterministic, verified, and self-reported results stay distinct.
+- **Customer-owned policy** — Dailies applies your thresholds and criterion roles; an evaluator does not decide whether you ship.
+- **Reproducible reports** — exact input identity, operations, policy, evidence, and decision precedence remain auditable.
 
 ## Minimal configuration
 
@@ -206,9 +201,9 @@ Please report vulnerabilities using the process in [SECURITY.md](SECURITY.md).
 Dailies owns the release consequence. It does not author rubrics, establish
 human truth, or statically inspect capability packages.
 
-- **Coeval** produces governed, policy-free assessment evidence.
+- [Coeval](https://github.com/luka-zivkovic/coeval) produces governed, policy-free assessment evidence.
 - [Casefile](https://github.com/luka-zivkovic/casefile) produces deterministic trust evidence for capability artifacts.
-- Dailies verifies or consumes those inputs and applies customer-owned release policy.
+- Dailies currently verifies Coeval evidence and applies customer-owned release policy. Casefile consumption remains a possible future integration.
 
 The products share explicit evidence contracts; they do not collapse into one
 runtime.
