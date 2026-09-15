@@ -11,6 +11,14 @@ versioning while the public API remains pre-1.0.
   preserving key order and formatting; `--check` reports drift without
   writing and exits `1` on mismatch. Document it in the README quickstart, a
   new CLI reference, and the `release-gate` skill.
+- Add a composite GitHub Action at the repository root
+  (`uses: luka-zivkovic/dailies@<ref>`) with `config`, `version`,
+  `fail-on-inconclusive`, and `summary` inputs and `decision`, `exit-code`,
+  `report-json`, and `report-md` outputs. It runs the pinned npm release,
+  appends `report.md` to the job summary, fails on `block`, and fails on
+  `inconclusive` by default (a `::warning::` only when explicitly opted out).
+  The step logic lives in `scripts/action-run.sh` and is tested against a
+  fake CLI for every exit-code mapping, stale-report handling, and outputs.
 - Add a Claude Code plugin marketplace (`.claude-plugin/marketplace.json`)
   and the `dailies` plugin with a `release-gate` skill so a coding agent can
   install Dailies in one line, initialize a digest-pinned starter corpus, run

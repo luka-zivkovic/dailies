@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="#quickstart">Quickstart</a> · <a href="#how-it-works">How it works</a> · <a href="#cli-reference">CLI</a> · <a href="#minimal-configuration">Configuration</a> · <a href="#evidence-integrations">Evidence</a> · <a href="#decision-safety">Decisions</a>
+  <a href="#quickstart">Quickstart</a> · <a href="#how-it-works">How it works</a> · <a href="#cli-reference">CLI</a> · <a href="#run-in-github-actions">GitHub Actions</a> · <a href="#minimal-configuration">Configuration</a> · <a href="#evidence-integrations">Evidence</a> · <a href="#decision-safety">Decisions</a>
 </p>
 
 Dailies helps you decide whether an AI change is ready to advance. It runs
@@ -122,6 +122,55 @@ The command exits with:
 Paths inside a config resolve relative to the config file. `dailies digest`
 changes only the two identity keys and preserves the file's key order and
 formatting; it never edits thresholds, policy, or scope descriptions.
+
+## Run in GitHub Actions
+
+The repository root ships a composite action, so a release gate needs no
+hand-written shell. The action runs `npx --yes dailies@<version> --config
+<config>`, appends `report.md` to the job summary, and maps the exit code:
+`block` fails the job, and `inconclusive` fails the job by default. Setting
+`fail-on-inconclusive: false` turns it into a `::warning::` line while the
+`decision` output still says `inconclusive`; it is never mapped to success
+silently. Node.js 20 or newer must already be on the runner.
+
+```yaml
+name: release-gate
+on: [pull_request]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify the corpus digest before running
+        run: npx --yes dailies@0.3.0 digest --config dailies.config.json --check
+      - id: dailies
+        uses: luka-zivkovic/dailies@main
+        with:
+          config: dailies.config.json
+          # version: 0.3.0                # dailies npm version (default: the action's release)
+          # fail-on-inconclusive: 'true'  # 'false' warns instead of failing
+          # summary: 'true'               # append report.md to the job summary
+      - if: always()
+        run: echo "decision=${{ steps.dailies.outputs.decision }} exit=${{ steps.dailies.outputs.exit-code }}"
+```
+
+| Input | Default | Meaning |
+| --- | --- | --- |
+| `config` | required | Path to the Dailies configuration, relative to the workspace. |
+| `version` | current release | `dailies` npm version passed to `npx`. |
+| `fail-on-inconclusive` | `true` | Fail the step on exit code `2`; `false` emits a warning instead. |
+| `summary` | `true` | Append `report.md` to `$GITHUB_STEP_SUMMARY`. |
+
+Outputs: `decision` (`promote`, `block`, or `inconclusive`), `exit-code`, and
+the absolute `report-json` and `report-md` paths (empty when no report was
+written). Pin the action to a tag or commit rather than `@main` for
+reproducible gates. The step logic lives in
+[`scripts/action-run.sh`](scripts/action-run.sh) and is covered by the test
+suite.
 
 ## Why Dailies
 

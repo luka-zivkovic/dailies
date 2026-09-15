@@ -1,0 +1,57 @@
+name: Dailies release gate
+description: >-
+  Run a Dailies release evaluation and fail the job on block; inconclusive
+  fails by default and is never mapped to success silently.
+author: Luka Živković
+
+branding:
+  icon: check-circle
+  color: gray-dark
+
+inputs:
+  config:
+    description: Path to the Dailies JSON configuration, relative to the workspace.
+    required: true
+  version:
+    description: >-
+      The dailies npm version to run with npx. Defaults to the version this
+      action was published with.
+    required: false
+    default: '0.3.0'
+  fail-on-inconclusive:
+    description: >-
+      Fail the step when the decision is inconclusive (exit code 2). Set to
+      'false' to emit a warning instead; the decision output still says
+      inconclusive.
+    required: false
+    default: 'true'
+  summary:
+    description: Append report.md to the GitHub job summary.
+    required: false
+    default: 'true'
+
+outputs:
+  decision:
+    description: promote, block, or inconclusive.
+    value: ${{ steps.run.outputs.decision }}
+  exit-code:
+    description: The dailies CLI exit code (0 promote, 1 block, 2 inconclusive).
+    value: ${{ steps.run.outputs.exit-code }}
+  report-json:
+    description: Absolute path to report.json, or empty when no report was written.
+    value: ${{ steps.run.outputs.report-json }}
+  report-md:
+    description: Absolute path to report.md, or empty when no report was written.
+    value: ${{ steps.run.outputs.report-md }}
+
+runs:
+  using: composite
+  steps:
+    - id: run
+      shell: bash
+      env:
+        DAILIES_CONFIG: ${{ inputs.config }}
+        DAILIES_VERSION: ${{ inputs.version }}
+        DAILIES_FAIL_ON_INCONCLUSIVE: ${{ inputs.fail-on-inconclusive }}
+        DAILIES_SUMMARY: ${{ inputs.summary }}
+      run: bash "${GITHUB_ACTION_PATH}/scripts/action-run.sh"
