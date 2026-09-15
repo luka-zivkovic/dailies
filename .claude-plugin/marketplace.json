@@ -1,0 +1,25 @@
+{
+  "name": "dailies",
+  "description": "Dailies — scope-bound, trust-aware release decisions for AI changes: promote, block, or inconclusive.",
+  "owner": {
+    "name": "Luka Zivkovic"
+  },
+  "plugins": [
+    {
+      "name": "dailies",
+      "source": "./plugins/dailies",
+      "description": "Gate an AI change on declared evidence before it advances. One skill walks a coding agent through creating a digest-pinned starter corpus with dailies init, running the release evaluation, and reading report.md and the exit codes as promote, block, or inconclusive without treating missing or untrusted evidence as a pass.",
+      "version": "0.3.0",
+      "category": "development",
+      "keywords": [
+        "release-gate",
+        "evaluation",
+        "ai",
+        "llm",
+        "ci",
+        "regression",
+        "evidence"
+      ]
+    }
+  ]
+}

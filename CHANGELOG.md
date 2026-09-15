@@ -5,6 +5,11 @@ versioning while the public API remains pre-1.0.
 
 ## Unreleased
 
+- Add a Claude Code plugin marketplace (`.claude-plugin/marketplace.json`)
+  and the `dailies` plugin with a `release-gate` skill so a coding agent can
+  install Dailies in one line, initialize a digest-pinned starter corpus, run
+  the release evaluation, and read the tri-state decision without treating
+  `inconclusive` as a pass; document the install in the README.
 - Add `CONTRIBUTING.md` describing the required local checks, the
   `TARGET`/`CURRENT`/`ASSUMPTION` evidence labels, and the rule against
   implementing proposed ADRs without approval; link it from the README.

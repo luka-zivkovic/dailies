@@ -1,0 +1,4 @@
+interface:
+  display_name: "Dailies Release Gate"
+  short_description: "Gate an AI change on declared evidence before it advances"
+  default_prompt: "Use $release-gate to set up a digest-pinned Dailies starter corpus, run the release evaluation, and report the result as promote, block, or inconclusive with the evidence trust class stated plainly."
