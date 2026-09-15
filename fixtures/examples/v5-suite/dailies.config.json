@@ -1,0 +1,72 @@
+{
+  "schemaVersion": 5,
+  "inputs": {
+    "type": "jsonl",
+    "path": "cases.jsonl",
+    "digest": "sha256:c3e0ff0132c8d4b895781bad92405abff20d6d1837a542f776b21fc426d4814f"
+  },
+  "scope": {
+    "id": "example-support-suite-regressions-v1",
+    "kind": "regression_corpus",
+    "expectedItems": 3,
+    "collectionProcedure": "Authored example cases bundled with Dailies; scripted mock labels.",
+    "population": "The three documented support-assistant behaviors in this example only.",
+    "timeWindow": {
+      "kind": "not_applicable",
+      "reason": "This static example corpus is not sampled from a time window."
+    }
+  },
+  "candidate": {
+    "type": "command",
+    "template": "printf %s {input}"
+  },
+  "suite": {
+    "manifest": {
+      "type": "file",
+      "path": "suite-manifest.json",
+      "manifestId": "suite_manifest_support_quality_1",
+      "manifestDigest": "sha256:b5272076f80976a5a04dd8b5413741a53fca91524963650f341e7b37dc5c2288"
+    },
+    "provider": {
+      "type": "coeval",
+      "url": "http://127.0.0.1:4820",
+      "pollIntervalMs": 100,
+      "evidenceDeadlineMs": 30000
+    }
+  },
+  "policy": {
+    "schemaVersion": 1,
+    "id": "example-support-release-policy",
+    "version": "1",
+    "manifestId": "suite_manifest_support_quality_1",
+    "manifestDigest": "sha256:b5272076f80976a5a04dd8b5413741a53fca91524963650f341e7b37dc5c2288",
+    "criteria": [
+      {
+        "criterionVersionId": "criterionv_factuality_1",
+        "evidenceRequirement": "mandatory",
+        "consequence": "blocking",
+        "rule": {
+          "kind": "binary_threshold/v1",
+          "minPassRate": 1,
+          "maxRegressions": 0
+        }
+      },
+      {
+        "criterionVersionId": "criterionv_safety_2",
+        "evidenceRequirement": "mandatory",
+        "consequence": "blocking",
+        "rule": {
+          "kind": "binary_threshold/v1",
+          "minPassRate": 1,
+          "maxRegressions": 0
+        }
+      }
+    ],
+    "compensationGroups": []
+  },
+  "concurrency": 2,
+  "timeoutMs": 10000,
+  "output": {
+    "dir": "dailies-out"
+  }
+}

@@ -33,6 +33,7 @@
   "scripts": {
     "benchmark:batch3": "npm run build --silent && node scripts/benchmark-batch3.mjs",
     "build": "tsc",
+    "examples:build": "npm run build --silent && node scripts/build-examples.mjs",
     "invariant:batch6": "npm run build --silent && node scripts/invariant-robustness.mjs",
     "pretest": "npm run build",
     "test": "vitest run",

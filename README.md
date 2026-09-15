@@ -102,6 +102,21 @@ npm run build
 node dist/cli.js --config fixtures/dailies.config.json
 ```
 
+Runnable v5 (evaluator suite) and v6 (calibration-aware) examples live under
+[`fixtures/examples/`](fixtures/examples/README.md). Their manifests and
+calibration artifacts are verified offline, but receipt evidence always
+comes from a Coeval HTTP endpoint, so they ship with a local stub that
+returns scripted, structurally valid receipts:
+
+```sh
+node scripts/mock-coeval.mjs --manifest fixtures/examples/v5-suite/suite-manifest.json &
+node dist/cli.js --config fixtures/examples/v5-suite/dailies.config.json
+node dist/cli.js --config fixtures/examples/v6-calibration/dailies.config.json
+```
+
+A `promote` from these examples demonstrates the report format only; the
+stub is not an evaluator.
+
 The command exits with:
 
 | Code | Decision | CI meaning |
@@ -259,7 +274,9 @@ through explicit schema versions:
 - **v6 — calibration-aware suite:** exact local calibration artifacts, evaluated per trial without silently pooling variance.
 
 The detailed contracts live in [report v4](docs/report-v4.md),
-[report v5](docs/report-v5.md), and [report v6](docs/report-v6.md).
+[report v5](docs/report-v5.md), and [report v6](docs/report-v6.md), and
+each generation has a runnable example: [v4](fixtures/dailies.config.json),
+[v5](fixtures/examples/v5-suite/), and [v6](fixtures/examples/v6-calibration/).
 
 ## Decision safety
 
