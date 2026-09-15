@@ -88,6 +88,21 @@ It recomputes the SHA-256 and line count, prints the old and new values, and
 rewrites only `inputs.digest` and `scope.expectedItems`. Add
 `--check` to verify without writing (exit `1` on drift).
 
+## 6. Gate in CI
+
+Use the composite action instead of hand-written shell. It runs the pinned
+npm release, appends `report.md` to the job summary, fails on `block`, and
+fails on `inconclusive` unless `fail-on-inconclusive: 'false'` is set (then
+it warns and the `decision` output still says `inconclusive`). Node.js 20 or
+newer must be set up first:
+
+```yaml
+- uses: actions/setup-node@v4
+  with: { node-version: 20 }
+- uses: luka-zivkovic/dailies@main
+  with: { config: dailies.config.json }
+```
+
 ## Mistakes to avoid
 
 - Do not describe a starter-corpus `promote` as evidence about the user's
