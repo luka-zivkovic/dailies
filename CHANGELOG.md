@@ -3,6 +3,16 @@
 Notable changes to Dailies are recorded here. The project follows semantic
 versioning while the public API remains pre-1.0.
 
+## Unreleased
+
+- Add `CONTRIBUTING.md` describing the required local checks, the
+  `TARGET`/`CURRENT`/`ASSUMPTION` evidence labels, and the rule against
+  implementing proposed ADRs without approval; link it from the README.
+- Run continuous integration on a Node.js 20 and 22 matrix and add the
+  `npm run invariant:batch6` robustness gate as a CI step.
+- Stop hardcoding the test count in the README and describe the CI matrix
+  and invariant gate accurately.
+
 ## 0.3.0 — 2026-08-26
 
 - Add `dailies init [directory]` to generate a runnable, digest-pinned starter

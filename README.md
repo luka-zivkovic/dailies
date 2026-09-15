@@ -216,6 +216,7 @@ runtime.
 - [Implementation plan](PLAN.md) — current sequencing and demand-gated work
 - [Evidence contracts](contracts/README.md) — vendored schemas and conformance fixtures
 - [Changelog](CHANGELOG.md) — notable changes by release
+- [Contributing guide](CONTRIBUTING.md) — local checks and pull request expectations
 
 `PRODUCT.md` and accepted ADRs define target behavior. The README describes
 the current CLI and does not override those sources.
@@ -230,10 +231,14 @@ npm run invariant:batch6
 npm pack --dry-run
 ```
 
-The project currently has 292 tests across onboarding, configuration, execution, retries,
-evidence verification, policy, reporting, tamper cases, and deterministic
-fault injection. GitHub Actions runs the build and complete test suite on every
-push and pull request.
+The test suite covers onboarding, configuration, execution, retries, evidence
+verification, policy, reporting, tamper cases, and deterministic fault
+injection; `npm test` reports the current test count. GitHub Actions runs the
+build, the complete test suite, and the invariant robustness gate on Node.js 20
+and 22 for every push and pull request.
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the local checks and review
+expectations before opening a change.
 
 Dailies is pre-1.0 software. Schema compatibility is deliberate, but the
 public CLI and library API may still evolve before a stable release.
