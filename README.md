@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="#quickstart">Quickstart</a> · <a href="#how-it-works">How it works</a> · <a href="#minimal-configuration">Configuration</a> · <a href="#evidence-integrations">Evidence</a> · <a href="#decision-safety">Decisions</a>
+  <a href="#quickstart">Quickstart</a> · <a href="#how-it-works">How it works</a> · <a href="#cli-reference">CLI</a> · <a href="#run-in-github-actions">GitHub Actions</a> · <a href="#minimal-configuration">Configuration</a> · <a href="#evidence-integrations">Evidence</a> · <a href="#decision-safety">Decisions</a>
 </p>
 
 Dailies helps you decide whether an AI change is ready to advance. It runs
@@ -79,7 +79,18 @@ report: .../dailies-out/report.md
 The generated scope deliberately claims only those three demonstration
 behaviors. Replace the cases, scope description, and candidate command with
 your real release evidence before using the decision in CI. Whenever the JSONL
-bytes change, update the configured SHA-256 digest as well.
+bytes change, the configured SHA-256 digest and `scope.expectedItems` must
+change with them. `dailies digest` recomputes both from the exact file bytes
+and rewrites only those two keys in place:
+
+```sh
+npx dailies digest --config dailies.config.json          # update the config
+npx dailies digest --config dailies.config.json --check  # verify only; exit 1 on drift
+```
+
+The command prints the old and new values. `--check` never writes and is
+meant for a CI step that catches an edited corpus before the release run
+stops with `input artifact digest mismatch`.
 
 To run the repository's five-case example instead:
 
@@ -91,6 +102,21 @@ npm run build
 node dist/cli.js --config fixtures/dailies.config.json
 ```
 
+Runnable v5 (evaluator suite) and v6 (calibration-aware) examples live under
+[`fixtures/examples/`](fixtures/examples/README.md). Their manifests and
+calibration artifacts are verified offline, but receipt evidence always
+comes from a Coeval HTTP endpoint, so they ship with a local stub that
+returns scripted, structurally valid receipts:
+
+```sh
+node scripts/mock-coeval.mjs --manifest fixtures/examples/v5-suite/suite-manifest.json &
+node dist/cli.js --config fixtures/examples/v5-suite/dailies.config.json
+node dist/cli.js --config fixtures/examples/v6-calibration/dailies.config.json
+```
+
+A `promote` from these examples demonstrates the report format only; the
+stub is not an evaluator.
+
 The command exits with:
 
 | Code | Decision | CI meaning |
@@ -98,6 +124,68 @@ The command exits with:
 | `0` | `promote` | Policy satisfied. |
 | `1` | `block` | Candidate should not advance. |
 | `2` | `inconclusive` | The run or required evidence failed. |
+
+## CLI reference
+
+| Command | Purpose | Exit codes |
+| --- | --- | --- |
+| `dailies --config <path>` | Run the release evaluation and write `report.json` and `report.md`. | `0` promote, `1` block, `2` inconclusive or run error |
+| `dailies init [directory]` | Create a runnable, digest-pinned schema-v4 starter without overwriting existing files. | `0` created, `2` refused or failed |
+| `dailies digest --config <path>` | Recompute the JSONL input digest and line count and update `inputs.digest` and `scope.expectedItems` in place (schema v4, v5, and v6). | `0` updated or already current, `2` error |
+| `dailies digest --config <path> --check` | Report whether the config matches the input artifact without writing. | `0` match, `1` mismatch, `2` error |
+
+Paths inside a config resolve relative to the config file. `dailies digest`
+changes only the two identity keys and preserves the file's key order and
+formatting; it never edits thresholds, policy, or scope descriptions.
+
+## Run in GitHub Actions
+
+The repository root ships a composite action, so a release gate needs no
+hand-written shell. The action runs `npx --yes dailies@<version> --config
+<config>`, appends `report.md` to the job summary, and maps the exit code:
+`block` fails the job, and `inconclusive` fails the job by default. Setting
+`fail-on-inconclusive: false` turns it into a `::warning::` line while the
+`decision` output still says `inconclusive`; it is never mapped to success
+silently. Node.js 20 or newer must already be on the runner.
+
+```yaml
+name: release-gate
+on: [pull_request]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Verify the corpus digest before running
+        run: npx --yes dailies@0.3.0 digest --config dailies.config.json --check
+      - id: dailies
+        uses: luka-zivkovic/dailies@main
+        with:
+          config: dailies.config.json
+          # version: 0.3.0                # dailies npm version (default: the action's release)
+          # fail-on-inconclusive: 'true'  # 'false' warns instead of failing
+          # summary: 'true'               # append report.md to the job summary
+      - if: always()
+        run: echo "decision=${{ steps.dailies.outputs.decision }} exit=${{ steps.dailies.outputs.exit-code }}"
+```
+
+| Input | Default | Meaning |
+| --- | --- | --- |
+| `config` | required | Path to the Dailies configuration, relative to the workspace. |
+| `version` | current release | `dailies` npm version passed to `npx`. |
+| `fail-on-inconclusive` | `true` | Fail the step on exit code `2`; `false` emits a warning instead. |
+| `summary` | `true` | Append `report.md` to `$GITHUB_STEP_SUMMARY`. |
+
+Outputs: `decision` (`promote`, `block`, or `inconclusive`), `exit-code`, and
+the absolute `report-json` and `report-md` paths (empty when no report was
+written). Pin the action to a tag or commit rather than `@main` for
+reproducible gates. The step logic lives in
+[`scripts/action-run.sh`](scripts/action-run.sh) and is covered by the test
+suite.
 
 ## Why Dailies
 
@@ -186,7 +274,9 @@ through explicit schema versions:
 - **v6 — calibration-aware suite:** exact local calibration artifacts, evaluated per trial without silently pooling variance.
 
 The detailed contracts live in [report v4](docs/report-v4.md),
-[report v5](docs/report-v5.md), and [report v6](docs/report-v6.md).
+[report v5](docs/report-v5.md), and [report v6](docs/report-v6.md), and
+each generation has a runnable example: [v4](fixtures/dailies.config.json),
+[v5](fixtures/examples/v5-suite/), and [v6](fixtures/examples/v6-calibration/).
 
 ## Decision safety
 

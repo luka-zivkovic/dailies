@@ -23,6 +23,10 @@ import { runShadow } from './runner.js';
 import { runSuiteRelease } from './suite-runner.js';
 import { runCalibrationSuiteRelease } from './suite-runner-v6.js';
 import { initializeDailiesProject } from './init.js';
+import { formatDigestSyncResult, syncInputDigest } from './digest.js';
+
+/** `dailies digest --check` exit status when the config does not match its input artifact. */
+const EXIT_DIGEST_MISMATCH = 1;
 
 function resolveFrom(baseDir: string, p: string): string {
   return isAbsolute(p) ? p : resolve(baseDir, p);
@@ -148,6 +152,7 @@ async function main(): Promise<number> {
   let exitCode = 0;
   const program = new Command()
     .name('dailies')
+    .enablePositionalOptions()
     .description(
       'Evaluate an AI release candidate and emit a promote/block/inconclusive report',
     )
@@ -162,6 +167,19 @@ async function main(): Promise<number> {
       console.log(`created: ${result.inputsPath}`);
       console.log(`created: ${result.configPath}`);
       console.log(`next: ${result.nextCommand}`);
+    });
+
+  program
+    .command('digest')
+    .description(
+      'recompute the JSONL input digest and line count and update inputs.digest and scope.expectedItems',
+    )
+    .requiredOption('--config <path>', 'path to a Dailies JSON configuration')
+    .option('--check', 'report whether the config matches the input artifact without writing', false)
+    .action(async (options: { config: string; check: boolean }) => {
+      const result = await syncInputDigest(options.config, { check: options.check });
+      for (const line of formatDigestSyncResult(result, options.check)) console.log(line);
+      if (options.check && !result.matches) exitCode = EXIT_DIGEST_MISMATCH;
     });
 
   program.action(async () => {

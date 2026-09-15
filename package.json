@@ -33,6 +33,7 @@
   "scripts": {
     "benchmark:batch3": "npm run build --silent && node scripts/benchmark-batch3.mjs",
     "build": "tsc",
+    "examples:build": "npm run build --silent && node scripts/build-examples.mjs",
     "invariant:batch6": "npm run build --silent && node scripts/invariant-robustness.mjs",
     "pretest": "npm run build",
     "test": "vitest run",
@@ -46,7 +47,8 @@
     "@types/node": "^20.14.0",
     "ajv": "^8.20.0",
     "typescript": "^5.5.0",
-    "vitest": "^4.1.11"
+    "vitest": "^4.1.11",
+    "yaml": "^2.9.1"
   },
   "repository": {
     "type": "git",
