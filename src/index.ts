@@ -313,3 +313,12 @@ export {
   type EvaluatorSuiteManifestMember,
   type ExpectedEvaluatorSuiteManifest,
 } from './suite-manifest.js';
+export {
+  DIGEST_SUPPORTED_SCHEMA_VERSIONS,
+  formatDigestSyncResult,
+  inputArtifactDigest,
+  inputArtifactLineCount,
+  syncInputDigest,
+  type DigestSyncOptions,
+  type DigestSyncResult,
+} from './digest.js';

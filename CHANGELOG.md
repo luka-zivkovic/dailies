@@ -5,6 +5,12 @@ versioning while the public API remains pre-1.0.
 
 ## Unreleased
 
+- Add `dailies digest --config <path>` to recompute the JSONL input
+  artifact's SHA-256 digest and line count and rewrite only `inputs.digest`
+  and `scope.expectedItems` in place for schema v4, v5, and v6 configs,
+  preserving key order and formatting; `--check` reports drift without
+  writing and exits `1` on mismatch. Document it in the README quickstart, a
+  new CLI reference, and the `release-gate` skill.
 - Add a Claude Code plugin marketplace (`.claude-plugin/marketplace.json`)
   and the `dailies` plugin with a `release-gate` skill so a coding agent can
   install Dailies in one line, initialize a digest-pinned starter corpus, run

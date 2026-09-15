@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="#quickstart">Quickstart</a> · <a href="#how-it-works">How it works</a> · <a href="#minimal-configuration">Configuration</a> · <a href="#evidence-integrations">Evidence</a> · <a href="#decision-safety">Decisions</a>
+  <a href="#quickstart">Quickstart</a> · <a href="#how-it-works">How it works</a> · <a href="#cli-reference">CLI</a> · <a href="#minimal-configuration">Configuration</a> · <a href="#evidence-integrations">Evidence</a> · <a href="#decision-safety">Decisions</a>
 </p>
 
 Dailies helps you decide whether an AI change is ready to advance. It runs
@@ -79,7 +79,18 @@ report: .../dailies-out/report.md
 The generated scope deliberately claims only those three demonstration
 behaviors. Replace the cases, scope description, and candidate command with
 your real release evidence before using the decision in CI. Whenever the JSONL
-bytes change, update the configured SHA-256 digest as well.
+bytes change, the configured SHA-256 digest and `scope.expectedItems` must
+change with them. `dailies digest` recomputes both from the exact file bytes
+and rewrites only those two keys in place:
+
+```sh
+npx dailies digest --config dailies.config.json          # update the config
+npx dailies digest --config dailies.config.json --check  # verify only; exit 1 on drift
+```
+
+The command prints the old and new values. `--check` never writes and is
+meant for a CI step that catches an edited corpus before the release run
+stops with `input artifact digest mismatch`.
 
 To run the repository's five-case example instead:
 
@@ -98,6 +109,19 @@ The command exits with:
 | `0` | `promote` | Policy satisfied. |
 | `1` | `block` | Candidate should not advance. |
 | `2` | `inconclusive` | The run or required evidence failed. |
+
+## CLI reference
+
+| Command | Purpose | Exit codes |
+| --- | --- | --- |
+| `dailies --config <path>` | Run the release evaluation and write `report.json` and `report.md`. | `0` promote, `1` block, `2` inconclusive or run error |
+| `dailies init [directory]` | Create a runnable, digest-pinned schema-v4 starter without overwriting existing files. | `0` created, `2` refused or failed |
+| `dailies digest --config <path>` | Recompute the JSONL input digest and line count and update `inputs.digest` and `scope.expectedItems` in place (schema v4, v5, and v6). | `0` updated or already current, `2` error |
+| `dailies digest --config <path> --check` | Report whether the config matches the input artifact without writing. | `0` match, `1` mismatch, `2` error |
+
+Paths inside a config resolve relative to the config file. `dailies digest`
+changes only the two identity keys and preserves the file's key order and
+formatting; it never edits thresholds, policy, or scope descriptions.
 
 ## Why Dailies
 

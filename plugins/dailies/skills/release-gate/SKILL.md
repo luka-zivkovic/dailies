@@ -1,6 +1,6 @@
 ---
 name: release-gate
-description: "Set up and run a Dailies release gate for an AI change: create a digest-pinned starter corpus with `dailies init`, run `dailies --config`, and read `report.md` and exit codes 0, 1, and 2 as promote, block, or inconclusive while keeping the evidence trust class visible. Do not use for authoring evaluation rubrics, judging output quality by hand, or statically inspecting agent plugins. Use when someone wants to decide whether an AI change is safe to advance, wants to add a regression gate for a prompt or model change to CI, or asks to set up or interpret Dailies."
+description: "Set up and run a Dailies release gate for an AI change: create a digest-pinned starter corpus with `dailies init`, keep the corpus digest current with `dailies digest`, run `dailies --config` locally or through the GitHub Action, and read `report.md` and exit codes 0, 1, and 2 as promote, block, or inconclusive while keeping the evidence trust class visible. Do not use for authoring evaluation rubrics, judging output quality by hand, or statically inspecting agent plugins. Use when someone wants to decide whether an AI change is safe to advance, wants to add a regression gate for a prompt or model change to CI, or asks to set up or interpret Dailies."
 argument-hint: "[project directory or config path]"
 ---
 
@@ -76,17 +76,17 @@ shows it.
 ## 5. Keep the digest honest
 
 The config pins the corpus with `inputs.digest`. Whenever the JSONL bytes
-change, even by one whitespace character, recompute the digest and update the
-config. Otherwise the next run stops before evaluating anything, prints
-`dailies error: input artifact digest mismatch`, and exits `2`:
+change, even by one whitespace character, the next run stops before
+evaluating anything, prints `dailies error: input artifact digest mismatch`,
+and exits `2`. After any corpus edit, run:
 
 ```sh
-shasum -a 256 dailies.cases.jsonl    # macOS and BSD
-sha256sum dailies.cases.jsonl        # Linux
+npx dailies digest --config <path-to-dailies.config.json>
 ```
 
-Write the value as `"digest": "sha256:<hex>"` and set `scope.expectedItems`
-to the new line count.
+It recomputes the SHA-256 and line count, prints the old and new values, and
+rewrites only `inputs.digest` and `scope.expectedItems`. Add
+`--check` to verify without writing (exit `1` on drift).
 
 ## Mistakes to avoid
 
