@@ -24,6 +24,23 @@ missing results visible.
   </picture>
 </p>
 
+## Install with your coding agent
+
+In Claude Code, add the marketplace and install the plugin:
+
+```text
+/plugin marketplace add luka-zivkovic/dailies
+/plugin install dailies@dailies
+```
+
+The `release-gate` skill then walks the agent through `dailies init`, the
+three evidence trust classes, the run, and reading the report and exit codes
+as `promote`, `block`, or `inconclusive`.
+
+For Codex or another agent, paste one line: `Read
+https://raw.githubusercontent.com/luka-zivkovic/dailies/main/plugins/dailies/skills/release-gate/SKILL.md
+and follow it to set up and run a Dailies release gate in this project.`
+
 ## How it works
 
 | Decision | Meaning |
