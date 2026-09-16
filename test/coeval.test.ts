@@ -5,7 +5,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   canonicalJson,
   coevalEvidenceOperationSchema,
@@ -178,7 +178,15 @@ function buildReceipt(submitted: SubmittedItem[], mode: MockMode): Record<string
   return receipt;
 }
 
-async function startMockCoeval(mode: MockMode = 'valid'): Promise<MockCoeval> {
+interface MockCoevalHooks {
+  /** Runs on every poll GET before the mock answers; lets a test move a fake clock. */
+  onPoll?: (pollCall: number) => void;
+}
+
+async function startMockCoeval(
+  mode: MockMode = 'valid',
+  hooks: MockCoevalHooks = {},
+): Promise<MockCoeval> {
   const requests: BatchRequest[] = [];
   const receiptBodies: string[] = [];
   const authorizationHeaders: Array<string | undefined> = [];
@@ -214,6 +222,7 @@ async function startMockCoeval(mode: MockMode = 'valid'): Promise<MockCoeval> {
     }
     if (req.method === 'GET' && req.url === '/api/v1/eval-runs/run-1') {
       pollCalls += 1;
+      hooks.onPoll?.(pollCalls);
       if (mode === 'poll-transient' && pollCalls === 1) {
         res
           .writeHead(503, { 'content-type': 'application/json', 'retry-after': '0' })
@@ -846,13 +855,21 @@ describe('Coeval release-evidence boundary', () => {
   });
 
   it('bounds polling and maps a never-terminal run to judge timeout', async () => {
-    const mock = await startMockCoeval('pending');
+    // The poll deadline is wall-clock (`Date.now()`), and a request whose budget the
+    // deadline clamps is recorded as a `timeout` attempt rather than a `deadline`
+    // termination. Fake only `Date` (timers, fetch aborts, and the candidate child
+    // process stay real) and let the mock jump the clock past the deadline while it
+    // serves the first poll, so the crossing no longer depends on machine latency.
+    const pollTimeoutMs = 500;
+    const mock = await startMockCoeval('pending', {
+      onPoll: () => vi.setSystemTime(Date.now() + pollTimeoutMs),
+    });
     const { path } = await writeInputs([{ id: 'pass-a', input: 'alpha' }]);
     try {
-      const config = makeConfig(path, mock.url, undefined, 25);
-      if (config.judge.type !== 'coeval') throw new Error('expected Coeval judge');
-      config.judge.pollIntervalMs = 100;
-      const report = await runShadow(config);
+      vi.useFakeTimers({ toFake: ['Date'] });
+      const report = await runShadow(makeConfig(path, mock.url, undefined, pollTimeoutMs));
+      expect(mock.callCounts.poll).toBe(1);
+      expect(mock.callCounts.receipt).toBe(0);
       expect(report.decision).toBe('inconclusive');
       expect(report.items[0]).toMatchObject({ errorStage: 'judge', errorKind: 'incomplete' });
       expect(report.evidence).toMatchObject({ status: 'failed' });
@@ -862,7 +879,9 @@ describe('Coeval release-evidence boundary', () => {
         attempts: [],
         termination: { kind: 'deadline', errorKind: 'timeout' },
       });
+      expect(reportSchema.safeParse(report).success).toBe(true);
     } finally {
+      vi.useRealTimers();
       closeServer(mock.server);
     }
   });

@@ -5,6 +5,10 @@ versioning while the public API remains pre-1.0.
 
 ## Unreleased
 
+- Make the Coeval `bounds polling` test deterministic: it drives the poll
+  deadline through a faked `Date` instead of a 25ms wall-clock budget, so a
+  slow local round-trip can no longer turn the expected `deadline`
+  termination into a recorded `timeout` attempt. Test-only; no runtime change.
 - Bump the dev-only transitive dependency `fast-uri` (pulled in by `ajv`,
   used only in contract tests) from 3.1.5 to 3.1.8 in the lockfile to clear
   four high-severity advisories (GHSA-5jgf-p345-68v8, GHSA-f65p-4m7j-42xc,
