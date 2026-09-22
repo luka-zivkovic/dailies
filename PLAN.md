@@ -84,6 +84,14 @@ The first, Dailies-only portion of Batch 6 comparative-evidence preparation is
 implemented as the authored invariant gate. Decision gate 5 remains open, so
 no comparator adapter, runtime, result, or claim belongs in the repository yet.
 
+## Proposed, not approved
+
+[ADR-0006](docs/decisions/0006-third-party-eval-result-intake.md) proposes
+import-only Promptfoo, DeepEval, and Braintrust result adapters as
+`self_reported` evidence. It is **Proposed**, so no dependent runtime,
+configuration kind, or example belongs in the repository until it is
+accepted. The adapters would be evidence intake, not gate-5 comparator work.
+
 ## Demand-gated future
 
 A hosted release control plane, staged rollout (`shadow → canary → broader

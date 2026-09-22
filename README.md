@@ -264,6 +264,19 @@ judge cannot independently promote a release unless the customer policy
 records an explicit self-reported-evidence override and reason. The override
 admits the evidence; it does not upgrade its trust class.
 
+## Bring your own eval platform
+
+If you already run Promptfoo, DeepEval, or Braintrust, Dailies can gate on
+those results today only through the generic HTTP judge: a small service you
+own calls your platform for each item and returns its pass/fail. That evidence
+is `self_reported`, so it needs the explicit override described above.
+
+Native result-file adapters are **proposed, not implemented**.
+[ADR-0006](docs/decisions/0006-third-party-eval-result-intake.md) records the
+open questions. Imported results would stay `self_reported`, even if Dailies
+ran the platform itself and pinned the output file's digest. A file digest
+proves which bytes Dailies read. It does not verify the platform's results.
+
 ## Configuration generations
 
 Dailies keeps earlier report formats readable while adding new capability

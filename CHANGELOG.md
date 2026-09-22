@@ -5,6 +5,11 @@ versioning while the public API remains pre-1.0.
 
 ## Unreleased
 
+- Propose ADR-0006 for Promptfoo, DeepEval, and Braintrust result intake.
+  It records that imported results are `self_reported` under ADR-0001 and
+  lists the questions that need a decision first: candidate-execution
+  ownership, scope identity, and score mapping. It adds a "Bring your own eval
+  platform" README section and a PLAN note. Docs only; no runtime change.
 - Make the Coeval `bounds polling` test deterministic: it drives the poll
   deadline through a faked `Date` instead of a 25ms wall-clock budget, so a
   slow local round-trip can no longer turn the expected `deadline`

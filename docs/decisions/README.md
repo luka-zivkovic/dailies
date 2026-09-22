@@ -16,3 +16,4 @@ Status meanings:
 - [0003 — Scope-bound release decisions](0003-scope-bound-release-decisions.md) — Accepted
 - [0004 — Multi-criterion release policy](0004-multi-criterion-release-policy.md) — Accepted
 - [0005 — Release-decision precedence under mixed evidence](0005-decision-precedence.md) — Accepted
+- [0006 — Third-party eval-platform result intake](0006-third-party-eval-result-intake.md) — Proposed
