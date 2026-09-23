@@ -1,8 +1,8 @@
 # Portfolio implementation batches
 
-Status: **Batch 6 product foundations complete: Rubrist Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5**
+Status: **Batch 6 product foundations complete: Rubrist Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5; Batch 7 Rubrist production outcome monitoring is planned under Rubrist ADR-0013**
 
-Last reviewed: 2026-08-24
+Last reviewed: 2026-09-23
 
 This file is intentionally vendored in Rubrist, Dailies, and Casefile. Update
 all three copies together.
@@ -17,7 +17,8 @@ The products remain separate:
 
 - Rubrist owns Analyze → Measure: failure taxonomy, governed human truth,
   evaluators and policy-free suites, calibration, pinned execution, and
-  immutable assessment evidence.
+  immutable assessment evidence. It also owns production outcome monitoring,
+  which is ungoverned development feedback kept separate from that evidence.
 - Dailies owns scope-bound release decisions: evidence coordination, trust and
   completeness, customer policy, and `promote | block | inconclusive`.
 - Casefile owns deterministic no-execution trust intake: static findings,
@@ -493,6 +494,66 @@ such.
 Exit gate: comparative claims are reproducible, scope-limited, and supported by
 independent evidence rather than the authored regression corpora.
 
+## Batch 7 — Rubrist production outcome monitoring
+
+Implementation status: **planned**. Decision gate 11 was accepted on
+2026-09-23 and is recorded in Rubrist ADR-0013.
+
+This batch is Rubrist-only. Dailies and Casefile runtimes do not change, and
+production monitoring reports are not a Dailies evidence contract. Monitoring
+is ungoverned development feedback: nothing in this batch writes human truth,
+dataset revisions, exposure events, receipts, suites, or binary-calibration
+artifacts.
+
+### 7A — report contract settlement
+
+- Score-question (ordinal) analysis in the pure production-calibration
+  module, with explicit exclusion counts for malformed distributions and
+  out-of-range outcomes.
+- The report states the time window it covers.
+- The `production-calibration` report version is settled before any snapshot
+  is saved or any stored-record read exists.
+
+### 7B — records, ingest, reports, and snapshots
+
+- Append-only, project-scoped decision, action, and outcome records with
+  canonical content digests and submitter provenance kept outside the record
+  content. The record contract stays `production-decision-record/v1`.
+- Write-time conflict rejection, idempotent duplicate records, orphan
+  actions and outcomes that join when their decision arrives, and rejection
+  of records dated more than five minutes after receipt.
+- API key capabilities. An ingest-only key appends records and nothing else;
+  existing keys gain no ingest capability.
+- An atomic JSON Lines batch append under `/api/v1/` (at most 10,000 records
+  and 4 MiB) with its own configurable records-per-minute budget, and an
+  owner import through the session UI over the same write path.
+- Reports computed on read over an explicit window with server-supplied
+  `now`, a deterministic record order, and an explicit record ceiling that
+  fails instead of sampling.
+- Member-saved snapshots of stored-record reports holding exact canonical
+  report bytes, their digest, build parameters, window, report version, and
+  record-set digest.
+- Scheduled retention by receive time (90 days by default, owner-adjustable
+  between 1 and 730 days), owner erasure of one decision's records with a
+  tombstone, owner purge of a revoked key's records, and owner snapshot
+  deletion, each with an audit entry written in the same transaction.
+- The web view reads stored records and snapshots. The preview route stays
+  compute-only.
+
+Not in this batch: Ironside ingest, governed-review routing of a
+low-confidence production sample, and drift or model-change notifications.
+ADR-0013 records them as follow-ups that each need their own decision.
+
+Exit gate: an identical retry writes nothing new; a conflicting decision is
+rejected without affecting later reports; a future-dated record is rejected;
+an ingest key cannot judge or read and an existing key cannot ingest; no
+stored row holds state or question text; two builds over the same records are
+identical; a build over the ceiling fails explicitly; a saved snapshot's
+bytes and digest never change; an erased decision ID cannot be re-ingested; a
+purge removes exactly the revoked key's records; retention, erasure, purge,
+and snapshot deletion leave audit entries; and receipt v1, suite manifest v1,
+and binary-calibration v1 bytes are unchanged.
+
 ## Cross-product test requirements
 
 - Producer fixtures are generated once and vendored by consumers with pinned
@@ -543,5 +604,9 @@ historical semantics and must be accepted before their runtime batch:
     append-only open coding, flat taxonomy revision, failure-code promotion,
     candidate evaluator lifecycle, and honest component measurements are fixed
     by Rubrist ADR-0010.
+11. **Resolved for Batch 7:** record persistence, ingest key capabilities,
+    report snapshots, retention, and erasure for production outcome
+    monitoring, which Rubrist's `PRODUCT.md` places in its charter, are fixed
+    by Rubrist ADR-0013.
 
 Resolve each in the contract phase of its owning batch before runtime code.
