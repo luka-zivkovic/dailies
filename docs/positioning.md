@@ -52,7 +52,7 @@ overstating what the evidence proves.
   it.
 - Scope and criterion policy remain usable enough that teams do not fall back
   to one opaque aggregate threshold.
-- Dailies can interoperate with Coeval and deterministic tools without becoming
+- Dailies can interoperate with Rubrist (formerly Coeval) and deterministic tools without becoming
   a serving-path proxy or duplicating their analysis.
 
 Until those comparative tests exist, these are product hypotheses rather than
