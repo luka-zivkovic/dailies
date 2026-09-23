@@ -51,7 +51,7 @@ function syntheticManifest(criterionCount) {
     };
   });
   const unsigned = {
-    contract: 'coeval/evaluator-suite-manifest/v1',
+    contract: 'rubrist/evaluator-suite-manifest/v1',
     schemaVersion: 1,
     manifestId: `benchmark_manifest_${criterionCount}`,
     suiteId: `benchmark_suite_${criterionCount}`,
@@ -207,7 +207,7 @@ function deriveValidatedReport(fixture) {
       trust: {
         status: 'complete',
         class: 'verified',
-        derivation: 'coeval_receipt_v1',
+        derivation: 'rubrist_receipt_v1',
         admissible: true,
       },
       evidence: {
@@ -257,7 +257,7 @@ function deriveValidatedReport(fixture) {
       rulePassed: applied.criteria[index].rulePassed,
     },
   }));
-  const provider = providerExecutionIdentity({ type: 'coeval', url: 'https://benchmark.invalid' });
+  const provider = providerExecutionIdentity({ type: 'rubrist', url: 'https://benchmark.invalid' });
   const candidate = candidateExecutionIdentity({
     type: 'command',
     template: 'synthetic-candidate {input}',

@@ -3,7 +3,7 @@
 Status: **CURRENT additive contract**
 
 Report v6 records one Dailies release decision that combines the unchanged
-suite assessment flow from report v5 with separately scoped, policy-free Coeval
+suite assessment flow from report v5 with separately scoped, policy-free Rubrist
 binary-calibration evidence. It does not change assessment receipt v1,
 evaluator-suite manifest v1, or reports v3 through v5.
 
@@ -15,7 +15,7 @@ A schema-v6 run binds:
 - one exact evaluator-suite manifest;
 - customer release policy v2;
 - one ordered calibration binding per manifest criterion; and
-- the existing command/HTTP candidate and Coeval receipt-v1 provider settings.
+- the existing command/HTTP candidate and Rubrist receipt-v1 provider settings.
 
 Each calibration binding is explicit absence or a local file with an expected
 byte digest and full expected producer identity. Paths resolve relative to the

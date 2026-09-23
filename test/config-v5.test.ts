@@ -16,7 +16,7 @@ const base = {
   candidate: { type: 'command', template: 'printf %s {input}' },
   suite: {
     manifest: { type: 'file', path: 'manifest.json', manifestId: 'manifest', manifestDigest: digest },
-    provider: { type: 'coeval', url: 'https://coeval.example' },
+    provider: { type: 'rubrist', url: 'https://rubrist.example' },
   },
   policy: {
     schemaVersion: 1,

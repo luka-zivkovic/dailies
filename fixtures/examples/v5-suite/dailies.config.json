@@ -25,10 +25,10 @@
       "type": "file",
       "path": "suite-manifest.json",
       "manifestId": "suite_manifest_support_quality_1",
-      "manifestDigest": "sha256:b5272076f80976a5a04dd8b5413741a53fca91524963650f341e7b37dc5c2288"
+      "manifestDigest": "sha256:8f9574b4d3ebf63dcfc19ca866bf4725fd4fec312c67179aa8b4468df78f9db2"
     },
     "provider": {
-      "type": "coeval",
+      "type": "rubrist",
       "url": "http://127.0.0.1:4820",
       "pollIntervalMs": 100,
       "evidenceDeadlineMs": 30000
@@ -39,7 +39,7 @@
     "id": "example-support-release-policy",
     "version": "1",
     "manifestId": "suite_manifest_support_quality_1",
-    "manifestDigest": "sha256:b5272076f80976a5a04dd8b5413741a53fca91524963650f341e7b37dc5c2288",
+    "manifestDigest": "sha256:8f9574b4d3ebf63dcfc19ca866bf4725fd4fec312c67179aa8b4468df78f9db2",
     "criteria": [
       {
         "criterionVersionId": "criterionv_factuality_1",

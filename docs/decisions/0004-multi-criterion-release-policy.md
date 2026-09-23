@@ -6,14 +6,14 @@ Date: 2026-08-22
 
 ## Context
 
-AI quality has multiple dimensions, but Coeval deliberately emits separate
+AI quality has multiple dimensions, but Rubrist deliberately emits separate
 policy-free evidence for each criterion. Dailies needs to decide how those
 measurements affect a release without hiding a catastrophic failure inside an
 average or treating missing evidence as a low score.
 
 ## Decision
 
-Dailies consumes criterion-level evidence and an optional pinned Coeval suite
+Dailies consumes criterion-level evidence and an optional pinned Rubrist suite
 manifest. Customer policy assigns each criterion one or more explicit release
 roles:
 
@@ -37,7 +37,7 @@ unqualified mean.
 
 ## Consequences
 
-- The same Coeval suite can support different customer policies.
+- The same Rubrist suite can support different customer policies.
 - Criterion-level incompleteness remains visible through the final decision.
 - Non-compensatory safety or correctness requirements cannot be averaged away.
 - Report and policy schemas need explicit criterion, scope, trust, and

@@ -3,8 +3,8 @@ import { readFile } from 'node:fs/promises';
 import { z } from 'zod';
 import {
   canonicalJson,
-  type CoevalAssessmentReceipt,
-} from './coeval.js';
+  type RubristAssessmentReceipt,
+} from './rubrist.js';
 
 const digestSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
 const nonEmptyStringSchema = z.string().min(1);
@@ -29,7 +29,7 @@ export const evaluatorSuiteTrialPlanSchema = z.object({
 }).strict();
 
 export const evaluatorSuiteManifestSchema = z.object({
-  contract: z.literal('coeval/evaluator-suite-manifest/v1'),
+  contract: z.literal('rubrist/evaluator-suite-manifest/v1'),
   schemaVersion: z.literal(1),
   manifestId: nonEmptyStringSchema,
   suiteId: nonEmptyStringSchema,
@@ -187,7 +187,7 @@ export async function loadEvaluatorSuiteManifest(
 }
 
 export function verifyReceiptManifestBinding(
-  receipt: CoevalAssessmentReceipt,
+  receipt: RubristAssessmentReceipt,
   manifest: EvaluatorSuiteManifest,
   member: EvaluatorSuiteManifestMember,
 ): void {

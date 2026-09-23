@@ -53,7 +53,7 @@ A failed evidence channel produces `inconclusive`. Missing evidence stays
 visible, with the exact precedence documented under [Decision safety](#decision-safety).
 
 Dailies runs locally and does not sit on the serving path. It contacts only the
-candidate, judge, or Coeval endpoints that you explicitly configure.
+candidate, judge, or Rubrist endpoints that you explicitly configure.
 
 ## Quickstart
 
@@ -105,11 +105,11 @@ node dist/cli.js --config fixtures/dailies.config.json
 Runnable v5 (evaluator suite) and v6 (calibration-aware) examples live under
 [`fixtures/examples/`](fixtures/examples/README.md). Their manifests and
 calibration artifacts are verified offline, but receipt evidence always
-comes from a Coeval HTTP endpoint, so they ship with a local stub that
+comes from a Rubrist HTTP endpoint, so they ship with a local stub that
 returns scripted, structurally valid receipts:
 
 ```sh
-node scripts/mock-coeval.mjs --manifest fixtures/examples/v5-suite/suite-manifest.json &
+node scripts/mock-rubrist.mjs --manifest fixtures/examples/v5-suite/suite-manifest.json &
 node dist/cli.js --config fixtures/examples/v5-suite/dailies.config.json
 node dist/cli.js --config fixtures/examples/v6-calibration/dailies.config.json
 ```
@@ -256,7 +256,7 @@ See the [bundled configuration](fixtures/dailies.config.json) and
 | Integration | Trust class | Intended use |
 | --- | --- | --- |
 | Built-in exact match | `deterministic` | Reproducible baseline comparisons without an external judge. |
-| Verified Coeval receipt | `verified` | Governed evaluator evidence with pinned identity, coverage, and digests. |
+| Verified Rubrist receipt | `verified` | Governed evaluator evidence with pinned identity, coverage, and digests. |
 | Generic HTTP judge | `self_reported` | Migration and custom integrations without a verifiable evidence envelope. |
 
 Verified and deterministic evidence are admissible by default. A generic HTTP
@@ -264,13 +264,26 @@ judge cannot independently promote a release unless the customer policy
 records an explicit self-reported-evidence override and reason. The override
 admits the evidence; it does not upgrade its trust class.
 
+## Bring your own eval platform
+
+If you already run Promptfoo, DeepEval, or Braintrust, Dailies can gate on
+those results today only through the generic HTTP judge: a small service you
+own calls your platform for each item and returns its pass/fail. That evidence
+is `self_reported`, so it needs the explicit override described above.
+
+Native result-file adapters are **proposed, not implemented**.
+[ADR-0006](docs/decisions/0006-third-party-eval-result-intake.md) records the
+open questions. Imported results would stay `self_reported`, even if Dailies
+ran the platform itself and pinned the output file's digest. A file digest
+proves which bytes Dailies read. It does not verify the platform's results.
+
 ## Configuration generations
 
 Dailies keeps earlier report formats readable while adding new capability
 through explicit schema versions:
 
-- **v4 — single criterion:** one declared scope with exact-match, HTTP, or Coeval evidence.
-- **v5 — evaluator suite:** a pinned, policy-free Coeval suite with separate evidence and policy for each criterion.
+- **v4 — single criterion:** one declared scope with exact-match, HTTP, or Rubrist evidence.
+- **v5 — evaluator suite:** a pinned, policy-free Rubrist suite with separate evidence and policy for each criterion.
 - **v6 — calibration-aware suite:** exact local calibration artifacts, evaluated per trial without silently pooling variance.
 
 The detailed contracts live in [report v4](docs/report-v4.md),
@@ -296,7 +309,7 @@ benchmark or a product-superiority claim.
 ## Data and security
 
 - Candidate commands run on the machine invoking Dailies.
-- Candidate, judge, and Coeval HTTP requests go only to configured endpoints.
+- Candidate, judge, and Rubrist HTTP requests go only to configured endpoints.
 - Authentication header **names**, but not their values, may appear in execution identity records.
 - Reports contain evaluation inputs, candidate outputs, labels, and reasons. Treat report artifacts as potentially sensitive data.
 - Dailies is not an inference proxy and does not require production traffic to pass through it.
@@ -308,9 +321,9 @@ Please report vulnerabilities using the process in [SECURITY.md](SECURITY.md).
 Dailies owns the release consequence. It does not author rubrics, establish
 human truth, or statically inspect capability packages.
 
-- [Coeval](https://github.com/luka-zivkovic/coeval) produces governed, policy-free assessment evidence.
+- [Rubrist](https://github.com/luka-zivkovic/rubrist) produces governed, policy-free assessment evidence.
 - [Casefile](https://github.com/luka-zivkovic/casefile) produces deterministic trust evidence for capability artifacts.
-- Dailies currently verifies Coeval evidence and applies customer-owned release policy. Casefile consumption remains a possible future integration.
+- Dailies currently verifies Rubrist evidence and applies customer-owned release policy. Casefile consumption remains a possible future integration.
 
 The products share explicit evidence contracts; they do not collapse into one
 runtime.

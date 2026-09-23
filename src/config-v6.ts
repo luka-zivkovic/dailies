@@ -17,7 +17,7 @@ const nonBlankStringSchema = z.string().min(1).refine((value) => value.trim().le
 const digestSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
 
 /**
- * The complete identity Dailies expects the Coeval artifact to prove. Keeping
+ * The complete identity Dailies expects the Rubrist artifact to prove. Keeping
  * this explicit prevents a digest-valid artifact for another evaluator,
  * sealed revision, exposure snapshot, provider policy, or suite position from
  * becoming admissible release evidence.

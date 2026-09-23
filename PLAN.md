@@ -16,7 +16,7 @@ release decision reproducible: run or coordinate the candidate evaluation,
 retain evidence scope, provenance, trust, and incompleteness, apply
 customer-owned policy, and emit `promote`, `block`, or `inconclusive`.
 
-Coeval may provide governed assessment evidence, but it does not decide the
+Rubrist may provide governed assessment evidence, but it does not decide the
 release. Casefile may provide deterministic artifact-trust evidence, but it
 does not decide the release. Dailies owns the consequence of applying release
 policy to those inputs.
@@ -26,7 +26,7 @@ policy to those inputs.
 The local CLI is the current product surface. It:
 
 - runs command or HTTP candidates over historical inputs;
-- supports exact-match, HTTP, and Coeval evidence paths;
+- supports exact-match, HTTP, and Rubrist evidence paths;
 - records typed retry and failure evidence;
 - compares explicit baseline labels with candidate assessments; and
 - requires exact-byte JSONL identity and a declared evidence scope;
@@ -34,7 +34,7 @@ The local CLI is the current product surface. It:
   safe admissibility default; and
 - emits a scope-bound v4 tri-state release report while retaining a separate
   read-only v3 inspection parser.
-- additively consumes a pinned Coeval evaluator-suite manifest with separate
+- additively consumes a pinned Rubrist evaluator-suite manifest with separate
   criterion receipts in v5, applies explicit customer criterion policy, and
   retains v4 execution compatibility; and
 - additively consumes exact local binary-calibration artifacts in v6, applies
@@ -60,8 +60,8 @@ Founder review accepted the following constraints on 2026-08-22:
 3. Bind every decision to the evidence scopes in ADR-0003.
 4. Apply mandatory, advisory, blocking, and non-implicitly-compensatory criterion policy
    in Dailies as defined by ADR-0004.
-5. Consume Coeval's separate policy-free criterion evidence rather than asking
-   Coeval for a suite release verdict.
+5. Consume Rubrist's separate policy-free criterion evidence rather than asking
+   Rubrist for a suite release verdict.
 
 ## Inputs to implementation batching
 
@@ -72,17 +72,25 @@ The next planning pass may divide work into batches, but it must cover:
 2. trust class through item results, aggregation, reports, and policy, with the
    safe default enforced;
 3. criterion and suite-policy mapping without implicit compensation
-   (**implemented in additive v5 for null-trial Coeval suites**);
+   (**implemented in additive v5 for null-trial Rubrist suites**);
 4. conformance fixtures for scope, trust, incomplete, tampered, and conflicting
    multi-criterion evidence;
 5. adversarial decision tests for false promotion, false blocking,
    inconclusive handling, determinism, and retry behavior; and
-6. Coeval calibration consumption through the frozen separate v1 artifact
+6. Rubrist calibration consumption through the frozen separate v1 artifact
    contract (**implemented as the local-file schema-v6 path**).
 
 The first, Dailies-only portion of Batch 6 comparative-evidence preparation is
 implemented as the authored invariant gate. Decision gate 5 remains open, so
 no comparator adapter, runtime, result, or claim belongs in the repository yet.
+
+## Proposed, not approved
+
+[ADR-0006](docs/decisions/0006-third-party-eval-result-intake.md) proposes
+import-only Promptfoo, DeepEval, and Braintrust result adapters as
+`self_reported` evidence. It is **Proposed**, so no dependent runtime,
+configuration kind, or example belongs in the repository until it is
+accepted. The adapters would be evidence intake, not gate-5 comparator work.
 
 ## Demand-gated future
 
@@ -96,7 +104,7 @@ do not need to pass through Dailies on the serving path.
 
 ## Explicit deferrals
 
-- Rubric authoring and human-truth adjudication belong to Coeval.
+- Rubric authoring and human-truth adjudication belong to Rubrist.
 - Static capability scanning belongs to Casefile.
 - Semantic clustering is deferred.
 - Production sampling/drift execution, cost/latency gates, and

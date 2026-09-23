@@ -31,7 +31,7 @@ the `scope` description, and the `candidate` command with their own.
 
 Every result carries a trust class, and the report keeps them distinct:
 
-- **verified** — a governed evaluator (Coeval) produced the result and
+- **verified** — a governed evaluator (Rubrist) produced the result and
   Dailies checked its pinned identity, coverage, and digests. Admissible.
 - **deterministic** — a reproducible check such as the built-in exact-match
   judge. Anyone can rerun it and get the same answer. Admissible.

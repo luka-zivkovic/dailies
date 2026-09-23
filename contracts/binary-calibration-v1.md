@@ -1,12 +1,12 @@
 # Binary calibration artifact v1 specification
 
-This document is normative for `coeval/binary-calibration/v1` alongside
+This document is normative for `rubrist/binary-calibration/v1` alongside
 `binary-calibration-v1.schema.json`. The artifact is immutable, aggregate-only,
 single-criterion evidence from one exact binary evaluator version measured
 against one exact governed-blind sealed-validation revision. It is not an
 assessment receipt, a provider transcript, or a release decision, and it does
-not change `coeval/assessment-receipt/v1` or
-`coeval/evaluator-suite-manifest/v1`.
+not change `rubrist/assessment-receipt/v1` or
+`rubrist/evaluator-suite-manifest/v1`.
 
 ## Closed public boundary
 
@@ -20,7 +20,7 @@ Consumers must expose minimum-support policy and operators must govern sealed
 population size accordingly; no public item linkage is added to solve this.
 
 The artifact includes one holistic commitment to the separately named private
-`coeval/binary-calibration-private-ledger/v1`. That ledger contains the ordered
+`rubrist/binary-calibration-private-ledger/v1`. That ledger contains the ordered
 logical attempt evidence needed by the producer to reconstruct the aggregates.
 It remains inside the protected sealed execution boundary and has no read API.
 The commitment is SHA-256 over its exact canonical bytes. The public contract
@@ -46,7 +46,7 @@ SHA-256 over those exact canonical UTF-8 ledger bytes. The salt makes guessing
 a small sealed ledger from the public digest impractical. Ledger records and
 salts never enter the public artifact or a read surface.
 
-The ledger uses `coeval-canonical-json/v1`. `errorCode` is non-null exactly for
+The ledger uses `rubrist-canonical-json/v1`. `errorCode` is non-null exactly for
 `errored`; `unevaluated` pairs with `not_started`; classified, abstained, and
 known errored terminal outcomes pair with `terminal`; and an
 `outcome_unknown` record may remain `started` because physical completion
@@ -55,7 +55,7 @@ globally requested provider; its observed model/version/fingerprint fields may
 be null for `requested_only` evidence, but the logical record is never omitted.
 
 The ledger root contract is exactly
-`coeval/binary-calibration-private-ledger/v1` with schema version `1`.
+`rubrist/binary-calibration-private-ledger/v1` with schema version `1`.
 Item/commitment digests use the public lowercase SHA-256 form, salts match
 `^[a-f0-9]{64}$`, trial indexes are zero through nine, provider is a non-empty
 Unicode-scalar string capped at 4,096 code points, and observed provider fields
@@ -105,7 +105,7 @@ The artifact binds:
 digests in lexicographic digest order; it is not an item presentation-order
 claim. v1 does not invent a redundant `truthSetDigest`.
 
-`requestedModelBinding.modelVersion` records what Coeval requested. It is not
+`requestedModelBinding.modelVersion` records what Rubrist requested. It is not
 silently treated as observed immutable provider identity. Observed identity is
 reported separately in each trial's provider groups.
 
@@ -145,7 +145,7 @@ bindings.
 
 ## Canonical JSON and time
 
-`canonicalizationVersion` is exactly `coeval-canonical-json/v1`, the same
+`canonicalizationVersion` is exactly `rubrist-canonical-json/v1`, the same
 algorithm used by assessment receipt v1 and evaluator suite manifest v1:
 
 1. object keys sort lexicographically by ECMAScript UTF-16 code units at every
@@ -264,7 +264,7 @@ The public groups contain no request IDs, response IDs, item identity, or
 observation commitments.
 
 `observed_version` is reserved for a version identifier returned by the
-provider and is not currently producible by Coeval's provider adapters.
+provider and is not currently producible by Rubrist's provider adapters.
 Requested `modelVersion` is only requested identity and never upgrades a group
 above `requested_only`; current Batch 5B implementations should expect
 `observed_model`, `observed_fingerprint`, or `requested_only` until an adapter
@@ -479,7 +479,7 @@ failure still outranks unrelated incompleteness. Thresholds, minimum support,
 freshness, provider strength, criterion roles, and release consequences remain
 customer policy in Dailies and never enter this artifact.
 
-This is normative TARGET behavior for the consumer. Coeval Batch 5A does not
+This is normative TARGET behavior for the consumer. Rubrist Batch 5A does not
 claim that Dailies has vendored the bytes or that the cross-product exit gate
 is closed.
 

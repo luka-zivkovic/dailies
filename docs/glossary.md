@@ -4,7 +4,7 @@ Status: **active shared vocabulary**
 
 Last reviewed: 2026-08-22
 
-This file is intentionally vendored in Coeval, Dailies, and Casefile. Update
+This file is intentionally vendored in Rubrist, Dailies, and Casefile. Update
 all three copies together. Product-specific scope is defined by each repo's
 `PRODUCT.md`.
 
@@ -13,11 +13,11 @@ all three copies together. Product-specific scope is defined by each repo's
   entry, or comparable package inspected by Casefile.
 - **Criterion:** One named quality dimension that can be judged independently.
 - **Evaluator:** A governed mechanism that maps case evidence to a structured
-  assessment. In Coeval, an LLM judging skill is one evaluator type.
+  assessment. In Rubrist, an LLM judging skill is one evaluator type.
 - **Evaluator suite:** A versioned, policy-free grouping of independently
   judged criteria and their pinned evaluators. A suite does not decide whether
   a release should ship.
-- **Judging skill:** Coeval's versioned evaluator definition: rubric, prompt,
+- **Judging skill:** Rubrist's versioned evaluator definition: rubric, prompt,
   output contract, and requested model binding.
 - **Human truth:** A reviewed human label or adjudicated result with rater and
   provenance information. It is reference evidence, not an LLM prediction.
@@ -38,7 +38,7 @@ all three copies together. Product-specific scope is defined by each repo's
 - **Assessment:** The result of applying an evaluator to one or more cases.
 - **Assessment label:** A per-case evaluator result such as `pass` or `fail`.
   Do not call it a release decision.
-- **Assessment receipt:** Coeval's policy-free, verifiable record of a pinned
+- **Assessment receipt:** Rubrist's policy-free, verifiable record of a pinned
   evaluator execution and its completeness/provenance.
 - **Evidence:** A typed observation with identity, provenance, and completeness
   that another system may verify and use.

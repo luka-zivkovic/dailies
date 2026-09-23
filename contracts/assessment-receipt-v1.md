@@ -1,6 +1,6 @@
 # Assessment receipt v1 digest and conformance specification
 
-This document is normative for Coeval assessment-receipt v1 alongside
+This document is normative for Rubrist assessment-receipt v1 alongside
 `assessment-receipt-v1.schema.json`. The schema defines structure; this
 document defines canonical bytes and semantic linkage.
 
@@ -56,8 +56,8 @@ under-validation.
 
 The pinned SHA-256 file digests are:
 
-- schema: `ca18a7b3bfa4610ff56ab88d60044f4357df2d035ac5e072356becc20250e9e7`;
+- schema: `3e5ce757a7f86d02a6ab33057c9176ea052225d65f984ca91e48e5dbaead30a3`;
 - positive fixture:
-  `530e7322feb5bc16d025daaef14bec8d73488a168a602d82b37fae2a06d12274`;
+  `803606d52c79b15c9869ced5920c166a180f4534a3eaf521423e6d0ed1b76752`;
 - conformance corpus:
-  `9a9ba86d54e78a6cc8d63d592712791f21984e68f09bbbe011d8903296af3e07`.
+  `caa74e8632721cf48ceca1133078ade568bfad4fcea177b5e7588837080c0692`.

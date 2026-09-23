@@ -73,7 +73,7 @@ than the definition of the product.
 ## Inputs and outputs
 
 Inputs include a release candidate, declared evidence scopes and their cases,
-optional baseline outputs and labels, evidence from Coeval, reproducible
+optional baseline outputs and labels, evidence from Rubrist, reproducible
 deterministic checks, external judge results, and customer release policy.
 
 Outputs include item-level execution evidence, paired comparisons, evidence
@@ -84,7 +84,7 @@ not establish representative production quality.
 
 ## Relationship to the other products
 
-- **Coeval** governs and executes evaluators and emits policy-free assessment
+- **Rubrist** governs and executes evaluators and emits policy-free assessment
   evidence. Dailies verifies that evidence and owns the release consequence.
 - **Casefile** emits deterministic trust evidence about capability artifacts.
   Dailies may eventually consume such evidence as one policy input, but it
@@ -96,16 +96,16 @@ The products share explicit evidence contracts, not product ownership.
 ## Current state versus target state
 
 Current Dailies is a local release CLI with command/HTTP candidates, the v4
-single-criterion exact-match/HTTP/Coeval paths, retries, and tri-state reports.
+single-criterion exact-match/HTTP/Rubrist paths, retries, and tri-state reports.
 Schema v4 requires exact-byte input identity and one declared evidence scope,
 derives and enforces evidence trust, and retains explicitly unavailable
-producer provenance. Additive schema v5 consumes an exact pinned Coeval
+producer provenance. Additive schema v5 consumes an exact pinned Rubrist
 policy-free suite manifest and separate receipt-v1 evidence, preserves
 criterion/suite/scope/trust identity, and applies explicit mandatory,
 blocking, advisory, or same-unit compensatory customer policy. Generic HTTP
 evidence remains visibly self-reported and inadmissible without a reasoned
 customer override. Additive schema v6 consumes exact local
-`coeval/binary-calibration/v1` artifacts under customer policy v2, preserves a
+`rubrist/binary-calibration/v1` artifacts under customer policy v2, preserves a
 separate sealed calibration scope, evaluates repeated calibration trials
 without pooling, and emits a canonical calibration-aware report while keeping
 receipt v1 unchanged. Repeated candidate-assessment execution, staged rollout,
@@ -130,8 +130,8 @@ and hosted control-plane ideas remain demand-gated.
   inconclusive.
 - Partial infrastructure failure never produces a false promotion.
 - Verified, deterministic, and self-reported evidence cannot be confused.
-- Dailies can consume the same Coeval receipt under different customer
-  policies without asking Coeval to make a deployment decision.
+- Dailies can consume the same Rubrist receipt under different customer
+  policies without asking Rubrist to make a deployment decision.
 - A release report distinguishes known-failure regression coverage, sealed
   representative evaluation, production sampling, and manual review evidence.
 

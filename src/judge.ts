@@ -35,9 +35,9 @@ export async function judgeItem(
     };
   }
 
-  if (judge.type === 'coeval') {
+  if (judge.type === 'rubrist') {
     throw new OperationError(
-      'coeval judge must be run through its batch evidence protocol',
+      'rubrist judge must be run through its batch evidence protocol',
       'protocol',
     );
   }

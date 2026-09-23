@@ -58,7 +58,7 @@ function manifestFor(value: BinaryCalibrationArtifact): {
   return {
     member,
     manifest: {
-      contract: 'coeval/evaluator-suite-manifest/v1',
+      contract: 'rubrist/evaluator-suite-manifest/v1',
       schemaVersion: 1,
       manifestId: value.suiteBinding?.manifestId ?? 'current-manifest',
       suiteId: 'suite-calibration-test',

@@ -11,7 +11,7 @@ import {
   collectCalibrationEvidence,
   type CalibrationCollectionResult,
 } from '../src/calibration-policy.js';
-import { canonicalJson, sha256Digest } from '../src/coeval.js';
+import { canonicalJson, sha256Digest } from '../src/rubrist.js';
 import {
   releasePolicyV2CandidateProjection,
   releasePolicyV2Digest,
@@ -77,7 +77,7 @@ function governedFixture(name = 'binary-calibration-v1.complete.json'): {
   };
   member.criterionDigest = evaluatorSuiteCriterionDigest(member);
   const manifest: EvaluatorSuiteManifest = {
-    contract: 'coeval/evaluator-suite-manifest/v1',
+    contract: 'rubrist/evaluator-suite-manifest/v1',
     schemaVersion: 1,
     manifestId: 'manifest-calibration-report-v6',
     suiteId: 'suite-calibration-report-v6',
@@ -173,7 +173,7 @@ function candidateReport(
 ): SuiteReport {
   const scope = releaseScope();
   const policyV1 = releasePolicyV2CandidateProjection(policyV2);
-  const provider = providerExecutionIdentity({ type: 'coeval', url: 'https://coeval.example' });
+  const provider = providerExecutionIdentity({ type: 'rubrist', url: 'https://rubrist.example' });
   const candidate = candidateExecutionIdentity({ type: 'command', template: 'candidate {input}' });
   const executionPolicy = {
     scheduling: 'manifest_order_bounded_pool/v1' as const,
@@ -237,7 +237,7 @@ function candidateReport(
       scope: { id: scope.id, kind: scope.kind, inputDigest: scope.inputArtifact.digest },
       trust: {
         status: 'unavailable',
-        derivation: 'coeval_receipt_v1',
+        derivation: 'rubrist_receipt_v1',
         admissible: false,
         reason: 'no_candidate_outputs',
       },
@@ -349,7 +349,7 @@ describe('calibration-aware report v6', () => {
     expect(report.criteria[0]!.evidenceState).toBe('verified');
     expect(report.criteria[0]!.trust).toEqual({
       status: 'verified',
-      derivation: 'coeval_binary_calibration_v1',
+      derivation: 'rubrist_binary_calibration_v1',
     });
     expect(report.criteria[0]!.calibrationPolicy.status).toBe('satisfied');
     expect(report.criteria[0]!.ageMilliseconds).toBe('3598000');
@@ -392,7 +392,7 @@ describe('calibration-aware report v6', () => {
     });
     const markdown = renderCalibrationReportMarkdown(report);
     expect(markdown).toContain('# Calibration-aware criterion release report: BLOCK');
-    expect(markdown).toContain('verified/coeval_binary_calibration_v1');
+    expect(markdown).toContain('verified/rubrist_binary_calibration_v1');
     expect(markdown).toContain('Separate calibration truth scope: sealed_validation_calibration/');
     expect(markdown).toContain('Artifact age: 3598000 ms');
     expect(markdown).toContain('Requirement checks:');
@@ -460,7 +460,7 @@ describe('calibration-aware report v6', () => {
     ['artifact metrics', (r: any) => { r.criteria[0].artifactEvidence.artifact.trials[0].confusionMatrix.truthPassEvaluatorPass = 0; }],
     ['calibration truth scope', (r: any) => { r.criteria[0].calibrationTruthScope.revisionDigest = ZERO_DIGEST; }],
     ['evidence state', (r: any) => { r.criteria[0].evidenceState = 'incomplete'; }],
-    ['trust', (r: any) => { r.criteria[0].trust = { status: 'unavailable', derivation: 'coeval_binary_calibration_v1', reason: 'artifact_incomplete' }; }],
+    ['trust', (r: any) => { r.criteria[0].trust = { status: 'unavailable', derivation: 'rubrist_binary_calibration_v1', reason: 'artifact_incomplete' }; }],
     ['age', (r: any) => { r.criteria[0].ageMilliseconds = '0'; }],
     ['requirement checks', (r: any) => { r.criteria[0].calibrationPolicy.checks[0].passed = false; }],
     ['per trial result', (r: any) => { r.criteria[0].calibrationPolicy.trials[0].passed = false; }],

@@ -1,9 +1,9 @@
 # Evaluator suite manifest v1 specification
 
-This document is normative for `coeval/evaluator-suite-manifest/v1` alongside
+This document is normative for `rubrist/evaluator-suite-manifest/v1` alongside
 `evaluator-suite-manifest-v1.schema.json`. The manifest is an immutable,
 policy-free grouping of separately judged criteria. It is not an assessment
-receipt and does not change `coeval/assessment-receipt/v1`.
+receipt and does not change `rubrist/assessment-receipt/v1`.
 
 ## Boundary
 
@@ -28,7 +28,7 @@ Each member contains exactly:
 - `criterionName` and `criterionDefinition`: the human-readable definition
   whose bytes participate in identity;
 - `criterionDigest`: SHA-256 identity defined below;
-- `skillId` and `skillVersionId`: the exact Coeval evaluator lineage/version;
+- `skillId` and `skillVersionId`: the exact Rubrist evaluator lineage/version;
 - `skillDigest`: the existing assessment-receipt-v1 evaluator digest;
 - `outputContractDigest`: a separate digest of the evaluator's output
   contract; and

@@ -1,16 +1,16 @@
 #!/usr/bin/env node
-// Minimal local stand-in for the Coeval release-evidence API used by the
+// Minimal local stand-in for the Rubrist release-evidence API used by the
 // runnable v5/v6 examples under fixtures/examples/. It implements only the
 // three endpoints Dailies calls (batch submit, eval-run poll, assessment
 // receipt) and produces structurally valid receipt-v1 artifacts whose
 // digests bind to the manifest and the submitted candidate outputs.
 //
-// It is a fixture server for local runs and tests. It is not Coeval, it has
+// It is a fixture server for local runs and tests. It is not Rubrist, it has
 // no evaluator, and every judged label is scripted: `pass` by default, or
 // `fail` for any criterion named with --fail-criterion.
 //
-//   node scripts/mock-coeval.mjs --manifest fixtures/examples/v5-suite/suite-manifest.json
-//   node scripts/mock-coeval.mjs --manifest <path> --port 0 --fail-criterion criterionv_safety_2
+//   node scripts/mock-rubrist.mjs --manifest fixtures/examples/v5-suite/suite-manifest.json
+//   node scripts/mock-rubrist.mjs --manifest <path> --port 0 --fail-criterion criterionv_safety_2
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { createServer } from 'node:http';
@@ -18,9 +18,9 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
 function usage(message) {
-  if (message) console.error(`mock-coeval: ${message}`);
+  if (message) console.error(`mock-rubrist: ${message}`);
   console.error(
-    'usage: node scripts/mock-coeval.mjs --manifest <suite-manifest.json> ' +
+    'usage: node scripts/mock-rubrist.mjs --manifest <suite-manifest.json> ' +
       '[--port 4820] [--host 127.0.0.1] [--fail-criterion <criterionVersionId>]...',
   );
   process.exit(2);
@@ -50,7 +50,7 @@ function parseArgs(argv) {
   return options;
 }
 
-/** Coeval canonical JSON: recursive lexicographic keys, stable array order. */
+/** Rubrist canonical JSON: recursive lexicographic keys, stable array order. */
 function canonicalJson(value) {
   if (value === null || typeof value !== 'object') return JSON.stringify(value);
   if (Array.isArray(value)) return `[${value.map((entry) => canonicalJson(entry ?? null)).join(',')}]`;
@@ -74,7 +74,7 @@ function buildReceipt(manifest, member, evalRunId, items, label) {
     error: null,
     contentDigest: sha256Digest({ input: item.input, output: item.output }),
     providerMetadata: {
-      model: 'mock-coeval',
+      model: 'mock-rubrist',
       requestId: `request-${member.position}-${item.clientItemId}`,
       responseId: `response-${member.position}-${item.clientItemId}`,
       systemFingerprint: null,
@@ -97,7 +97,7 @@ function buildReceipt(manifest, member, evalRunId, items, label) {
     },
     requestedModelBinding: {
       provider: 'mock',
-      modelId: 'mock-coeval',
+      modelId: 'mock-rubrist',
       modelVersion: '1',
       temperature: 0,
     },
@@ -124,7 +124,7 @@ function json(res, status, payload) {
   res.writeHead(status, { 'content-type': 'application/json' }).end(JSON.stringify(payload));
 }
 
-export function createMockCoevalServer(manifest, { failCriteria = new Set() } = {}) {
+export function createMockRubristServer(manifest, { failCriteria = new Set() } = {}) {
   const membersBySkillVersion = new Map(
     manifest.members.map((member) => [member.skillVersionId, member]),
   );
@@ -193,13 +193,13 @@ function main() {
   if (!Array.isArray(manifest?.members) || typeof manifest.projectId !== 'string') {
     usage(`${options.manifest} is not an evaluator suite manifest`);
   }
-  const server = createMockCoevalServer(manifest, { failCriteria: options.failCriteria });
+  const server = createMockRubristServer(manifest, { failCriteria: options.failCriteria });
   server.listen(options.port, options.host, () => {
     const address = server.address();
     const port = typeof address === 'object' && address !== null ? address.port : options.port;
-    console.log(`mock-coeval: listening on http://${options.host}:${port}`);
+    console.log(`mock-rubrist: listening on http://${options.host}:${port}`);
     console.log(
-      `mock-coeval: serving ${manifest.members.length} criteria from ${options.manifest}; ` +
+      `mock-rubrist: serving ${manifest.members.length} criteria from ${options.manifest}; ` +
         `labels ${options.failCriteria.size === 0 ? 'all pass' : `fail for ${[...options.failCriteria].join(', ')}`}`,
     );
   });

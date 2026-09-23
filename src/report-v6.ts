@@ -30,7 +30,7 @@ import {
   timeWindowSchema,
   type ScopeConfig,
 } from './config.js';
-import { canonicalJson, sha256Digest } from './coeval.js';
+import { canonicalJson, sha256Digest } from './rubrist.js';
 import {
   applyReleasePolicyV2,
   releasePolicyV2CandidateProjection,
@@ -117,11 +117,11 @@ const artifactEvidenceSchema = z.discriminatedUnion('disposition', [
 const calibrationTrustSchema = z.discriminatedUnion('status', [
   z.object({
     status: z.literal('verified'),
-    derivation: z.literal('coeval_binary_calibration_v1'),
+    derivation: z.literal('rubrist_binary_calibration_v1'),
   }).strict(),
   z.object({
     status: z.literal('unavailable'),
-    derivation: z.literal('coeval_binary_calibration_v1'),
+    derivation: z.literal('rubrist_binary_calibration_v1'),
     reason: z.union([
       calibrationCollectionIncompleteReasonSchema,
       calibrationCollectionIntegrityReasonSchema,
@@ -414,11 +414,11 @@ function calibrationTrust(
   collection: CalibrationCollectionResult,
 ): CalibrationReportCriterion['trust'] {
   if (collection.state === 'verified') {
-    return { status: 'verified', derivation: 'coeval_binary_calibration_v1' };
+    return { status: 'verified', derivation: 'rubrist_binary_calibration_v1' };
   }
   return {
     status: 'unavailable',
-    derivation: 'coeval_binary_calibration_v1',
+    derivation: 'rubrist_binary_calibration_v1',
     reason: collection.reason,
   };
 }
@@ -764,7 +764,7 @@ export function renderCalibrationReportMarkdown(report: CalibrationSuiteReport):
       `- Expected artifact digest: ${criterion.artifactEvidence.expectedArtifactDigest ?? 'unavailable'}`,
       `- Observed artifact digest: ${criterion.artifactEvidence.observedArtifactDigest ?? 'unavailable'}`,
       `- Calibration trust: ${criterion.trust.status === 'verified'
-        ? 'verified/coeval_binary_calibration_v1'
+        ? 'verified/rubrist_binary_calibration_v1'
         : `unavailable/${criterion.trust.reason}`}`,
       `- Separate calibration truth scope: ${criterion.calibrationTruthScope === null
         ? 'unavailable'

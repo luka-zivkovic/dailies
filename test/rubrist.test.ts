@@ -8,9 +8,9 @@ import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   canonicalJson,
-  coevalEvidenceOperationSchema,
+  rubristEvidenceOperationSchema,
   sha256Digest,
-} from '../src/coeval.js';
+} from '../src/rubrist.js';
 import { parseConfig, type Config } from '../src/config.js';
 import { decideExitCode, renderMarkdown, reportSchema, type Report } from '../src/report.js';
 import { runShadow } from '../src/runner.js';
@@ -48,7 +48,7 @@ interface BatchRequest {
   items: SubmittedItem[];
 }
 
-interface MockCoeval {
+interface MockRubrist {
   server: Server;
   url: string;
   requests: BatchRequest[];
@@ -178,15 +178,15 @@ function buildReceipt(submitted: SubmittedItem[], mode: MockMode): Record<string
   return receipt;
 }
 
-interface MockCoevalHooks {
+interface MockRubristHooks {
   /** Runs on every poll GET before the mock answers; lets a test move a fake clock. */
   onPoll?: (pollCall: number) => void;
 }
 
-async function startMockCoeval(
+async function startMockRubrist(
   mode: MockMode = 'valid',
-  hooks: MockCoevalHooks = {},
-): Promise<MockCoeval> {
+  hooks: MockRubristHooks = {},
+): Promise<MockRubrist> {
   const requests: BatchRequest[] = [];
   const receiptBodies: string[] = [];
   const authorizationHeaders: Array<string | undefined> = [];
@@ -277,7 +277,7 @@ async function startMockCoeval(
 }
 
 async function writeInputs(lines: object[]): Promise<{ dir: string; path: string }> {
-  const dir = await mkdtemp(join(tmpdir(), 'dailies-coeval-'));
+  const dir = await mkdtemp(join(tmpdir(), 'dailies-rubrist-'));
   tempDirs.push(dir);
   const path = join(dir, 'inputs.jsonl');
   await writeFile(path, lines.map((line) => JSON.stringify(line)).join('\n') + '\n', 'utf8');
@@ -294,7 +294,7 @@ function makeConfig(
     ...v4ContractForPath(inputsPath),
     candidate: { type: 'command', template: 'printf %s {input}' },
     judge: {
-      type: 'coeval',
+      type: 'rubrist',
       url: judgeUrl,
       headers: { authorization: 'Bearer test-key' },
       skillVersionId: 'skill-version-1',
@@ -331,7 +331,7 @@ afterEach(async () => {
   await Promise.all(tempDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
 });
 
-describe('Coeval canonical receipt primitives', () => {
+describe('Rubrist canonical receipt primitives', () => {
   it('uses recursive code-unit key ordering and array order/undefined semantics', () => {
     const value = { z: [undefined, { é: 3, Z: 1, a: 2 }], a: 'first' };
     const expected = '{"a":"first","z":[null,{"Z":1,"a":2,"é":3}]}';
@@ -358,7 +358,7 @@ describe('Coeval canonical receipt primitives', () => {
     [{ phase: 'poll', policy: 'retry_transient', attempts: [] }, 'zero requests without termination'],
     [{ phase: 'poll', policy: 'retry_transient', attempts: [{ attempt: 1, outcome: 'success' }], termination: { kind: 'deadline', errorKind: 'timeout' }, status: 'running' }, 'attempt plus termination'],
   ] as const)('rejects incoherent evidence operation: %s', (operation) => {
-    expect(coevalEvidenceOperationSchema.safeParse(operation).success).toBe(false);
+    expect(rubristEvidenceOperationSchema.safeParse(operation).success).toBe(false);
   });
 
   it.each([
@@ -369,13 +369,13 @@ describe('Coeval canonical receipt primitives', () => {
     { phase: 'poll', policy: 'retry_transient', attempts: [], termination: { kind: 'preflight', errorKind: 'protocol' } },
     { phase: 'receipt', policy: 'retry_transient', attempts: [], termination: { kind: 'deadline', errorKind: 'timeout' } },
   ] as const)('accepts coherent evidence operation %#', (operation) => {
-    expect(coevalEvidenceOperationSchema.safeParse(operation).success).toBe(true);
+    expect(rubristEvidenceOperationSchema.safeParse(operation).success).toBe(true);
   });
 });
 
-describe('Coeval release-evidence boundary', () => {
+describe('Rubrist release-evidence boundary', () => {
   it('submits one batch, verifies the receipt, and leaves promotion policy in Dailies', async () => {
-    const mock = await startMockCoeval();
+    const mock = await startMockRubrist();
     const { path } = await writeInputs([
       { id: 'pass-a', input: 'alpha', baseline_label: 'pass', baseline_output: 'alpha' },
       { id: 'fail-b', input: 'beta', baseline_label: 'pass', baseline_output: 'old-beta' },
@@ -410,7 +410,7 @@ describe('Coeval release-evidence boundary', () => {
       expect(strict.trust).toEqual({
         status: 'complete',
         class: 'verified',
-        derivation: 'coeval_receipt_v1',
+        derivation: 'rubrist_receipt_v1',
         admissible: true,
       });
       expect(strict.items.every((item) => item.trustClass === 'verified')).toBe(true);
@@ -431,7 +431,7 @@ describe('Coeval release-evidence boundary', () => {
   });
 
   it('rejects internally inconsistent or receipt-unlinked serialized reports', async () => {
-    const mock = await startMockCoeval();
+    const mock = await startMockRubrist();
     const { path } = await writeInputs([
       { id: 'pass-a', input: 'alpha', baseline_label: 'pass', baseline_output: 'alpha' },
       { id: 'fail-b', input: 'beta', baseline_label: 'pass', baseline_output: 'old-beta' },
@@ -528,7 +528,7 @@ describe('Coeval release-evidence boundary', () => {
         ['poll sequence', pollRemoved],
         ['poll/receipt status linkage', pollStatusUnlinked],
         ['receipt removal', receiptRemovedAfterSuccess],
-        ['synthetic per-item Coeval judge attempt', syntheticPerItemJudge],
+        ['synthetic per-item Rubrist judge attempt', syntheticPerItemJudge],
       ] as const) {
         expect(reportSchema.safeParse(tampered).success, name).toBe(false);
       }
@@ -538,7 +538,7 @@ describe('Coeval release-evidence boundary', () => {
   });
 
   it('accepts receipt order defined by JS code units for mixed-case and non-ASCII IDs', async () => {
-    const mock = await startMockCoeval();
+    const mock = await startMockRubrist();
     const { path } = await writeInputs([
       { id: 'é', input: 'accent' },
       { id: 'a', input: 'lower' },
@@ -560,7 +560,7 @@ describe('Coeval release-evidence boundary', () => {
   });
 
   it('retains distinct client IDs even when submitted input and output bytes are identical', async () => {
-    const mock = await startMockCoeval();
+    const mock = await startMockRubrist();
     const { path } = await writeInputs([
       { id: 'duplicate-content-a', input: 'same' },
       { id: 'duplicate-content-b', input: 'same' },
@@ -579,7 +579,7 @@ describe('Coeval release-evidence boundary', () => {
   });
 
   it('submits only successful candidates and still blocks a required candidate failure', async () => {
-    const mock = await startMockCoeval();
+    const mock = await startMockRubrist();
     const { path } = await writeInputs([
       { id: 'required-fails', input: 'bad' },
       { id: 'pass-good', input: 'good' },
@@ -612,17 +612,17 @@ describe('Coeval release-evidence boundary', () => {
   });
 
   it('does not invent provider operations when every required candidate fails', async () => {
-    const mock = await startMockCoeval();
+    const mock = await startMockRubrist();
     const { path } = await writeInputs([{ id: 'required-fails', input: 'bad' }]);
     const config = makeConfig(path, mock.url, { minPassRate: 0, maxRegressions: 99 });
     config.candidate = { type: 'command', template: 'exit 3' };
     try {
       const report = await runShadow(config);
-      expect(report).toMatchObject({ judgeType: 'coeval', decision: 'block' });
+      expect(report).toMatchObject({ judgeType: 'rubrist', decision: 'block' });
       expect(report.evidence).toBeUndefined();
       expect(report.trust).toEqual({
         status: 'unavailable',
-        derivation: 'coeval_receipt_v1',
+        derivation: 'rubrist_receipt_v1',
         admissible: false,
         reason: 'no_completed_evidence',
       });
@@ -651,7 +651,7 @@ describe('Coeval release-evidence boundary', () => {
     ['unordered', 'not ordered by clientItemId'],
   ] as const) {
     it(`is inconclusive for ${mode} evidence`, async () => {
-      const mock = await startMockCoeval(mode);
+      const mock = await startMockRubrist(mode);
       const { path } = await writeInputs([
         { id: 'pass-a', input: 'alpha', baseline_output: 'alpha' },
         { id: 'pass-b', input: 'beta', baseline_output: 'beta' },
@@ -662,7 +662,7 @@ describe('Coeval release-evidence boundary', () => {
         );
         expect(report.decision).toBe('inconclusive');
         expect(decideExitCode(report)).toBe(2);
-        expect(report.evidence).toMatchObject({ provider: 'coeval', status: 'failed' });
+        expect(report.evidence).toMatchObject({ provider: 'rubrist', status: 'failed' });
         expect(report.evidence?.receipt).toBeUndefined();
         expect(report.evidence?.operations.at(-1)).toMatchObject({
           phase: 'receipt',
@@ -689,7 +689,7 @@ describe('Coeval release-evidence boundary', () => {
   }
 
   it('preserves a digest-valid incomplete receipt without calling it a protocol error', async () => {
-    const mock = await startMockCoeval('incomplete');
+    const mock = await startMockRubrist('incomplete');
     const { path } = await writeInputs([
       { id: 'pass-a', input: 'alpha', baseline_label: 'pass' },
       { id: 'pass-b', input: 'beta', baseline_label: 'pass' },
@@ -721,7 +721,7 @@ describe('Coeval release-evidence boundary', () => {
       )).toBe(true);
       expect(report.trust).toEqual({
         status: 'unavailable',
-        derivation: 'coeval_receipt_v1',
+        derivation: 'rubrist_receipt_v1',
         admissible: false,
         reason: 'no_completed_evidence',
       });
@@ -730,7 +730,7 @@ describe('Coeval release-evidence boundary', () => {
       forgedVerifiedTrust.trust = {
         status: 'complete',
         class: 'verified',
-        derivation: 'coeval_receipt_v1',
+        derivation: 'rubrist_receipt_v1',
         admissible: true,
       };
       expect(reportSchema.safeParse(forgedVerifiedTrust).success).toBe(false);
@@ -755,14 +755,14 @@ describe('Coeval release-evidence boundary', () => {
   });
 
   it('records cross-origin poll rejection as a zero-request preflight termination', async () => {
-    const mock = await startMockCoeval('cross-origin-poll');
+    const mock = await startMockRubrist('cross-origin-poll');
     const { path } = await writeInputs([{ id: 'pass-a', input: 'alpha' }]);
     try {
       const report = await runShadow(makeConfig(path, mock.url));
       expect(report.decision).toBe('inconclusive');
       expect(report.trust).toEqual({
         status: 'unavailable',
-        derivation: 'coeval_receipt_v1',
+        derivation: 'rubrist_receipt_v1',
         admissible: false,
         reason: 'no_completed_evidence',
       });
@@ -780,7 +780,7 @@ describe('Coeval release-evidence boundary', () => {
   });
 
   it('retries transient poll GETs and records real ordered operation attempts', async () => {
-    const mock = await startMockCoeval('poll-transient');
+    const mock = await startMockRubrist('poll-transient');
     const { path } = await writeInputs([{ id: 'pass-a', input: 'alpha' }]);
     try {
       const report = await runShadow(makeConfig(path, mock.url));
@@ -807,8 +807,8 @@ describe('Coeval release-evidence boundary', () => {
   });
 
   it('retries receipt GETs but suppresses uncertain batch POST retries', async () => {
-    const receiptMock = await startMockCoeval('receipt-transient');
-    const submitMock = await startMockCoeval('submit-transient');
+    const receiptMock = await startMockRubrist('receipt-transient');
+    const submitMock = await startMockRubrist('submit-transient');
     const { path } = await writeInputs([{ id: 'pass-a', input: 'alpha' }]);
     try {
       const recovered = await runShadow(makeConfig(path, receiptMock.url));
@@ -841,7 +841,7 @@ describe('Coeval release-evidence boundary', () => {
   });
 
   it('maps a provider HTTP failure to judge-stage inconclusive evidence', async () => {
-    const mock = await startMockCoeval('provider-error');
+    const mock = await startMockRubrist('provider-error');
     const { path } = await writeInputs([{ id: 'pass-a', input: 'alpha' }]);
     try {
       const report = await runShadow(makeConfig(path, mock.url));
@@ -861,7 +861,7 @@ describe('Coeval release-evidence boundary', () => {
     // process stay real) and let the mock jump the clock past the deadline while it
     // serves the first poll, so the crossing no longer depends on machine latency.
     const pollTimeoutMs = 500;
-    const mock = await startMockCoeval('pending', {
+    const mock = await startMockRubrist('pending', {
       onPoll: () => vi.setSystemTime(Date.now() + pollTimeoutMs),
     });
     const { path } = await writeInputs([{ id: 'pass-a', input: 'alpha' }]);
@@ -887,13 +887,13 @@ describe('Coeval release-evidence boundary', () => {
   });
 });
 
-describe('Coeval full CLI contract', () => {
+describe('Rubrist full CLI contract', () => {
   for (const [mode, expectedCode, expectedVerdict] of [
     ['valid', 0, 'promote'],
     ['tampered-evidence', 2, 'inconclusive'],
   ] as const) {
     it(`writes a matching ${expectedVerdict} report and exit code for ${mode} evidence`, async () => {
-      const mock = await startMockCoeval(mode);
+      const mock = await startMockRubrist(mode);
       const { dir, path } = await writeInputs([{ id: 'pass-cli', input: 'cli' }]);
       const outputDir = join(dir, 'out');
       const configPath = join(dir, 'dailies.json');
@@ -924,7 +924,7 @@ describe('Coeval full CLI contract', () => {
           .end('{"output":"unused"}');
       });
       const candidatePort = await listen(candidateServer);
-      const mock = await startMockCoeval();
+      const mock = await startMockRubrist();
       const { dir, path } = await writeInputs([{ id: invalidId, input: 'must-not-run' }]);
       const outputDir = join(dir, 'out');
       const configPath = join(dir, 'dailies.json');
@@ -942,7 +942,7 @@ describe('Coeval full CLI contract', () => {
       try {
         const cli = await runCli(configPath);
         expect(cli.code).toBe(2);
-        expect(cli.stderr).toContain('is not a valid Coeval clientItemId');
+        expect(cli.stderr).toContain('is not a valid Rubrist clientItemId');
         expect(candidateCalls).toBe(0);
         expect(mock.requests).toHaveLength(0);
       } finally {

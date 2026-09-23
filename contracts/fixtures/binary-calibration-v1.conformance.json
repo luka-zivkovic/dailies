@@ -1,5 +1,5 @@
 {
-  "contract": "coeval/binary-calibration/v1",
+  "contract": "rubrist/binary-calibration/v1",
   "baseFixture": "binary-calibration-v1.complete.json",
   "expectedIdentityByFixture": {
     "binary-calibration-v1.complete.json": {

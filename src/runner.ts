@@ -1,13 +1,13 @@
 import { runCandidate } from './candidate.js';
 import type { Config, InputItem } from './config.js';
 import {
-  COEVAL_CLIENT_ITEM_ID_MAX_LENGTH,
-  CoevalCollectionError,
-  CoevalProtocolError,
-  collectCoevalAssessment,
-  type CoevalAssessmentReceipt,
-  type CoevalEvidenceOperation,
-} from './coeval.js';
+  RUBRIST_CLIENT_ITEM_ID_MAX_LENGTH,
+  RubristCollectionError,
+  RubristProtocolError,
+  collectRubristAssessment,
+  type RubristAssessmentReceipt,
+  type RubristEvidenceOperation,
+} from './rubrist.js';
 import { classifyOperationError } from './errors.js';
 import { judgeItem } from './judge.js';
 import { loadInputArtifact } from './inputs.js';
@@ -134,13 +134,13 @@ async function judgeCandidate(config: Config, execution: CandidateSuccess): Prom
   }
 }
 
-function coevalJudgeFailure(execution: CandidateSuccess, err: unknown): ItemResult {
+function rubristJudgeFailure(execution: CandidateSuccess, err: unknown): ItemResult {
   const detail = classifyOperationError(err);
   const logicalKind = detail.kind === 'protocol' ? 'protocol' : 'incomplete';
   return {
     ...execution.base,
     candidate_output: execution.candidateOutput,
-    error: `Coeval judge failed: ${err instanceof Error ? err.message : String(err)}`,
+    error: `Rubrist judge failed: ${err instanceof Error ? err.message : String(err)}`,
     outcome: 'error',
     errorStage: 'judge',
     errorKind: logicalKind,
@@ -153,7 +153,7 @@ function coevalJudgeFailure(execution: CandidateSuccess, err: unknown): ItemResu
   };
 }
 
-function coevalJudgedResult(
+function rubristJudgedResult(
   execution: CandidateSuccess,
   label: 'pass' | 'fail',
 ): ItemResult {
@@ -166,7 +166,7 @@ function coevalJudgedResult(
     judge: {
       score: pass ? 1 : 0,
       pass,
-      reason: `Coeval assessment receipt judged ${label}`,
+      reason: `Rubrist assessment receipt judged ${label}`,
     },
     outcome,
     pass,
@@ -197,14 +197,14 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
     );
   }
 
-  if (config.judge.type === 'coeval') {
+  if (config.judge.type === 'rubrist') {
     const invalid = inputs.find(
-      (item) => item.id.length > COEVAL_CLIENT_ITEM_ID_MAX_LENGTH,
+      (item) => item.id.length > RUBRIST_CLIENT_ITEM_ID_MAX_LENGTH,
     );
     if (invalid) {
       throw new Error(
-        `input id ${JSON.stringify(invalid.id)} is not a valid Coeval clientItemId: ` +
-          `IDs must be at most ${COEVAL_CLIENT_ITEM_ID_MAX_LENGTH} characters`,
+        `input id ${JSON.stringify(invalid.id)} is not a valid Rubrist clientItemId: ` +
+          `IDs must be at most ${RUBRIST_CLIENT_ITEM_ID_MAX_LENGTH} characters`,
       );
     }
   }
@@ -218,7 +218,7 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
     }
   }
 
-  // Candidate execution is deliberately a separate phase. A Coeval judge must
+  // Candidate execution is deliberately a separate phase. A Rubrist judge must
   // receive all successful traces in one release-evidence batch, while failed
   // required candidates remain Dailies-owned blocking results.
   const candidateExecutions = await mapPool(inputs, config.concurrency, (item) =>
@@ -226,22 +226,22 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
   );
 
   let evidence: {
-    provider: 'coeval';
+    provider: 'rubrist';
     skillVersionId: string;
     evalRunId?: string;
     status: 'complete' | 'incomplete' | 'failed';
-    operations: CoevalEvidenceOperation[];
-    receipt?: CoevalAssessmentReceipt;
+    operations: RubristEvidenceOperation[];
+    receipt?: RubristAssessmentReceipt;
   } | undefined;
   let items: ItemResult[];
-  if (config.judge.type === 'coeval') {
+  if (config.judge.type === 'rubrist') {
     const successful = candidateExecutions.flatMap((execution) =>
       'success' in execution ? [execution.success] : [],
     );
     let judged = new Map<string, ItemResult>();
     if (successful.length > 0) {
       try {
-        const assessment = await collectCoevalAssessment(
+        const assessment = await collectRubristAssessment(
           config.judge,
           successful.map((execution) => ({
             id: execution.item.id,
@@ -251,7 +251,7 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
           config.timeoutMs,
         );
         evidence = {
-          provider: 'coeval',
+          provider: 'rubrist',
           skillVersionId: config.judge.skillVersionId,
           evalRunId: assessment.evalRunId,
           status: 'complete',
@@ -262,18 +262,18 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
           successful.map((execution) => {
             const label = assessment.labels.get(execution.item.id);
             if (label === undefined) {
-              throw new CoevalProtocolError(`missing verified label for ${execution.item.id}`);
+              throw new RubristProtocolError(`missing verified label for ${execution.item.id}`);
             }
-            return [execution.item.id, coevalJudgedResult(execution, label)];
+            return [execution.item.id, rubristJudgedResult(execution, label)];
           }),
         );
       } catch (err) {
         judged = new Map(
-          successful.map((execution) => [execution.item.id, coevalJudgeFailure(execution, err)]),
+          successful.map((execution) => [execution.item.id, rubristJudgeFailure(execution, err)]),
         );
-        if (err instanceof CoevalCollectionError) {
+        if (err instanceof RubristCollectionError) {
           evidence = {
-            provider: 'coeval',
+            provider: 'rubrist',
             skillVersionId: config.judge.skillVersionId,
             ...(err.evalRunId === undefined ? {} : { evalRunId: err.evalRunId }),
             status: err.receipt === undefined ? 'failed' : 'incomplete',
@@ -289,9 +289,9 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
       'failure' in execution
         ? execution.failure
         : (judged.get(execution.success.item.id) ??
-          coevalJudgeFailure(
+          rubristJudgeFailure(
             execution.success,
-            new CoevalProtocolError(`missing judge result for ${execution.success.item.id}`),
+            new RubristProtocolError(`missing judge result for ${execution.success.item.id}`),
           )),
     );
   } else {
@@ -305,8 +305,8 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
   const totals = aggregate(items);
   const trustPath = config.judge.type === 'exact-match'
     ? { class: 'deterministic' as const, derivation: 'exact_match_v1' as const }
-    : config.judge.type === 'coeval'
-      ? { class: 'verified' as const, derivation: 'coeval_receipt_v1' as const }
+    : config.judge.type === 'rubrist'
+      ? { class: 'verified' as const, derivation: 'rubrist_receipt_v1' as const }
       : { class: 'self_reported' as const, derivation: 'http_judge_v1' as const };
   const policyAdmissible = config.trustPolicy.admissibleClasses.includes(trustPath.class);
   const trust = totals.evaluated > 0

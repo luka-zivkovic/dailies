@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://coeval.dev/contracts/assessment-receipt-v1.schema.json",
-  "title": "Coeval Assessment Receipt v1",
-  "description": "Closed, policy-free evidence emitted for a Coeval release_evidence run.",
+  "$id": "https://rubrist.dev/contracts/assessment-receipt-v1.schema.json",
+  "title": "Rubrist Assessment Receipt v1",
+  "description": "Closed, policy-free evidence emitted for a Rubrist release_evidence run.",
   "type": "object",
   "additionalProperties": false,
   "required": [

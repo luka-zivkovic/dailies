@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import type { CoevalJudgeConfig } from './config.js';
+import type { RubristJudgeConfig } from './config.js';
 import {
   OperationError,
   classifyOperationError,
@@ -17,8 +17,8 @@ import {
 } from './retry.js';
 
 const digestSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
-export const COEVAL_CLIENT_ITEM_ID_MAX_LENGTH = 240;
-export const MAX_COEVAL_EVIDENCE_OPERATIONS = 10_000;
+export const RUBRIST_CLIENT_ITEM_ID_MAX_LENGTH = 240;
+export const MAX_RUBRIST_EVIDENCE_OPERATIONS = 10_000;
 const evalRunStatusSchema = z.enum(['pending', 'running', 'completed', 'failed', 'canceled']);
 const evalRunItemStatusSchema = z.enum(['pending', 'completed', 'failed', 'skipped']);
 
@@ -42,7 +42,7 @@ const providerMetadataSchema = z
   })
   .strict();
 
-export const coevalReceiptItemSchema = z
+export const rubristReceiptItemSchema = z
   .object({
     clientItemId: z.string().min(1),
     caseId: z.string().min(1),
@@ -55,7 +55,7 @@ export const coevalReceiptItemSchema = z
   })
   .strict();
 
-export const coevalAssessmentReceiptSchema = z
+export const rubristAssessmentReceiptSchema = z
   .object({
     schemaVersion: z.literal(1),
     receiptId: z.string().min(1),
@@ -76,7 +76,7 @@ export const coevalAssessmentReceiptSchema = z
     requestedModelBinding: requestedModelBindingSchema,
     skillDigest: digestSchema,
     datasetDigest: digestSchema,
-    items: z.array(coevalReceiptItemSchema),
+    items: z.array(rubristReceiptItemSchema),
     evidenceDigest: digestSchema,
   })
   .strict();
@@ -95,7 +95,7 @@ const pollResponseSchema = z.object({
   status: evalRunStatusSchema,
 }).passthrough();
 
-const coevalOperationAttemptsSchema = z
+const rubristOperationAttemptsSchema = z
   .array(attemptRecordSchema)
   .max(MAX_RETRY_ATTEMPTS)
   .superRefine((attempts, ctx) => {
@@ -106,18 +106,18 @@ const coevalOperationAttemptsSchema = z
     }
   });
 
-const coevalOperationTerminationSchema = z.discriminatedUnion('kind', [
+const rubristOperationTerminationSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('preflight'), errorKind: z.literal('protocol') }).strict(),
   z.object({ kind: z.literal('deadline'), errorKind: z.literal('timeout') }).strict(),
 ]);
 
-export const coevalEvidenceOperationSchema = z
+export const rubristEvidenceOperationSchema = z
   .object({
     phase: z.enum(['submit', 'poll', 'receipt']),
     policy: z.enum(['single_non_idempotent', 'retry_transient']),
     /** Actual provider request attempts; empty only for an explicit local termination. */
-    attempts: coevalOperationAttemptsSchema,
-    termination: coevalOperationTerminationSchema.optional(),
+    attempts: rubristOperationAttemptsSchema,
+    termination: rubristOperationTerminationSchema.optional(),
     status: z
       .enum(['pending', 'running', 'completed', 'failed', 'canceled', 'complete', 'incomplete'])
       .optional(),
@@ -161,51 +161,51 @@ export const coevalEvidenceOperationSchema = z
     }
   });
 
-export type CoevalAssessmentReceipt = z.infer<typeof coevalAssessmentReceiptSchema>;
-export type CoevalReceiptItem = z.infer<typeof coevalReceiptItemSchema>;
-export type CoevalEvidenceOperation = z.infer<typeof coevalEvidenceOperationSchema>;
+export type RubristAssessmentReceipt = z.infer<typeof rubristAssessmentReceiptSchema>;
+export type RubristReceiptItem = z.infer<typeof rubristReceiptItemSchema>;
+export type RubristEvidenceOperation = z.infer<typeof rubristEvidenceOperationSchema>;
 
-export interface CoevalCandidateItem {
+export interface RubristCandidateItem {
   id: string;
   input: string;
   output: string;
 }
 
-export interface CoevalAssessment {
+export interface RubristAssessment {
   /** Eval-run identity returned by the independently recorded batch submission. */
   evalRunId: string;
-  receipt: CoevalAssessmentReceipt;
+  receipt: RubristAssessmentReceipt;
   labels: Map<string, 'pass' | 'fail'>;
-  operations: CoevalEvidenceOperation[];
+  operations: RubristEvidenceOperation[];
 }
 
-export class CoevalProtocolError extends OperationError {
+export class RubristProtocolError extends OperationError {
   constructor(message: string) {
     super(message, 'protocol');
-    this.name = 'CoevalProtocolError';
+    this.name = 'RubristProtocolError';
   }
 }
 
-export class CoevalIncompleteError extends OperationError {
-  readonly receipt: CoevalAssessmentReceipt;
+export class RubristIncompleteError extends OperationError {
+  readonly receipt: RubristAssessmentReceipt;
 
-  constructor(receipt: CoevalAssessmentReceipt) {
-    super('Coeval assessment receipt is structurally valid but incomplete', 'incomplete');
-    this.name = 'CoevalIncompleteError';
+  constructor(receipt: RubristAssessmentReceipt) {
+    super('Rubrist assessment receipt is structurally valid but incomplete', 'incomplete');
+    this.name = 'RubristIncompleteError';
     this.receipt = receipt;
   }
 }
 
-export class CoevalCollectionError extends OperationError {
-  readonly operations: CoevalEvidenceOperation[];
-  readonly receipt?: CoevalAssessmentReceipt;
+export class RubristCollectionError extends OperationError {
+  readonly operations: RubristEvidenceOperation[];
+  readonly receipt?: RubristAssessmentReceipt;
   readonly evalRunId?: string;
   readonly originalError: unknown;
 
   constructor(
     error: unknown,
-    operations: CoevalEvidenceOperation[],
-    receipt?: CoevalAssessmentReceipt,
+    operations: RubristEvidenceOperation[],
+    receipt?: RubristAssessmentReceipt,
     evalRunId?: string,
   ) {
     const detail = classifyOperationError(error);
@@ -218,7 +218,7 @@ export class CoevalCollectionError extends OperationError {
         cause: error,
       },
     );
-    this.name = 'CoevalCollectionError';
+    this.name = 'RubristCollectionError';
     this.operations = operations;
     this.receipt = receipt;
     this.evalRunId = evalRunId;
@@ -226,26 +226,26 @@ export class CoevalCollectionError extends OperationError {
   }
 }
 
-class CoevalOperationFailure extends Error {
-  readonly operation: CoevalEvidenceOperation;
+class RubristOperationFailure extends Error {
+  readonly operation: RubristEvidenceOperation;
   readonly originalError: unknown;
 
-  constructor(error: unknown, operation: CoevalEvidenceOperation) {
+  constructor(error: unknown, operation: RubristEvidenceOperation) {
     super(error instanceof Error ? error.message : String(error), { cause: error });
-    this.name = 'CoevalOperationFailure';
+    this.name = 'RubristOperationFailure';
     this.operation = operation;
     this.originalError = error;
   }
 }
 
-/** Coeval's canonical JSON: recursive lexicographic object keys, stable array order. */
+/** Rubrist's canonical JSON: recursive lexicographic object keys, stable array order. */
 export function canonicalJson(value: unknown): string {
   if (value === null || typeof value === 'string' || typeof value === 'boolean') {
     return JSON.stringify(value);
   }
   if (typeof value === 'number') {
     if (!Number.isFinite(value)) {
-      throw new CoevalProtocolError('canonical JSON rejects non-finite numbers');
+      throw new RubristProtocolError('canonical JSON rejects non-finite numbers');
     }
     return JSON.stringify(value);
   }
@@ -263,7 +263,7 @@ export function canonicalJson(value: unknown): string {
       .map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`)
       .join(',')}}`;
   }
-  throw new CoevalProtocolError(`canonical JSON does not support ${typeof value}`);
+  throw new RubristProtocolError(`canonical JSON does not support ${typeof value}`);
 }
 
 export function sha256Digest(value: unknown): string {
@@ -277,7 +277,7 @@ function apiUrl(baseUrl: string, path: string): string {
 function sameOriginUrl(baseUrl: string, value: string): string {
   const resolved = new URL(value, baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`);
   if (resolved.origin !== new URL(baseUrl).origin) {
-    throw new CoevalProtocolError('Coeval pollUrl must have the same origin as judge.url');
+    throw new RubristProtocolError('Rubrist pollUrl must have the same origin as judge.url');
   }
   return resolved.toString();
 }
@@ -286,7 +286,7 @@ async function readJson(res: Response, what: string): Promise<unknown> {
   try {
     return await res.json();
   } catch (err) {
-    throw new CoevalProtocolError(
+    throw new RubristProtocolError(
       `${what} returned invalid JSON: ${err instanceof Error ? err.message : String(err)}`,
     );
   }
@@ -306,62 +306,62 @@ async function requestJson(
 function protocolParse<T>(schema: z.ZodType<T>, raw: unknown, what: string): T {
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
-    throw new CoevalProtocolError(
+    throw new RubristProtocolError(
       `${what} does not match receipt v1 contract: ${parsed.error.message}`,
     );
   }
   return parsed.data;
 }
 
-export interface CoevalReceiptVerification {
+export interface RubristReceiptVerification {
   status: 'complete' | 'incomplete';
   labels: Map<string, 'pass' | 'fail'>;
 }
 
 /** Pure receipt integrity/linkage verification shared by collection and report parsing. */
-export function verifyCoevalReceipt(
+export function verifyRubristReceipt(
   raw: unknown,
-  receipt: CoevalAssessmentReceipt,
+  receipt: RubristAssessmentReceipt,
   evalRunId: string,
   skillVersionId: string,
-  candidates: CoevalCandidateItem[],
-): CoevalReceiptVerification {
+  candidates: RubristCandidateItem[],
+): RubristReceiptVerification {
   if (receipt.evalRunId !== evalRunId) {
-    throw new CoevalProtocolError(`receipt evalRunId mismatch: expected ${evalRunId}`);
+    throw new RubristProtocolError(`receipt evalRunId mismatch: expected ${evalRunId}`);
   }
   if (receipt.skillVersionId !== skillVersionId) {
-    throw new CoevalProtocolError(
+    throw new RubristProtocolError(
       `receipt skillVersionId mismatch: expected pinned ${skillVersionId}`,
     );
   }
 
   const expectedById = new Map(candidates.map((item) => [item.id, item]));
   if (expectedById.size !== candidates.length) {
-    throw new CoevalProtocolError('candidate clientItemId values must be unique');
+    throw new RubristProtocolError('candidate clientItemId values must be unique');
   }
   const receiptIds = receipt.items.map((item) => item.clientItemId);
   const codeUnitOrder = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
   const sortedReceiptIds = [...receiptIds].sort(codeUnitOrder);
   if (new Set(receiptIds).size !== receiptIds.length) {
-    throw new CoevalProtocolError('receipt clientItemId values must be unique');
+    throw new RubristProtocolError('receipt clientItemId values must be unique');
   }
   if (receiptIds.some((id, index) => id !== sortedReceiptIds[index])) {
-    throw new CoevalProtocolError('receipt items are not ordered by clientItemId');
+    throw new RubristProtocolError('receipt items are not ordered by clientItemId');
   }
   const expectedIds = [...expectedById.keys()].sort(codeUnitOrder);
   if (
     receiptIds.length !== expectedIds.length ||
     receiptIds.some((id, index) => id !== expectedIds[index])
   ) {
-    throw new CoevalProtocolError('receipt does not have exact clientItemId coverage');
+    throw new RubristProtocolError('receipt does not have exact clientItemId coverage');
   }
 
   for (const item of receipt.items) {
     const candidate = expectedById.get(item.clientItemId);
-    if (!candidate) throw new CoevalProtocolError(`unexpected receipt item ${item.clientItemId}`);
+    if (!candidate) throw new RubristProtocolError(`unexpected receipt item ${item.clientItemId}`);
     const expectedContentDigest = sha256Digest({ input: candidate.input, output: candidate.output });
     if (item.contentDigest !== expectedContentDigest) {
-      throw new CoevalProtocolError(`contentDigest mismatch for ${item.clientItemId}`);
+      throw new RubristProtocolError(`contentDigest mismatch for ${item.clientItemId}`);
     }
   }
 
@@ -369,16 +369,16 @@ export function verifyCoevalReceipt(
     receipt.items.map(({ clientItemId, contentDigest }) => ({ clientItemId, contentDigest })),
   );
   if (receipt.datasetDigest !== expectedDatasetDigest) {
-    throw new CoevalProtocolError('datasetDigest mismatch');
+    throw new RubristProtocolError('datasetDigest mismatch');
   }
 
   if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
-    throw new CoevalProtocolError('receipt is not an object');
+    throw new RubristProtocolError('receipt is not an object');
   }
   const { evidenceDigest: _evidenceDigest, ...unsignedReceipt } = raw as Record<string, unknown>;
   const expectedEvidenceDigest = sha256Digest(unsignedReceipt);
   if (receipt.evidenceDigest !== expectedEvidenceDigest) {
-    throw new CoevalProtocolError('evidenceDigest mismatch');
+    throw new RubristProtocolError('evidenceDigest mismatch');
   }
 
   const completedItems = receipt.items.filter((item) => item.status === 'completed').length;
@@ -389,7 +389,7 @@ export function verifyCoevalReceipt(
     receipt.run.failedItems !== failedItems ||
     receipt.run.agreedItems > receipt.run.completedItems
   ) {
-    throw new CoevalProtocolError('receipt run counters are inconsistent with its items');
+    throw new RubristProtocolError('receipt run counters are inconsistent with its items');
   }
 
   const labels = new Map<string, 'pass' | 'fail'>();
@@ -408,10 +408,10 @@ export function verifyCoevalReceipt(
     receipt.run.failedItems === 0 &&
     itemsComplete;
   if (receipt.status === 'complete' && !computedComplete) {
-    throw new CoevalProtocolError('receipt claims complete with incomplete run or item evidence');
+    throw new RubristProtocolError('receipt claims complete with incomplete run or item evidence');
   }
   if (receipt.status === 'incomplete' && computedComplete) {
-    throw new CoevalProtocolError('receipt claims incomplete despite complete run and item evidence');
+    throw new RubristProtocolError('receipt claims incomplete despite complete run and item evidence');
   }
   return {
     status: receipt.status,
@@ -424,8 +424,8 @@ function sleep(ms: number): Promise<void> {
 }
 
 async function executeEvidenceOperation<T>(
-  phase: CoevalEvidenceOperation['phase'],
-  policy: CoevalEvidenceOperation['policy'],
+  phase: RubristEvidenceOperation['phase'],
+  policy: RubristEvidenceOperation['policy'],
   fn: () => Promise<T>,
   options: {
     maxAttempts: number;
@@ -433,7 +433,7 @@ async function executeEvidenceOperation<T>(
     sleep?: (delayMs: number) => Promise<void>;
     canRetry?: (delayBeforeNextMs: number) => boolean;
   },
-): Promise<{ value: T; operation: CoevalEvidenceOperation }> {
+): Promise<{ value: T; operation: RubristEvidenceOperation }> {
   try {
     const result = await runWithRetry(fn, options);
     return {
@@ -451,31 +451,31 @@ async function executeEvidenceOperation<T>(
       ...(detail.httpStatus === undefined ? {} : { httpStatus: detail.httpStatus }),
       retryable: false,
     }];
-    throw new CoevalOperationFailure(originalError, { phase, policy, attempts });
+    throw new RubristOperationFailure(originalError, { phase, policy, attempts });
   }
 }
 
 function collectOperationFailure(
   error: unknown,
-  operations: CoevalEvidenceOperation[],
-  receipt?: CoevalAssessmentReceipt,
+  operations: RubristEvidenceOperation[],
+  receipt?: RubristAssessmentReceipt,
   evalRunId?: string,
 ): never {
-  if (error instanceof CoevalOperationFailure) {
-    throw new CoevalCollectionError(
+  if (error instanceof RubristOperationFailure) {
+    throw new RubristCollectionError(
       error.originalError,
       [...operations, error.operation],
       receipt,
       evalRunId,
     );
   }
-  throw new CoevalCollectionError(error, operations, receipt, evalRunId);
+  throw new RubristCollectionError(error, operations, receipt, evalRunId);
 }
 
 function terminatedEvidenceOperation(
   phase: 'poll' | 'receipt',
   kind: 'preflight' | 'deadline',
-): CoevalEvidenceOperation {
+): RubristEvidenceOperation {
   return {
     phase,
     policy: 'retry_transient',
@@ -487,15 +487,15 @@ function terminatedEvidenceOperation(
 }
 
 /** Submit one release-evidence batch, wait for it, then verify its receipt independently. */
-export async function collectCoevalAssessment(
-  judge: CoevalJudgeConfig,
-  candidates: CoevalCandidateItem[],
+export async function collectRubristAssessment(
+  judge: RubristJudgeConfig,
+  candidates: RubristCandidateItem[],
   requestTimeoutMs: number,
-): Promise<CoevalAssessment> {
+): Promise<RubristAssessment> {
   if (candidates.length === 0) {
-    throw new CoevalProtocolError('cannot submit an empty Coeval release-evidence batch');
+    throw new RubristProtocolError('cannot submit an empty Rubrist release-evidence batch');
   }
-  const operations: CoevalEvidenceOperation[] = [];
+  const operations: RubristEvidenceOperation[] = [];
   const headers = { ...judge.headers, 'content-type': 'application/json' };
   const batchUrl = apiUrl(judge.url, '/api/v1/judge/batch');
   let batch: z.infer<typeof batchResponseSchema>;
@@ -520,20 +520,20 @@ export async function collectCoevalAssessment(
             }),
           },
           requestTimeoutMs,
-          'Coeval batch submit',
+          'Rubrist batch submit',
         );
         const parsedBatch = protocolParse(
           batchResponseSchema,
           batchRaw,
-          'Coeval batch response',
+          'Rubrist batch response',
         );
         if (
           parsedBatch.totalItems !== candidates.length ||
           parsedBatch.cachedItems > parsedBatch.totalItems ||
           parsedBatch.skippedItems !== 0
         ) {
-          throw new CoevalProtocolError(
-            'Coeval batch response counters do not cover every submitted item',
+          throw new RubristProtocolError(
+            'Rubrist batch response counters do not cover every submitted item',
           );
         }
         return parsedBatch;
@@ -551,8 +551,8 @@ export async function collectCoevalAssessment(
   } catch (error) {
     const typed = error instanceof OperationError
       ? error
-      : new CoevalProtocolError(error instanceof Error ? error.message : String(error));
-    throw new CoevalCollectionError(
+      : new RubristProtocolError(error instanceof Error ? error.message : String(error));
+    throw new RubristCollectionError(
       typed,
       [...operations, terminatedEvidenceOperation('poll', 'preflight')],
       undefined,
@@ -565,22 +565,22 @@ export async function collectCoevalAssessment(
     const remainingMs = deadline - Date.now();
     if (remainingMs <= 0) {
       const timeout = new OperationError(
-        `Coeval polling timed out after ${judge.pollTimeoutMs}ms`,
+        `Rubrist polling timed out after ${judge.pollTimeoutMs}ms`,
         'timeout',
       );
-      throw new CoevalCollectionError(
+      throw new RubristCollectionError(
         timeout,
         [...operations, terminatedEvidenceOperation('poll', 'deadline')],
         undefined,
         batch.evalRunId,
       );
     }
-    if (operations.length >= MAX_COEVAL_EVIDENCE_OPERATIONS - 1) {
+    if (operations.length >= MAX_RUBRIST_EVIDENCE_OPERATIONS - 1) {
       const timeout = new OperationError(
-        `Coeval polling exceeded the ${MAX_COEVAL_EVIDENCE_OPERATIONS}-operation evidence limit`,
+        `Rubrist polling exceeded the ${MAX_RUBRIST_EVIDENCE_OPERATIONS}-operation evidence limit`,
         'timeout',
       );
-      throw new CoevalCollectionError(
+      throw new RubristCollectionError(
         timeout,
         [...operations, terminatedEvidenceOperation('poll', 'deadline')],
         undefined,
@@ -598,15 +598,15 @@ export async function collectCoevalAssessment(
             pollUrl,
             { method: 'GET', headers: judge.headers },
             Math.min(requestTimeoutMs, attemptRemainingMs),
-            'Coeval eval-run poll',
+            'Rubrist eval-run poll',
           );
           const parsedPoll = protocolParse(
             pollResponseSchema,
             pollRaw,
-            'Coeval eval-run poll response',
+            'Rubrist eval-run poll response',
           );
           if (parsedPoll.id !== batch.evalRunId) {
-            throw new CoevalProtocolError(
+            throw new RubristProtocolError(
               `poll evalRunId mismatch: expected ${batch.evalRunId}`,
             );
           }
@@ -637,16 +637,16 @@ export async function collectCoevalAssessment(
     judge.url,
     `/api/v1/eval-runs/${encodeURIComponent(batch.evalRunId)}/assessment-receipt`,
   );
-  let receipt: CoevalAssessmentReceipt;
-  let verification: CoevalReceiptVerification;
+  let receipt: RubristAssessmentReceipt;
+  let verification: RubristReceiptVerification;
   try {
     const remainingMs = deadline - Date.now();
     if (remainingMs <= 0) {
       const timeout = new OperationError(
-        `Coeval polling timed out before receipt after ${judge.pollTimeoutMs}ms`,
+        `Rubrist polling timed out before receipt after ${judge.pollTimeoutMs}ms`,
         'timeout',
       );
-      throw new CoevalCollectionError(
+      throw new RubristCollectionError(
         timeout,
         [...operations, terminatedEvidenceOperation('receipt', 'deadline')],
         undefined,
@@ -662,24 +662,24 @@ export async function collectCoevalAssessment(
           receiptUrl,
           { method: 'GET', headers: judge.headers },
           Math.min(requestTimeoutMs, attemptRemainingMs),
-          'Coeval assessment receipt',
+          'Rubrist assessment receipt',
         );
         const parsedReceipt = protocolParse(
-          coevalAssessmentReceiptSchema,
+          rubristAssessmentReceiptSchema,
           receiptRaw,
-          'Coeval assessment receipt',
+          'Rubrist assessment receipt',
         );
         if (
           terminalPollStatus === undefined ||
           parsedReceipt.run.status !== terminalPollStatus
         ) {
-          throw new CoevalProtocolError(
+          throw new RubristProtocolError(
             `receipt run status ${parsedReceipt.run.status} does not match terminal poll ${terminalPollStatus ?? 'missing'}`,
           );
         }
         return {
           receipt: parsedReceipt,
-          verification: verifyCoevalReceipt(
+          verification: verifyRubristReceipt(
             receiptRaw,
             parsedReceipt,
             batch.evalRunId,
@@ -701,12 +701,12 @@ export async function collectCoevalAssessment(
     verification = received.value.verification;
     operations.push({ ...received.operation, status: receipt.status });
   } catch (error) {
-    if (error instanceof CoevalCollectionError) throw error;
+    if (error instanceof RubristCollectionError) throw error;
     collectOperationFailure(error, operations, undefined, batch.evalRunId);
   }
   if (verification.status === 'incomplete') {
-    throw new CoevalCollectionError(
-      new CoevalIncompleteError(receipt),
+    throw new RubristCollectionError(
+      new RubristIncompleteError(receipt),
       operations,
       receipt,
       batch.evalRunId,

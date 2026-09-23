@@ -1,5 +1,5 @@
 {
-  "contract": "coeval/evaluator-suite-manifest/v1",
+  "contract": "rubrist/evaluator-suite-manifest/v1",
   "baseFixture": "evaluator-suite-manifest-v1.complete.json",
   "cases": [
     {

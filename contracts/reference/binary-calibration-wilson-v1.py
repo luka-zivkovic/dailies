@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Independent binary64 reference for coeval Wilson score v1."""
+"""Independent binary64 reference for rubrist Wilson score v1."""
 
 import json
 import math

@@ -1,10 +1,10 @@
 import { z } from 'zod';
 import {
-  coevalAssessmentReceiptSchema,
-  coevalEvidenceOperationSchema,
+  rubristAssessmentReceiptSchema,
+  rubristEvidenceOperationSchema,
   sha256Digest,
-  verifyCoevalReceipt,
-} from './coeval.js';
+  verifyRubristReceipt,
+} from './rubrist.js';
 import {
   scopeConfigSchema,
   scopeKindSchema,
@@ -131,12 +131,12 @@ const criterionTrustSchema = z.discriminatedUnion('status', [
   z.object({
     status: z.literal('complete'),
     class: z.literal('verified'),
-    derivation: z.literal('coeval_receipt_v1'),
+    derivation: z.literal('rubrist_receipt_v1'),
     admissible: z.boolean(),
   }).strict(),
   z.object({
     status: z.literal('unavailable'),
-    derivation: z.literal('coeval_receipt_v1'),
+    derivation: z.literal('rubrist_receipt_v1'),
     admissible: z.literal(false),
     reason: z.enum(['incomplete_evidence', 'integrity_failure', 'no_candidate_outputs']),
   }).strict(),
@@ -156,9 +156,9 @@ const zeroRequestTerminationSchema = z.discriminatedUnion('phase', [
 const criterionEvidenceSchema = z.object({
   state: evidenceStateSchema,
   evalRunId: z.string().min(1).optional(),
-  operations: z.array(coevalEvidenceOperationSchema).max(10_000),
-  receipt: coevalAssessmentReceiptSchema.optional(),
-  rejectedReceipt: coevalAssessmentReceiptSchema.optional(),
+  operations: z.array(rubristEvidenceOperationSchema).max(10_000),
+  receipt: rubristAssessmentReceiptSchema.optional(),
+  rejectedReceipt: rubristAssessmentReceiptSchema.optional(),
   rejection: z.object({
     kind: z.literal('manifest_binding'),
     reason: z.string().min(1),
@@ -208,7 +208,7 @@ const compensationResultSchema = z.object({
 const headerNamesSchema = z.array(z.string().min(1));
 
 const providerExecutionIdentitySchema = z.object({
-  type: z.literal('coeval'),
+  type: z.literal('rubrist'),
   url: z.string().url(),
   headerNames: headerNamesSchema,
   identityDigest: digestSchema,
@@ -283,7 +283,7 @@ function sortedHeaderNames(headers: Record<string, string> | undefined): string[
 }
 
 export function providerExecutionIdentity(
-  provider: { type: 'coeval'; url: string; headers?: Record<string, string> },
+  provider: { type: 'rubrist'; url: string; headers?: Record<string, string> },
 ): SuiteReport['executionPolicy']['provider'] {
   const basis = {
     type: provider.type,
@@ -621,7 +621,7 @@ export const reportV5Schema = reportV5ShapeSchema.superRefine((report, ctx) => {
       } else {
         try {
           verifyReceiptManifestBinding(evidence.receipt, manifest, member);
-          const verification = verifyCoevalReceipt(
+          const verification = verifyRubristReceipt(
             evidence.receipt,
             evidence.receipt,
             evidence.evalRunId,
@@ -655,7 +655,7 @@ export const reportV5Schema = reportV5ShapeSchema.superRefine((report, ctx) => {
     }
     if (evidence.rejectedReceipt !== undefined && evidence.evalRunId !== undefined) {
       try {
-        verifyCoevalReceipt(
+        verifyRubristReceipt(
           evidence.rejectedReceipt,
           evidence.rejectedReceipt,
           evidence.evalRunId,

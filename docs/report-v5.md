@@ -3,16 +3,16 @@
 Status: **implemented Batch 3 contract**
 
 Version 5 adds customer-owned criterion release policy over a pinned,
-policy-free Coeval evaluator-suite manifest. It is additive: v4 configuration
+policy-free Rubrist evaluator-suite manifest. It is additive: v4 configuration
 continues to execute with v4 semantics and produces a v4 report. Historical
 v3 and v4 reports are never upgraded into v5.
 
 ## Evidence boundary
 
 Dailies reads one exact canonical
-`coeval/evaluator-suite-manifest/v1` artifact. Configuration pins both its
+`rubrist/evaluator-suite-manifest/v1` artifact. Configuration pins both its
 `manifestId` and `manifestDigest`; there is no `latest` selection. The first
-runtime transport is an exact local file because Coeval has not yet accepted a
+runtime transport is an exact local file because Rubrist has not yet accepted a
 public manifest-fetch route.
 
 Manifest v1 supplies ordered criterion definitions and exact evaluator
@@ -32,7 +32,7 @@ V5 retains the exact-byte input declaration, scope, candidate, trust policy,
 timeouts, concurrency, and output directory from v4. It replaces one `judge`
 and one global `thresholds` block with:
 
-- a pinned suite manifest and Coeval provider;
+- a pinned suite manifest and Rubrist provider;
 - a strict release policy v1; and
 - criterion-version-specific `baseline_labels` in JSONL inputs.
 
