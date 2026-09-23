@@ -5,6 +5,14 @@ versioning while the public API remains pre-1.0.
 
 ## Unreleased
 
+## 0.4.0 — 2026-09-23
+
+- Publish the Rubrist-compatible consumer and align the npm package, GitHub
+  Action default, and plugin at 0.4.0. This pre-1.0 breaking release consumes
+  Rubrist 0.3.0 evidence; Dailies 0.3.x remains the Coeval-era consumer.
+  Existing Coeval configuration identifiers are not aliases. Recreate
+  disposable test evidence using the renamed contracts before using 0.4.0.
+
 - Rename the consumed evidence provider Coeval to Rubrist (ADR-0007, owner
   decision 2026-09-22). Vendored contract IDs are now `rubrist/<name>/v1` and
   `rubrist-canonical-json/v1`; the configuration judge/provider `type` is
@@ -14,7 +22,7 @@ versioning while the public API remains pre-1.0.
   now `src/rubrist.ts` and `scripts/mock-rubrist.mjs`. The old spellings are
   not accepted as aliases. Vendored contracts are re-vendored byte-identical
   from Rubrist, and derived digests and examples are regenerated. The
-  `dailies` plugin is bumped to 0.3.1.
+  `dailies` plugin is aligned with the 0.4.0 package release.
 - Propose ADR-0006 for Promptfoo, DeepEval, and Braintrust result intake.
   It records that imported results are `self_reported` under ADR-0001 and
   lists the questions that need a decision first: candidate-execution

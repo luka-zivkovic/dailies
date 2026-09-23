@@ -1,9 +1,9 @@
 {
   "name": "dailies",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Scope-bound, trust-aware release decisions for AI changes: promote, block, or inconclusive.",
   "license": "MIT",
-  "author": "Luka Živković",
+  "author": "Luka \u017divkovi\u0107",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",

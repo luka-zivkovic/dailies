@@ -17,7 +17,7 @@ inputs:
       The dailies npm version to run with npx. Defaults to the version this
       action was published with.
     required: false
-    default: '0.3.0'
+    default: '0.4.0'
   fail-on-inconclusive:
     description: >-
       Fail the step when the decision is inconclusive (exit code 2). Set to

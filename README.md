@@ -161,12 +161,12 @@ jobs:
         with:
           node-version: 20
       - name: Verify the corpus digest before running
-        run: npx --yes dailies@0.3.0 digest --config dailies.config.json --check
+        run: npx --yes dailies@0.4.0 digest --config dailies.config.json --check
       - id: dailies
         uses: luka-zivkovic/dailies@main
         with:
           config: dailies.config.json
-          # version: 0.3.0                # dailies npm version (default: the action's release)
+          # version: 0.4.0                # dailies npm version (default: the action's release)
           # fail-on-inconclusive: 'true'  # 'false' warns instead of failing
           # summary: 'true'               # append report.md to the job summary
       - if: always()
