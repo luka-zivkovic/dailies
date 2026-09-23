@@ -2,7 +2,7 @@
 
 Status: **active shared vocabulary**
 
-Last reviewed: 2026-08-22
+Last reviewed: 2026-09-23
 
 This file is intentionally vendored in Rubrist, Dailies, and Casefile. Update
 all three copies together. Product-specific scope is defined by each repo's
@@ -49,6 +49,10 @@ all three copies together. Product-specific scope is defined by each repo's
   evaluation, production sample, or manual review set.
 - **Calibration evidence:** Measurements comparing an evaluator with human
   truth on an identified dataset revision. It is not release policy.
+- **Production outcome monitoring:** Rubrist's ungoverned comparison of a
+  production system's stated probabilities with the outcomes recorded after
+  it acted. It is development feedback, not calibration evidence or human
+  truth.
 - **Release policy:** Customer-owned rules that translate evidence into a
   release decision.
 - **Release decision:** Dailies' `promote`, `block`, or `inconclusive` result.
