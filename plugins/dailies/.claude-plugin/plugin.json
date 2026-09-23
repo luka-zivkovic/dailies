@@ -2,7 +2,7 @@
   "name": "dailies",
   "displayName": "Dailies",
   "description": "Gate an AI change on declared evidence before it advances. The release-gate skill teaches an agent to create a digest-pinned starter corpus with dailies init, explain the verified, deterministic, and self-reported trust classes, run the release evaluation, and read report.md and exit codes 0, 1, and 2 as promote, block, or inconclusive. Inconclusive means evidence was missing or untrusted and is left for a human to resolve.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "author": {
     "name": "Luka Zivkovic"
   },

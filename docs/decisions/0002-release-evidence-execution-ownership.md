@@ -6,7 +6,7 @@ Date: 2026-08-22
 
 ## Context
 
-Dailies coordinates a release run while Coeval executes governed evaluator
+Dailies coordinates a release run while Rubrist executes governed evaluator
 work. Without an explicit boundary, both products can retry the same
 non-idempotent operation or each can assume the other records failure detail.
 
@@ -21,7 +21,7 @@ Dailies owns the lifecycle of the release run:
 - evidence sufficiency; and
 - final policy evaluation and release decision.
 
-An evidence provider such as Coeval owns its internal assessment lifecycle:
+An evidence provider such as Rubrist owns its internal assessment lifecycle:
 
 - idempotency and retries inside an accepted assessment;
 - evaluator-provider calls;
@@ -41,7 +41,7 @@ retrieves and verifies the same assessment identity.
 ## Consequences
 
 - Retry behavior can be audited without double counting or duplicate runs.
-- Coeval remains responsible for judge execution while Dailies remains
+- Rubrist remains responsible for judge execution while Dailies remains
   responsible for the release consequence.
 - A future cancellation or resume protocol requires explicit provider support
   rather than implicit assumptions.

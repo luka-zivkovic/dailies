@@ -3,16 +3,16 @@ import { readFileSync } from 'node:fs';
 import { Ajv2020 } from 'ajv/dist/2020.js';
 import { describe, expect, it } from 'vitest';
 import {
-  coevalAssessmentReceiptSchema,
+  rubristAssessmentReceiptSchema,
   sha256Digest,
-  verifyCoevalReceipt,
-  type CoevalAssessmentReceipt,
-  type CoevalCandidateItem,
-} from '../src/coeval.js';
+  verifyRubristReceipt,
+  type RubristAssessmentReceipt,
+  type RubristCandidateItem,
+} from '../src/rubrist.js';
 
 interface ContractFixture {
-  contract: 'coeval/assessment-receipt/v1';
-  candidates: CoevalCandidateItem[];
+  contract: 'rubrist/assessment-receipt/v1';
+  candidates: RubristCandidateItem[];
   receipt: unknown;
 }
 
@@ -35,17 +35,17 @@ interface ConformanceCase {
 }
 
 interface ConformanceCorpus {
-  contract: 'coeval/assessment-receipt/v1';
+  contract: 'rubrist/assessment-receipt/v1';
   baseFixture: string;
   cases: ConformanceCase[];
 }
 
 const contractRoot = new URL('../contracts/', import.meta.url);
 const pinnedFileDigests = {
-  schema: 'ca18a7b3bfa4610ff56ab88d60044f4357df2d035ac5e072356becc20250e9e7',
-  specification: '85c4a502709a4a6a8c27b96634262fa2b583bbafce98558c99de475528df8802',
-  fixture: '530e7322feb5bc16d025daaef14bec8d73488a168a602d82b37fae2a06d12274',
-  conformance: '9a9ba86d54e78a6cc8d63d592712791f21984e68f09bbbe011d8903296af3e07',
+  schema: '3e5ce757a7f86d02a6ab33057c9176ea052225d65f984ca91e48e5dbaead30a3',
+  specification: '3316bd789574b8976e6449e4fd52725fb972b920eed004e9edf6c9a2456c2432',
+  fixture: '803606d52c79b15c9869ced5920c166a180f4534a3eaf521423e6d0ed1b76752',
+  conformance: 'caa74e8632721cf48ceca1133078ade568bfad4fcea177b5e7588837080c0692',
 } as const;
 
 function fileBytes(relativePath: string): Buffer {
@@ -118,7 +118,7 @@ function materialize(vector: ContractFixture, testCase: ConformanceCase): unknow
   return receipt;
 }
 
-describe('vendored Coeval assessment receipt v1 contract', () => {
+describe('vendored Rubrist assessment receipt v1 contract', () => {
   it('pins the reviewed schema and portable corpus bytes', () => {
     expect(fileDigest('assessment-receipt-v1.schema.json')).toBe(pinnedFileDigests.schema);
     expect(fileDigest('assessment-receipt-v1.md')).toBe(pinnedFileDigests.specification);
@@ -132,15 +132,15 @@ describe('vendored Coeval assessment receipt v1 contract', () => {
       additionalProperties?: boolean;
       properties?: { schemaVersion?: { const?: number } };
     };
-    expect(schema.$id).toBe('https://coeval.dev/contracts/assessment-receipt-v1.schema.json');
+    expect(schema.$id).toBe('https://rubrist.dev/contracts/assessment-receipt-v1.schema.json');
     expect(schema.additionalProperties).toBe(false);
     expect(schema.properties?.schemaVersion?.const).toBe(1);
   });
 
-  it('parses and independently verifies the portable Coeval fixture', () => {
+  it('parses and independently verifies the portable Rubrist fixture', () => {
     const vector = fixture();
-    const receipt = coevalAssessmentReceiptSchema.parse(vector.receipt);
-    const verified = verifyCoevalReceipt(
+    const receipt = rubristAssessmentReceiptSchema.parse(vector.receipt);
+    const verified = verifyRubristReceipt(
       vector.receipt,
       receipt,
       receipt.evalRunId,
@@ -148,7 +148,7 @@ describe('vendored Coeval assessment receipt v1 contract', () => {
       vector.candidates,
     );
 
-    expect(vector.contract).toBe('coeval/assessment-receipt/v1');
+    expect(vector.contract).toBe('rubrist/assessment-receipt/v1');
     expect(verified.status).toBe('complete');
     expect([...verified.labels.entries()]).toEqual([['a', 'pass'], ['b', 'fail']]);
   });
@@ -163,7 +163,7 @@ describe('vendored Coeval assessment receipt v1 contract', () => {
       const raw = materialize(vector, testCase);
       const expected = testCase.structural === 'accept';
       expect(validate(raw), `JSON Schema: ${testCase.name}`).toBe(expected);
-      expect(coevalAssessmentReceiptSchema.safeParse(raw).success, `Zod: ${testCase.name}`).toBe(expected);
+      expect(rubristAssessmentReceiptSchema.safeParse(raw).success, `Zod: ${testCase.name}`).toBe(expected);
     }
   });
 
@@ -172,8 +172,8 @@ describe('vendored Coeval assessment receipt v1 contract', () => {
     const vector = fixture(`fixtures/${conformance.baseFixture}`);
     for (const testCase of conformance.cases.filter((entry) => entry.semantic !== 'not-run')) {
       const raw = materialize(vector, testCase);
-      const receipt = coevalAssessmentReceiptSchema.parse(raw);
-      const verify = () => verifyCoevalReceipt(
+      const receipt = rubristAssessmentReceiptSchema.parse(raw);
+      const verify = () => verifyRubristReceipt(
         raw,
         receipt,
         testCase.expectedEvalRunId ?? receipt.evalRunId,

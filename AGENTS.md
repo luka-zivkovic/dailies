@@ -31,7 +31,7 @@ Dailies coordinates release evaluation over declared evidence scopes,
 preserves evidence trust and incompleteness per criterion, applies
 customer-owned release policy, and emits `promote`, `block`, or
 `inconclusive`. Its decision claim never exceeds those scopes. It does not
-author rubrics, establish human truth, or govern evaluator quality. Coeval owns
+author rubrics, establish human truth, or govern evaluator quality. Rubrist owns
 governed assessment evidence.
 Casefile owns deterministic no-execution trust intake for capability artifacts.
 

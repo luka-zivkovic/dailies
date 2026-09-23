@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://coeval.dev/contracts/binary-calibration-v1.schema.json",
-  "title": "Coeval binary calibration artifact v1",
+  "$id": "https://rubrist.dev/contracts/binary-calibration-v1.schema.json",
+  "title": "Rubrist binary calibration artifact v1",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -34,9 +34,9 @@
     "evidenceDigest"
   ],
   "properties": {
-    "contract": { "const": "coeval/binary-calibration/v1" },
+    "contract": { "const": "rubrist/binary-calibration/v1" },
     "schemaVersion": { "const": 1 },
-    "canonicalizationVersion": { "const": "coeval-canonical-json/v1" },
+    "canonicalizationVersion": { "const": "rubrist-canonical-json/v1" },
     "artifactId": { "$ref": "#/$defs/nonEmptyString" },
     "calibrationRunId": { "$ref": "#/$defs/nonEmptyString" },
     "projectId": { "$ref": "#/$defs/nonEmptyString" },
@@ -422,7 +422,7 @@
       "additionalProperties": false,
       "required": ["contract", "commitmentDigest"],
       "properties": {
-        "contract": { "const": "coeval/binary-calibration-private-ledger/v1" },
+        "contract": { "const": "rubrist/binary-calibration-private-ledger/v1" },
         "commitmentDigest": { "$ref": "#/$defs/sha256Digest" }
       }
     },

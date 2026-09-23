@@ -9,7 +9,7 @@ Date: 2026-09-22
 Teams that already run Promptfoo, DeepEval, or Braintrust want to adopt
 Dailies as their release gate without first replacing their eval platform.
 CURRENT Dailies has two ways to reach such a team: wrap the platform behind the
-generic HTTP judge, or rebuild the evaluation around exact-match or Coeval
+generic HTTP judge, or rebuild the evaluation around exact-match or Rubrist
 evidence. The first is visibly self-reported per ADR-0001; the second is a
 migration, not an on-ramp.
 

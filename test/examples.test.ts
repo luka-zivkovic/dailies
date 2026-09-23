@@ -10,7 +10,7 @@ import { reportSchema } from '../src/report.js';
 
 const projectRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const cliPath = join(projectRoot, 'dist', 'cli.js');
-const mockPath = join(projectRoot, 'scripts', 'mock-coeval.mjs');
+const mockPath = join(projectRoot, 'scripts', 'mock-rubrist.mjs');
 const examplesRoot = join(projectRoot, 'fixtures', 'examples');
 const tempDirs: string[] = [];
 const children: ChildProcess[] = [];
@@ -38,7 +38,7 @@ function runCli(configPath: string): Promise<CliResult> {
   });
 }
 
-/** Start scripts/mock-coeval.mjs on an ephemeral port and return its base URL. */
+/** Start scripts/mock-rubrist.mjs on an ephemeral port and return its base URL. */
 function startMock(manifestPath: string, extraArgs: string[] = []): Promise<string> {
   return new Promise((resolve, reject) => {
     const child = spawn(
@@ -56,7 +56,7 @@ function startMock(manifestPath: string, extraArgs: string[] = []): Promise<stri
     });
     child.stderr.setEncoding('utf8');
     child.stderr.on('data', (chunk: string) => { output += chunk; });
-    child.on('exit', (code) => reject(new Error(`mock-coeval exited ${code}: ${output}`)));
+    child.on('exit', (code) => reject(new Error(`mock-rubrist exited ${code}: ${output}`)));
     child.on('error', reject);
   });
 }
@@ -122,7 +122,7 @@ describe('fixtures/examples', () => {
     expect(report.decision).toBe('promote');
   });
 
-  it('v5-suite promotes against the mock Coeval stub and writes a verified v5 report', async () => {
+  it('v5-suite promotes against the mock Rubrist stub and writes a verified v5 report', async () => {
     const providerUrl = await startMock(join(examplesRoot, 'v5-suite', 'suite-manifest.json'));
     const configPath = await stageExample('v5-suite', providerUrl);
     const result = await runCli(configPath);

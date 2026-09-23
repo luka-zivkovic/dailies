@@ -362,7 +362,7 @@ describe('report/config v4 scope and trust contract', () => {
 
     for (const fixtureName of [
       'report-v3-http.json',
-      'report-v3-coeval-incomplete.json',
+      'report-v3-rubrist-incomplete.json',
     ]) {
       const historicalMinifiedBytes = await readFile(
         new URL(`../fixtures/${fixtureName}`, import.meta.url),

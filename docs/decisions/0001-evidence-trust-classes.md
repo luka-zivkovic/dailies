@@ -6,7 +6,7 @@ Date: 2026-08-22
 
 ## Context
 
-Dailies currently accepts exact-match results, verified Coeval receipts, and a
+Dailies currently accepts exact-match results, verified Rubrist receipts, and a
 minimal HTTP judge response. These sources do not have equivalent provenance
 or reproducibility. Aggregating them without retaining that distinction can
 make self-reported evidence look governed.
@@ -39,8 +39,8 @@ incomplete evidence and yields `inconclusive`.
 ## Consequences
 
 - The generic HTTP judge can remain an integration surface without pretending
-  to provide Coeval-grade provenance.
+  to provide Rubrist-grade provenance.
 - Reports and policy schemas must eventually retain trust class through
   aggregation.
-- Generalizing Coeval's receipt into a universal signed protocol is not
+- Generalizing Rubrist's receipt into a universal signed protocol is not
   required for the first implementation.

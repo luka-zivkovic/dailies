@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://coeval.dev/contracts/evaluator-suite-manifest-v1.schema.json",
-  "title": "Coeval evaluator suite manifest v1",
+  "$id": "https://rubrist.dev/contracts/evaluator-suite-manifest-v1.schema.json",
+  "title": "Rubrist evaluator suite manifest v1",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -16,7 +16,7 @@
     "manifestDigest"
   ],
   "properties": {
-    "contract": { "const": "coeval/evaluator-suite-manifest/v1" },
+    "contract": { "const": "rubrist/evaluator-suite-manifest/v1" },
     "schemaVersion": { "const": 1 },
     "manifestId": { "$ref": "#/$defs/nonEmptyString" },
     "suiteId": { "$ref": "#/$defs/nonEmptyString" },

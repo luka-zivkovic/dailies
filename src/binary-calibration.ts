@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { canonicalJson, sha256Digest } from './coeval.js';
+import { canonicalJson, sha256Digest } from './rubrist.js';
 
 const MAX_ARTIFACT_BYTES = 16 * 1024 * 1024;
 const MAX_PUBLIC_STRING_CODE_POINTS = 4_096;
@@ -318,9 +318,9 @@ const trialSchema = z.object({
 }).strict();
 
 export const binaryCalibrationArtifactSchema = z.object({
-  contract: z.literal('coeval/binary-calibration/v1'),
+  contract: z.literal('rubrist/binary-calibration/v1'),
   schemaVersion: z.literal(1),
-  canonicalizationVersion: z.literal('coeval-canonical-json/v1'),
+  canonicalizationVersion: z.literal('rubrist-canonical-json/v1'),
   artifactId: publicStringSchema,
   calibrationRunId: publicStringSchema,
   projectId: publicStringSchema,
@@ -353,7 +353,7 @@ export const binaryCalibrationArtifactSchema = z.object({
   trialPlan: trialPlanSchema,
   truthSupport: truthSupportSchema,
   privateLedger: z.object({
-    contract: z.literal('coeval/binary-calibration-private-ledger/v1'),
+    contract: z.literal('rubrist/binary-calibration-private-ledger/v1'),
     commitmentDigest: digestSchema,
   }).strict(),
   trials: z.array(trialSchema).min(1).max(10),

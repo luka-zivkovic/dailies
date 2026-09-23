@@ -3,7 +3,7 @@
 Status: **accepted Batch 1B contract**
 
 Version 4 makes evidence scope and trust part of the release decision. It does
-not change Coeval receipt v1 and does not introduce multi-criterion policy.
+not change Rubrist receipt v1 and does not introduce multi-criterion policy.
 It remains an executable compatibility contract after additive v5 introduced
 criterion suites; v4 artifacts are never reinterpreted as suite evidence.
 
@@ -39,18 +39,18 @@ Trust is derived from the integration path and cannot be supplied by a judge:
 | Judge path | Trust class | Derivation |
 | --- | --- | --- |
 | Exact match | `deterministic` | `exact_match_v1` |
-| Fully verified Coeval receipt path | `verified` | `coeval_receipt_v1` |
+| Fully verified Rubrist receipt path | `verified` | `rubrist_receipt_v1` |
 | Generic HTTP judge | `self_reported` | `http_judge_v1` |
 
 Completed item evidence records the derived class. Candidate or judge errors
 do not fabricate a trust class for evidence that was never completed.
-Incomplete or invalid Coeval evidence remains explicitly incomplete; it is not
+Incomplete or invalid Rubrist evidence remains explicitly incomplete; it is not
 silently downgraded to self-reported evidence.
 
 The report-level trust summary has `status: complete` only when at least one
 item has completed evidence. When no item was evaluated it records
 `status: unavailable`, the configured derivation path, `admissible: false`,
-and `reason: no_completed_evidence`; it does not claim the intended Coeval path
+and `reason: no_completed_evidence`; it does not claim the intended Rubrist path
 actually produced verified evidence.
 
 ## Report contract
@@ -63,7 +63,7 @@ retains:
 - the declared digest separately from the observed digest, which must match;
 - expected, observed, and evaluated coverage;
 - producer-supplied dataset revision, exposure, and review provenance, each
-  explicitly `not_provided` for current integrations and Coeval receipt v1;
+  explicitly `not_provided` for current integrations and Rubrist receipt v1;
 - configured trust policy, achieved trust class when evidence completed (or
   explicit unavailability), derivation path, and admissibility; and
 - an exact deterministic decision statement naming the scope kind, id, and
@@ -88,7 +88,7 @@ than being upgraded into v5. Versions 1, 2, unknown versions, and objects
 without an explicit version are rejected with a version diagnostic.
 
 `fixtures/report-v3-exact.json`, `fixtures/report-v3-http.json`, and
-`fixtures/report-v3-coeval-incomplete.json` were captured from the pre-v4
+`fixtures/report-v3-rubrist-incomplete.json` were captured from the pre-v4
 `a6d494f` runtime. Compatibility tests validate and return those historical
 objects byte-for-byte so later live-schema changes cannot silently redefine v3.
 

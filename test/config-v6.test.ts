@@ -43,8 +43,8 @@ function rawConfig(): SuiteConfigV6 {
         manifestDigest: identity.suiteManifestDigest!,
       },
       provider: {
-        type: 'coeval',
-        url: 'https://coeval.example',
+        type: 'rubrist',
+        url: 'https://rubrist.example',
         pollIntervalMs: 1_000,
         evidenceDeadlineMs: 60_000,
       },

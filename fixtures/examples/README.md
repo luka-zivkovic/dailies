@@ -2,7 +2,7 @@
 
 These directories let you run a real schema-v5 (evaluator suite) and
 schema-v6 (calibration-aware suite) release evaluation and read the reports
-without a Coeval account. They are generated from the vendored Coeval
+without a Rubrist account. They are generated from the vendored Rubrist
 contract fixtures in `contracts/fixtures/` by `scripts/build-examples.mjs`,
 and the test suite fails if the committed files drift from that script.
 
@@ -16,13 +16,13 @@ and the test suite fails if the committed files drift from that script.
 The suite manifest and, for v6, the binary-calibration artifacts are exact
 local files that Dailies verifies offline (canonical bytes, digests, and the
 complete expected-identity tuple). The receipt-v1 evidence for each criterion
-is different: v5 and v6 always obtain it from a Coeval HTTP endpoint (batch
+is different: v5 and v6 always obtain it from a Rubrist HTTP endpoint (batch
 submit, poll, assessment receipt). There is no pre-fetched receipt path, so
-the examples use `scripts/mock-coeval.mjs`, a local stub that implements only
+the examples use `scripts/mock-rubrist.mjs`, a local stub that implements only
 those three endpoints and returns structurally valid receipts whose digests
 bind to the manifest and to the submitted candidate outputs.
 
-The stub is not Coeval and has no evaluator. Every label it returns is
+The stub is not Rubrist and has no evaluator. Every label it returns is
 scripted: `pass` by default, or `fail` for criteria named with
 `--fail-criterion`. A `promote` from these examples says only that the
 bundled three-case corpus satisfied the bundled policy against scripted
@@ -34,7 +34,7 @@ system.
 From the repository root after `npm ci && npm run build`:
 
 ```sh
-node scripts/mock-coeval.mjs --manifest fixtures/examples/v5-suite/suite-manifest.json &
+node scripts/mock-rubrist.mjs --manifest fixtures/examples/v5-suite/suite-manifest.json &
 node dist/cli.js --config fixtures/examples/v5-suite/dailies.config.json
 node dist/cli.js --config fixtures/examples/v6-calibration/dailies.config.json
 kill %1

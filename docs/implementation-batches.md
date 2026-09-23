@@ -1,10 +1,10 @@
 # Portfolio implementation batches
 
-Status: **Batch 6 product foundations complete: Coeval Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5**
+Status: **Batch 6 product foundations complete: Rubrist Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5**
 
 Last reviewed: 2026-08-24
 
-This file is intentionally vendored in Coeval, Dailies, and Casefile. Update
+This file is intentionally vendored in Rubrist, Dailies, and Casefile. Update
 all three copies together.
 
 ## Authority and scope
@@ -15,7 +15,7 @@ competitor behavior into product authority.
 
 The products remain separate:
 
-- Coeval owns Analyze → Measure: failure taxonomy, governed human truth,
+- Rubrist owns Analyze → Measure: failure taxonomy, governed human truth,
   evaluators and policy-free suites, calibration, pinned execution, and
   immutable assessment evidence.
 - Dailies owns scope-bound release decisions: evidence coordination, trust and
@@ -25,7 +25,7 @@ The products remain separate:
   evidence.
 
 Explicit non-goals for these batches are product merger, semantic clustering,
-a Dailies serving proxy, release policy in Coeval, and dynamic execution or MCP
+a Dailies serving proxy, release policy in Rubrist, and dynamic execution or MCP
 traffic proxying in Casefile.
 
 ## Completed foundation to preserve
@@ -33,7 +33,7 @@ traffic proxying in Casefile.
 The completed Batches 0–1C contain correctness and contract work that later
 batches must not rebuild or regress:
 
-- Coeval has immutable exact-byte terminal receipt artifacts, hardened provider
+- Rubrist has immutable exact-byte terminal receipt artifacts, hardened provider
   prompt boundaries, observed provider metadata, terminal-failure handling,
   and portable producer contract fixtures.
 - Dailies has scope-bound report/config schema v4, tri-state decisions, enforced
@@ -84,7 +84,7 @@ work.
 - Preserve the founder-approved TARGET documents in a docs-only commit before
   new runtime work. Use a feature branch in each repo; Dailies must leave
   `main` before implementation. Zero authority files may remain untracked.
-- Resolve Coeval's existing stash explicitly: apply it on its intended branch
+- Resolve Rubrist's existing stash explicitly: apply it on its intended branch
   and review it, or retain it with a documented owner and purpose. Never drop it
   merely to make the tree look clean.
 - Complete ADR-0001's portable contract corpus: producer-owned negative
@@ -93,7 +93,7 @@ work.
   Dailies. Add a shared conformance corpus that exercises JSON Schema and Zod
   acceptance/rejection consistently without claiming proof of full schema
   equivalence.
-- Re-run Coeval with Node 24, Postgres-backed tests, typecheck, full tests, and
+- Re-run Rubrist with Node 24, Postgres-backed tests, typecheck, full tests, and
   build.
 - Re-run Dailies full tests and standalone TypeScript build.
 - Re-run Casefile full tests, build, authored benchmark, package dry-run, and
@@ -102,7 +102,7 @@ work.
   conformance.
 - Review migrations for clean-database, upgrade-from-pre-0039, retry, and
   forward-fix paths.
-- Audit Coeval's two gate meanings. Retain and name the golden-set
+- Audit Rubrist's two gate meanings. Retain and name the golden-set
   `regression_gate` as evaluator-version governance. Freeze the deprecated
   product-release surfaces (`product_gate`, `/api/v1/gate-checks`, and
   `gate.mjs --product`). Here, freeze means document "no new callers" and pin
@@ -119,12 +119,12 @@ Exit gate: the current foundation is reproducible and reviewable with no
 unknown dirty-worktree dependency, every portable negative fixture is rejected
 by both producer and consumer, and no untracked authority document remains.
 
-## Batch 1A — Coeval immutable receipts
+## Batch 1A — Rubrist immutable receipts
 
 Implementation status: **complete and independently reviewed on 2026-08-22**.
 
 Decision gates 1, 2, and 6 were accepted on 2026-08-22 and are recorded in
-Coeval ADR-0006. Exact-byte `bytea` storage, idempotent historical freeze with
+Rubrist ADR-0006. Exact-byte `bytea` storage, idempotent historical freeze with
 divergence records, and the post-Dailies-v4 legacy write-removal window are
 binding for this batch.
 
@@ -168,7 +168,7 @@ trust class:
   records `not_provided` without inferring or upgrading it;
 - derive trust class from the verified integration path, never from a
   provider's self-assertion;
-- classify exact-match as deterministic, a fully verified Coeval receipt as
+- classify exact-match as deterministic, a fully verified Rubrist receipt as
   verified, and the generic HTTP judge as self-reported;
 - make verified and deterministic evidence admissible by default;
 - make self-reported evidence insufficient for automated promotion unless a
@@ -219,7 +219,7 @@ qualification cannot emit a performance claim.
 
 Implementation status: **complete and independently reviewed on 2026-08-22**.
 
-Coeval implements the four accepted immutable dataset roles:
+Rubrist implements the four accepted immutable dataset roles:
 
 - analysis/authoring;
 - iterative development;
@@ -259,7 +259,7 @@ legacy or visible regression data cannot be re-roled sealed.
 
 ## Batch 3 — single criteria, policy-free suites, and release policy
 
-Status: **Complete (2026-08-23).** Coeval now supports immutable criterion
+Status: **Complete (2026-08-23).** Rubrist now supports immutable criterion
 definitions, exact evaluator bindings, criterion-scoped evidence, explicit
 multi-criterion imports and UI selection, and canonical policy-free suite
 manifest v1 artifacts while leaving receipt v1 unchanged. Dailies v5 vendors
@@ -268,7 +268,7 @@ explicit mandatory, blocking, advisory, or formula-defined compensatory
 customer policy without a default weighted average. V3/v4 Dailies artifacts
 remain read-only/compatible.
 
-### Coeval
+### Rubrist
 
 Add a versioned criterion model and policy-free suite manifest:
 
@@ -291,7 +291,7 @@ Add a versioned criterion model and policy-free suite manifest:
 The first integration should prefer a suite manifest plus separate criterion
 receipts. Do not mutate receipt v1 to create a shortcut.
 
-Coeval's producer contract and adversarial fixtures must pass before Dailies
+Rubrist's producer contract and adversarial fixtures must pass before Dailies
 starts the paired consumer slice.
 
 ### Dailies
@@ -307,11 +307,11 @@ Introduce the next report/policy version for criterion-level rules:
 - a complete truth table defines precedence for simultaneous block and
   incomplete conditions before implementation.
 
-Coeval exit gate: multiple criteria can coexist in one project without an
+Rubrist exit gate: multiple criteria can coexist in one project without an
 ambiguous "current skill," and reordered, missing, substituted, duplicated,
 or unknown criterion fixtures fail verification.
 
-Dailies exit gate: identical Coeval criterion evidence supports different valid
+Dailies exit gate: identical Rubrist criterion evidence supports different valid
 policies, advisory evidence cannot rescue mandatory-incomplete or
 blocking-fail evidence, and no criterion is silently compensated.
 
@@ -319,11 +319,11 @@ blocking-fail evidence, and no criterion is silently compensated.
 
 Implementation status: **complete and independently reviewed on 2026-08-23**.
 
-Decision gate 7 was accepted on 2026-08-23 and is recorded in Coeval
+Decision gate 7 was accepted on 2026-08-23 and is recorded in Rubrist
 ADR-0008. Governed review uses a separate append-only evidence path; legacy
 verdicts and queues are never upgraded to blind or representative truth.
 
-Coeval makes review a first-class governed workflow:
+Rubrist makes review a first-class governed workflow:
 
 - full relevant trace and criterion instructions;
 - open failure codes and rationale;
@@ -349,7 +349,7 @@ queue cannot be presented as a representative sample.
 ### Contract gate
 
 ADR-0009 accepts the separate immutable, aggregate-only
-`coeval/binary-calibration/v1` artifact referenced by exact evaluator,
+`rubrist/binary-calibration/v1` artifact referenced by exact evaluator,
 criterion, truth revision, exposure, selection, and execution identities. The
 closed schema, canonical builder/parser/verifier, exact transport fixtures,
 adversarial corpus, and Wilson reference implementation were completed,
@@ -357,7 +357,7 @@ independently reviewed, and frozen in Batch 5A. Dailies vendors those exact
 bytes and passes the shared conformance corpus in its own JavaScript runtime.
 The artifact is not inserted into closed receipt v1.
 
-### Coeval (single-trial Batch 5B runtime complete and independently reviewed)
+### Rubrist (single-trial Batch 5B runtime complete and independently reviewed)
 
 The current Postgres runtime lets a project owner launch one explicit
 `{ kind: "single", trialsPerItem: 1 }` run over an exact complete governed
@@ -381,7 +381,7 @@ mints a public-contract artifact containing:
 - exact canonical bytes that exclude item identity, protected payloads,
   per-item labels, rationale, and provider request/response identifiers.
 
-Undefined and weakly supported metrics remain explicit. Coeval does not issue a
+Undefined and weakly supported metrics remain explicit. Rubrist does not issue a
 universal calibrated/un-calibrated release verdict. Current admissibility is
 separate from immutable artifact bytes. The private salted ledger has no read
 API or export surface. The frozen artifact contract also supports
@@ -416,9 +416,9 @@ or unverifiable required evidence cannot falsely promote a candidate.
 
 ## Batch 6 — Analyze workflow and comparative evidence
 
-### Coeval
+### Rubrist
 
-Contract status: **accepted in Coeval ADR-0010; the finite-frame Analyze → Measure runtime is implemented through candidate lifecycle and digest-bound component measurement**.
+Contract status: **accepted in Rubrist ADR-0010; the finite-frame Analyze → Measure runtime is implemented through candidate lifecycle and digest-bound component measurement**.
 
 The implemented non-clustering Analyze → Measure loop now:
 
@@ -434,10 +434,10 @@ The implemented non-clustering Analyze → Measure loop now:
 The first slice uses a frozen finite trace population, server-executed simple
 random sampling, append-only multi-label coding, flat human-authored taxonomy
 revisions, and explicit candidate-evaluator lifecycle. Analysis and authoring
-data never become sealed calibration truth, and Coeval does not invent a
+data never become sealed calibration truth, and Rubrist does not invent a
 universal trusted-evaluator threshold.
 
-Coeval uses internal and customer-task validation rather than a forced
+Rubrist uses internal and customer-task validation rather than a forced
 competitor leaderboard.
 
 The PostgreSQL integration gate covers promotion, independent governed truth,
@@ -517,31 +517,31 @@ These gates do not reopen product ownership, but several have user-visible or
 historical semantics and must be accepted before their runtime batch:
 
 1. **Resolved for Batch 1A:** exact schema and storage representation for
-   persisted Coeval receipt bytes (Coeval ADR-0006).
+   persisted Rubrist receipt bytes (Rubrist ADR-0006).
 2. **Resolved for Batch 1A:** historical v1 one-time freeze and
-   divergence-reporting behavior (Coeval ADR-0006).
+   divergence-reporting behavior (Rubrist ADR-0006).
 3. **Resolved:** the simultaneous blocking-failure plus mandatory-incomplete
    precedence table is fixed in Dailies ADR-0005.
 4. **Resolved for Batch 5A:** calibration transport, canonicalization, and
-   compatibility are fixed by Coeval ADR-0009 as a separate artifact v1;
+   compatibility are fixed by Rubrist ADR-0009 as a separate artifact v1;
    assessment receipt v1 remains unchanged.
 5. Independent owners, sampling frames, budgets, and stopping rules for the two
    comparative benchmarks.
 6. **Resolved:** deprecated product-release writes remain through the Dailies
    v4 migration and become `410 Gone` in Batch 2; historical reads remain.
-   The evaluator-version regression gate remains in Coeval (Coeval ADR-0006).
+   The evaluator-version regression gate remains in Rubrist (Rubrist ADR-0006).
 7. **Resolved for Batch 4:** the collection, independent-review, abstention,
    resolution, selection, and separation-of-duty plan for the first genuinely
-   sealed validation revision is fixed by Coeval ADR-0008.
+   sealed validation revision is fixed by Rubrist ADR-0008.
 8. **Resolved for Batch 1C:** ownership and isolation of the neutral benchmark
    workspace is fixed by Casefile ADR-0002; comparator execution never becomes
    Casefile product behavior.
 9. **Resolved for Batch 2:** the directional compatibility, declassification,
    sealed-successor, exact-input identity, and public sealed-intake boundary
-   are fixed by Coeval ADR-0007.
+   are fixed by Rubrist ADR-0007.
 10. **Resolved for Batch 6:** representative finite-frame sampling,
     append-only open coding, flat taxonomy revision, failure-code promotion,
     candidate evaluator lifecycle, and honest component measurements are fixed
-    by Coeval ADR-0010.
+    by Rubrist ADR-0010.
 
 Resolve each in the contract phase of its owning batch before runtime code.

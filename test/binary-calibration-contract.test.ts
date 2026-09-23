@@ -38,7 +38,7 @@ interface ConformanceCase {
 }
 
 interface ConformanceCorpus {
-  contract: 'coeval/binary-calibration/v1';
+  contract: 'rubrist/binary-calibration/v1';
   baseFixture: string;
   expectedIdentityByFixture: Record<string, ExpectedBinaryCalibrationIdentity>;
   cases: ConformanceCase[];
@@ -46,13 +46,13 @@ interface ConformanceCorpus {
 
 const contractRoot = new URL('../contracts/', import.meta.url);
 const pinnedFileDigests = {
-  schema: 'fc671a8dbac5f4d7599667f85931283304071135058021a5df4b9f0a5ddd9686',
-  specification: '340816ebfe0b7b591776ba2f0b8a1bea80380980a2ce90261f4772d16c93b370',
-  complete: '61a5a2b5abeb3303c209d1a9bd32352ec094b77190b3b139fcf8f6b76f010c4f',
-  repeated: 'a4ebaa3036c3bc9e1e868b3a2a8eee3ca828db3ed67006dc6daab98e25a3f53c',
-  incomplete: 'b4bf55752831c5a9a7a237654a0b92a32137790b5ea270ccda02c56f9a9c633f',
-  conformance: '07636d660500f693f2c160d2d09e2a43a4699e243bfe44918e0c9ec357fb97e4',
-  wilsonReference: 'bdf28e4ecd43a64fb51890dcf2414820fd820aaad422caa51190f9ff1a080c71',
+  schema: '2e50ce0cef7b650a06f0aa011c552f1f7bb60e02bd3dc3d6751ff923b66ddf0d',
+  specification: 'dee8960964941a65e819fbd50168ed5cd9f2764bc2eac50c57e1905bcf56f0f6',
+  complete: 'f68a7aae8216dcf91510f63d72b0f8955bb5d0cae1ae0abc633245d0d183283c',
+  repeated: '37b3b8471f9b4f9f4278655c54a6033ed185c5d731d9bcb881f7d0052e17e3e7',
+  incomplete: '3cf6d2b44e790cad592fd4372a38fcce8748c43cb1cff4067b707d48a76198cd',
+  conformance: '4caaa800b5e5d2a63ab1ef71511918b2d90877a5f6d147809f7334db075c1c89',
+  wilsonReference: '948ac238d7b5780dd160dd29bbcad52259c3ae574287fc19fb63cdc41e02d8dd',
 } as const;
 
 function bytes(relativePath: string): Buffer {
@@ -148,7 +148,7 @@ function materialize(testCase: ConformanceCase, defaultFixture: string): {
   return { artifact, fixtureName };
 }
 
-describe('vendored Coeval binary calibration v1 contract', () => {
+describe('vendored Rubrist binary calibration v1 contract', () => {
   it('pins only the reviewed public producer bytes', () => {
     expect(fileDigest('binary-calibration-v1.schema.json')).toBe(pinnedFileDigests.schema);
     expect(fileDigest('binary-calibration-v1.md')).toBe(pinnedFileDigests.specification);

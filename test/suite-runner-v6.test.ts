@@ -12,7 +12,7 @@ import {
   parseCanonicalBinaryCalibrationBytes,
   type BinaryCalibrationArtifact,
 } from '../src/binary-calibration.js';
-import { canonicalJson } from '../src/coeval.js';
+import { canonicalJson } from '../src/rubrist.js';
 import { MAX_CALIBRATION_FILE_BYTES } from '../src/calibration-file.js';
 import { parseSuiteConfigV6, type SuiteConfigV6 } from '../src/config-v6.js';
 import type { BinaryCalibrationRequirementV1 } from '../src/policy-v2.js';
@@ -153,7 +153,7 @@ async function preflightFixture(): Promise<{
         manifestDigest: manifest.manifestDigest,
       },
       provider: {
-        type: 'coeval',
+        type: 'rubrist',
         url: 'http://127.0.0.1:1',
         pollIntervalMs: 1,
         evidenceDeadlineMs: 1_000,
@@ -271,7 +271,7 @@ async function executionServers(
   failingPositions: number[] = [],
 ): Promise<{
   candidateServer: Server;
-  coevalServer: Server;
+  rubristServer: Server;
   readonly candidateCalls: number;
   readonly providerSubmissions: number;
 }> {
@@ -291,7 +291,7 @@ async function executionServers(
 
   const submissions = new Map<string, { skillVersionId: string; items: SubmittedItem[] }>();
   let providerSubmissions = 0;
-  const coevalServer = createServer(async (req, res) => {
+  const rubristServer = createServer(async (req, res) => {
     if (req.method === 'POST' && req.url === '/api/v1/judge/batch') {
       providerSubmissions += 1;
       const body = JSON.parse(await readBody(req)) as { skillVersionId: string; items: SubmittedItem[] };
@@ -331,11 +331,11 @@ async function executionServers(
     }
     res.writeHead(404).end();
   });
-  const coevalPort = await listen(coevalServer);
-  fixture.config.suite.provider.url = `http://127.0.0.1:${coevalPort}`;
+  const rubristPort = await listen(rubristServer);
+  fixture.config.suite.provider.url = `http://127.0.0.1:${rubristPort}`;
   return {
     candidateServer,
-    coevalServer,
+    rubristServer,
     get candidateCalls() { return candidateCalls; },
     get providerSubmissions() { return providerSubmissions; },
   };
@@ -475,7 +475,7 @@ describe('calibration-aware suite preflight', () => {
       });
     } finally {
       close(permissiveServers.candidateServer);
-      close(permissiveServers.coevalServer);
+      close(permissiveServers.rubristServer);
     }
 
     const strict = await preflightFixture();
@@ -495,7 +495,7 @@ describe('calibration-aware suite preflight', () => {
         .toBe('classified_coverage_overall_below_minimum');
     } finally {
       close(strictServers.candidateServer);
-      close(strictServers.coevalServer);
+      close(strictServers.rubristServer);
     }
   });
 
@@ -519,7 +519,7 @@ describe('calibration-aware suite preflight', () => {
       });
     } finally {
       close(servers.candidateServer);
-      close(servers.coevalServer);
+      close(servers.rubristServer);
     }
   });
 
@@ -543,7 +543,7 @@ describe('calibration-aware suite preflight', () => {
       });
     } finally {
       close(servers.candidateServer);
-      close(servers.coevalServer);
+      close(servers.rubristServer);
     }
   });
 
@@ -576,7 +576,7 @@ describe('calibration-aware suite preflight', () => {
       expect(servers.providerSubmissions).toBe(0);
     } finally {
       close(servers.candidateServer);
-      close(servers.coevalServer);
+      close(servers.rubristServer);
     }
   });
 
@@ -610,7 +610,7 @@ describe('calibration-aware suite preflight', () => {
       expect(servers.providerSubmissions).toBe(0);
     } finally {
       close(servers.candidateServer);
-      close(servers.coevalServer);
+      close(servers.rubristServer);
     }
   });
 
@@ -636,7 +636,7 @@ describe('calibration-aware suite preflight', () => {
       expect(servers.providerSubmissions).toBe(0);
     } finally {
       close(servers.candidateServer);
-      close(servers.coevalServer);
+      close(servers.rubristServer);
     }
   });
 
@@ -667,7 +667,7 @@ describe('calibration-aware suite preflight', () => {
       expect(nonfutureServers.providerSubmissions).toBe(2);
     } finally {
       close(nonfutureServers.candidateServer);
-      close(nonfutureServers.coevalServer);
+      close(nonfutureServers.rubristServer);
     }
 
     const future = await preflightFixture();
@@ -709,7 +709,7 @@ describe('calibration-aware suite preflight', () => {
       expect(futureServers.providerSubmissions).toBe(0);
     } finally {
       close(futureServers.candidateServer);
-      close(futureServers.coevalServer);
+      close(futureServers.rubristServer);
     }
   });
 
@@ -744,7 +744,7 @@ describe('calibration-aware suite preflight', () => {
       expect(report.decision).toBe('inconclusive');
     } finally {
       close(servers.candidateServer);
-      close(servers.coevalServer);
+      close(servers.rubristServer);
     }
   });
 
@@ -765,7 +765,7 @@ describe('calibration-aware suite preflight', () => {
       expect(futureServers.providerSubmissions).toBe(0);
     } finally {
       close(futureServers.candidateServer);
-      close(futureServers.coevalServer);
+      close(futureServers.rubristServer);
     }
 
     const stale = await preflightFixture();
@@ -787,7 +787,7 @@ describe('calibration-aware suite preflight', () => {
       expect(staleServers.providerSubmissions).toBe(2);
     } finally {
       close(staleServers.candidateServer);
-      close(staleServers.coevalServer);
+      close(staleServers.rubristServer);
     }
   });
 
@@ -828,7 +828,7 @@ describe('calibration-aware suite preflight', () => {
         .toContain(`# Calibration-aware criterion release report: ${decision.toUpperCase()}`);
     } finally {
       close(servers.candidateServer);
-      close(servers.coevalServer);
+      close(servers.rubristServer);
     }
   });
 });

@@ -17,3 +17,4 @@ Status meanings:
 - [0004 — Multi-criterion release policy](0004-multi-criterion-release-policy.md) — Accepted
 - [0005 — Release-decision precedence under mixed evidence](0005-decision-precedence.md) — Accepted
 - [0006 — Third-party eval-platform result intake](0006-third-party-eval-result-intake.md) — Proposed
+- [0007 — Rename consumed Coeval identifiers to Rubrist](0007-rubrist-rename-consumed-identifiers.md) — Accepted

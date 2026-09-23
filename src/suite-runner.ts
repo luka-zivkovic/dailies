@@ -1,13 +1,13 @@
 import { runCandidate } from './candidate.js';
 import { suiteInputItemSchema, type SuiteConfig, type SuiteInputItem } from './config-v5.js';
-import type { CoevalJudgeConfig } from './config.js';
+import type { RubristJudgeConfig } from './config.js';
 import {
-  COEVAL_CLIENT_ITEM_ID_MAX_LENGTH,
-  CoevalCollectionError,
-  collectCoevalAssessment,
-  verifyCoevalReceipt,
-  type CoevalEvidenceOperation,
-} from './coeval.js';
+  RUBRIST_CLIENT_ITEM_ID_MAX_LENGTH,
+  RubristCollectionError,
+  collectRubristAssessment,
+  verifyRubristReceipt,
+  type RubristEvidenceOperation,
+} from './rubrist.js';
 import { classifyOperationError } from './errors.js';
 import {
   loadInputArtifactWithSchema,
@@ -152,7 +152,7 @@ async function collectCriterion(
       ...base,
       trust: {
         status: 'unavailable',
-        derivation: 'coeval_receipt_v1',
+        derivation: 'rubrist_receipt_v1',
         admissible: false,
         reason: 'no_candidate_outputs',
       },
@@ -176,7 +176,7 @@ async function collectCriterion(
       ...base,
       trust: {
         status: 'unavailable',
-        derivation: 'coeval_receipt_v1',
+        derivation: 'rubrist_receipt_v1',
         admissible: false,
         reason: 'integrity_failure',
       },
@@ -193,19 +193,19 @@ async function collectCriterion(
       items,
     };
   }
-  const judge: CoevalJudgeConfig = {
-    type: 'coeval',
+  const judge: RubristJudgeConfig = {
+    type: 'rubrist',
     url: config.suite.provider.url,
     ...(config.suite.provider.headers === undefined ? {} : { headers: config.suite.provider.headers }),
     skillVersionId: member.skillVersionId,
     pollIntervalMs: config.suite.provider.pollIntervalMs,
     pollTimeoutMs: remaining,
   };
-  let operations: CoevalEvidenceOperation[] = [];
+  let operations: RubristEvidenceOperation[] = [];
   let collectedEvalRunId: string | undefined;
-  let collectedReceipt: Awaited<ReturnType<typeof collectCoevalAssessment>>['receipt'] | undefined;
+  let collectedReceipt: Awaited<ReturnType<typeof collectRubristAssessment>>['receipt'] | undefined;
   try {
-    const assessment = await collectCoevalAssessment(
+    const assessment = await collectRubristAssessment(
       judge,
       successful.map((candidate) => ({
         id: candidate.id,
@@ -224,7 +224,7 @@ async function collectCriterion(
       trust: {
         status: 'complete',
         class: 'verified',
-        derivation: 'coeval_receipt_v1',
+        derivation: 'rubrist_receipt_v1',
         admissible: config.trustPolicy.admissibleClasses.includes('verified'),
       },
       evidence: {
@@ -237,7 +237,7 @@ async function collectCriterion(
       items,
     };
   } catch (error) {
-    const collection = error instanceof CoevalCollectionError ? error : undefined;
+    const collection = error instanceof RubristCollectionError ? error : undefined;
     operations = collection?.operations ?? operations;
     const receipt = collection?.receipt;
     const evalRunId = collection?.evalRunId ?? collectedEvalRunId;
@@ -245,7 +245,7 @@ async function collectCriterion(
     let bindingRejectionReason: string | undefined;
     if (receipt !== undefined && evalRunId !== undefined) {
       try {
-        verifyCoevalReceipt(
+        verifyRubristReceipt(
           receipt,
           receipt,
           evalRunId,
@@ -270,7 +270,7 @@ async function collectCriterion(
           ...base,
           trust: {
             status: 'unavailable',
-            derivation: 'coeval_receipt_v1',
+            derivation: 'rubrist_receipt_v1',
             admissible: false,
             reason: 'incomplete_evidence',
           },
@@ -302,7 +302,7 @@ async function collectCriterion(
       ...base,
       trust: {
         status: 'unavailable',
-        derivation: 'coeval_receipt_v1',
+        derivation: 'rubrist_receipt_v1',
         admissible: false,
         reason: 'integrity_failure',
       },
@@ -388,12 +388,12 @@ export async function preflightSuiteRelease(
   }
   const policy = verifyReleasePolicy(config.policy, manifest);
   const invalidClientId = inputArtifact.items.find(
-    (item) => item.id.length > COEVAL_CLIENT_ITEM_ID_MAX_LENGTH,
+    (item) => item.id.length > RUBRIST_CLIENT_ITEM_ID_MAX_LENGTH,
   );
   if (invalidClientId !== undefined) {
     throw new Error(
-      `input id ${JSON.stringify(invalidClientId.id)} is not a valid Coeval clientItemId: ` +
-      `IDs must be at most ${COEVAL_CLIENT_ITEM_ID_MAX_LENGTH} characters`,
+      `input id ${JSON.stringify(invalidClientId.id)} is not a valid Rubrist clientItemId: ` +
+      `IDs must be at most ${RUBRIST_CLIENT_ITEM_ID_MAX_LENGTH} characters`,
     );
   }
   const expectedCriterionVersions = new Set(

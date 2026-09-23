@@ -2,10 +2,10 @@ import { z } from 'zod';
 import {
   candidateConfigSchema,
   inputsConfigSchema,
-  MAX_COEVAL_POLL_INTERVAL_MS,
-  MAX_COEVAL_POLL_TIMEOUT_MS,
-  DEFAULT_COEVAL_POLL_INTERVAL_MS,
-  DEFAULT_COEVAL_POLL_TIMEOUT_MS,
+  MAX_RUBRIST_POLL_INTERVAL_MS,
+  MAX_RUBRIST_POLL_TIMEOUT_MS,
+  DEFAULT_RUBRIST_POLL_INTERVAL_MS,
+  DEFAULT_RUBRIST_POLL_TIMEOUT_MS,
   DEFAULT_TIMEOUT_MS,
   scopeConfigSchema,
   trustPolicySchema,
@@ -34,13 +34,13 @@ export const suiteInputItemSchema = z.object({
 });
 
 export const suiteProviderConfigSchema = z.object({
-  type: z.literal('coeval'),
+  type: z.literal('rubrist'),
   url: z.string().url(),
   headers: z.record(z.string()).optional(),
-  pollIntervalMs: z.number().int().min(1).max(MAX_COEVAL_POLL_INTERVAL_MS)
-    .default(DEFAULT_COEVAL_POLL_INTERVAL_MS),
-  evidenceDeadlineMs: z.number().int().min(1).max(MAX_COEVAL_POLL_TIMEOUT_MS)
-    .default(DEFAULT_COEVAL_POLL_TIMEOUT_MS),
+  pollIntervalMs: z.number().int().min(1).max(MAX_RUBRIST_POLL_INTERVAL_MS)
+    .default(DEFAULT_RUBRIST_POLL_INTERVAL_MS),
+  evidenceDeadlineMs: z.number().int().min(1).max(MAX_RUBRIST_POLL_TIMEOUT_MS)
+    .default(DEFAULT_RUBRIST_POLL_TIMEOUT_MS),
 }).strict();
 
 export const suiteConfigSchema = z.object({

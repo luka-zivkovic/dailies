@@ -4,7 +4,7 @@ import { Ajv2020 } from 'ajv/dist/2020.js';
 import { describe, expect, it } from 'vitest';
 import {
   canonicalJson,
-} from '../src/coeval.js';
+} from '../src/rubrist.js';
 import {
   evaluatorSuiteCriterionDigest,
   evaluatorSuiteManifestDigest,
@@ -32,17 +32,17 @@ interface ConformanceCase {
 }
 
 interface ConformanceCorpus {
-  contract: 'coeval/evaluator-suite-manifest/v1';
+  contract: 'rubrist/evaluator-suite-manifest/v1';
   baseFixture: string;
   cases: ConformanceCase[];
 }
 
 const contractRoot = new URL('../contracts/', import.meta.url);
 const pinnedFileDigests = {
-  schema: 'd9510a027313659f0fe11f8dc300874a9b106c57ca08f7cf168d90839bd60b26',
-  specification: '6f0982d3e2b8da38b54fb4d91dab2a92340799b4cd406f29e0698264dd1a43e8',
-  fixture: '64fcd11e94f209015914294bb9f6ef33ee3e1fb4766c3081e0a58f69eed785ae',
-  conformance: 'd09392d37c255fcf05361fbe8b7e78ec4306af876352d9b8a05dd621ae0d2458',
+  schema: '5d32cb547d354ffb74f0236bddb249c65fc8c32ae113fced46a62561fb9d9f3a',
+  specification: 'd20974868c3d3f126ccc3b0f926489c20089ff0f8aa1659834a9441920eb0564',
+  fixture: 'cc8a51571b4b16ff2c004fad8d3bd1eb747dae526a457f7c0806dcb21e523134',
+  conformance: '0ae717946ba9124e0caf5adf68ea4c3808d0f7285c68f394c940782263534506',
 } as const;
 
 function bytes(relativePath: string): Buffer {
@@ -110,14 +110,14 @@ function mutate(manifest: Record<string, unknown>, mutation: Mutation): void {
   else (parent as Record<string, unknown>)[key] = mutation.value;
 }
 
-describe('vendored Coeval evaluator-suite-manifest v1 contract', () => {
+describe('vendored Rubrist evaluator-suite-manifest v1 contract', () => {
   it('pins the reviewed producer bytes and keeps receipt v1 pins unchanged', () => {
     expect(fileDigest('evaluator-suite-manifest-v1.schema.json')).toBe(pinnedFileDigests.schema);
     expect(fileDigest('evaluator-suite-manifest-v1.md')).toBe(pinnedFileDigests.specification);
     expect(fileDigest('fixtures/evaluator-suite-manifest-v1.complete.json')).toBe(pinnedFileDigests.fixture);
     expect(fileDigest('fixtures/evaluator-suite-manifest-v1.conformance.json')).toBe(pinnedFileDigests.conformance);
     expect(fileDigest('assessment-receipt-v1.schema.json')).toBe(
-      'ca18a7b3bfa4610ff56ab88d60044f4357df2d035ac5e072356becc20250e9e7',
+      '3e5ce757a7f86d02a6ab33057c9176ea052225d65f984ca91e48e5dbaead30a3',
     );
   });
 

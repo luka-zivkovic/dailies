@@ -4,7 +4,7 @@ import {
   compareExactRationals,
   parseCanonicalDecimalRational,
 } from './binary-calibration.js';
-import { canonicalJson } from './coeval.js';
+import { canonicalJson } from './rubrist.js';
 import {
   applyReleasePolicy,
   binaryThresholdRuleSchema,

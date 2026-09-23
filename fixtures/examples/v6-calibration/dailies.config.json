@@ -25,10 +25,10 @@
       "type": "file",
       "path": "suite-manifest.json",
       "manifestId": "suite_manifest_support_quality_1",
-      "manifestDigest": "sha256:b5272076f80976a5a04dd8b5413741a53fca91524963650f341e7b37dc5c2288"
+      "manifestDigest": "sha256:8f9574b4d3ebf63dcfc19ca866bf4725fd4fec312c67179aa8b4468df78f9db2"
     },
     "provider": {
-      "type": "coeval",
+      "type": "rubrist",
       "url": "http://127.0.0.1:4820",
       "pollIntervalMs": 100,
       "evidenceDeadlineMs": 30000
@@ -39,7 +39,7 @@
     "id": "example-support-calibrated-release-policy",
     "version": "1",
     "manifestId": "suite_manifest_support_quality_1",
-    "manifestDigest": "sha256:b5272076f80976a5a04dd8b5413741a53fca91524963650f341e7b37dc5c2288",
+    "manifestDigest": "sha256:8f9574b4d3ebf63dcfc19ca866bf4725fd4fec312c67179aa8b4468df78f9db2",
     "criteria": [
       {
         "criterionVersionId": "criterionv_factuality_1",
@@ -132,7 +132,7 @@
       "source": {
         "type": "file",
         "path": "calibration-factuality.json",
-        "artifactDigest": "sha256:e302360a77f4eefd03e7b3924c62a2fe5f81ac2f9d50b34d296d3570fe06f90e",
+        "artifactDigest": "sha256:b82018b32225ab1f64ebd4ad6e082a1a7043f4049246c0f913412ac1198ba705",
         "expectedIdentity": {
           "artifactId": "example-calibration-criterion_factuality",
           "calibrationRunId": "example-calibration-run-0",
@@ -171,7 +171,7 @@
           "trialPlanKind": "single",
           "trialsPerItem": 1,
           "suiteManifestId": "suite_manifest_support_quality_1",
-          "suiteManifestDigest": "sha256:b5272076f80976a5a04dd8b5413741a53fca91524963650f341e7b37dc5c2288",
+          "suiteManifestDigest": "sha256:8f9574b4d3ebf63dcfc19ca866bf4725fd4fec312c67179aa8b4468df78f9db2",
           "suiteMemberPosition": 0
         }
       }
@@ -181,7 +181,7 @@
       "source": {
         "type": "file",
         "path": "calibration-safety.json",
-        "artifactDigest": "sha256:b4a655742f6abadc7283c0d5e784b3c7a3956dd2d3711ec028f525f14b6bce85",
+        "artifactDigest": "sha256:01e55e13ab849c23240410bc457fecf9510e49fe044167d685def9919a467a39",
         "expectedIdentity": {
           "artifactId": "example-calibration-criterion_safety",
           "calibrationRunId": "example-calibration-run-1",
@@ -220,7 +220,7 @@
           "trialPlanKind": "single",
           "trialsPerItem": 1,
           "suiteManifestId": "suite_manifest_support_quality_1",
-          "suiteManifestDigest": "sha256:b5272076f80976a5a04dd8b5413741a53fca91524963650f341e7b37dc5c2288",
+          "suiteManifestDigest": "sha256:8f9574b4d3ebf63dcfc19ca866bf4725fd4fec312c67179aa8b4468df78f9db2",
           "suiteMemberPosition": 1
         }
       }

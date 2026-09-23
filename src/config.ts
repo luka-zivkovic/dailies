@@ -2,10 +2,10 @@ import { z } from 'zod';
 
 /** Default per-call timeout for candidate/judge invocations, in milliseconds. */
 export const DEFAULT_TIMEOUT_MS = 60_000;
-export const DEFAULT_COEVAL_POLL_INTERVAL_MS = 1_000;
-export const DEFAULT_COEVAL_POLL_TIMEOUT_MS = 300_000;
-export const MAX_COEVAL_POLL_INTERVAL_MS = 30_000;
-export const MAX_COEVAL_POLL_TIMEOUT_MS = 1_800_000;
+export const DEFAULT_RUBRIST_POLL_INTERVAL_MS = 1_000;
+export const DEFAULT_RUBRIST_POLL_TIMEOUT_MS = 300_000;
+export const MAX_RUBRIST_POLL_INTERVAL_MS = 30_000;
+export const MAX_RUBRIST_POLL_TIMEOUT_MS = 1_800_000;
 
 export const CONFIG_SCHEMA_VERSION = 4;
 export const SHA256_DIGEST_PATTERN = /^sha256:[0-9a-f]{64}$/;
@@ -121,25 +121,25 @@ export const judgeConfigSchema = z.discriminatedUnion('type', [
     type: z.literal('exact-match'),
   }).strict(),
   z.object({
-    type: z.literal('coeval'),
-    /** Base URL for the Coeval API, without an endpoint-specific suffix. */
+    type: z.literal('rubrist'),
+    /** Base URL for the Rubrist API, without an endpoint-specific suffix. */
     url: z.string().url(),
     /** API authentication and any deployment-specific request headers. */
     headers: z.record(z.string()).optional(),
-    /** Immutable Coeval judging skill version used to produce the evidence. */
+    /** Immutable Rubrist judging skill version used to produce the evidence. */
     skillVersionId: z.string().min(1),
     pollIntervalMs: z
       .number()
       .int()
       .min(1)
-      .max(MAX_COEVAL_POLL_INTERVAL_MS)
-      .default(DEFAULT_COEVAL_POLL_INTERVAL_MS),
+      .max(MAX_RUBRIST_POLL_INTERVAL_MS)
+      .default(DEFAULT_RUBRIST_POLL_INTERVAL_MS),
     pollTimeoutMs: z
       .number()
       .int()
       .min(1)
-      .max(MAX_COEVAL_POLL_TIMEOUT_MS)
-      .default(DEFAULT_COEVAL_POLL_TIMEOUT_MS),
+      .max(MAX_RUBRIST_POLL_TIMEOUT_MS)
+      .default(DEFAULT_RUBRIST_POLL_TIMEOUT_MS),
   }).strict(),
 ]);
 
@@ -173,7 +173,7 @@ export const configSchema = z.object({
 export type Config = z.infer<typeof configSchema>;
 export type CandidateConfig = z.infer<typeof candidateConfigSchema>;
 export type JudgeConfig = z.infer<typeof judgeConfigSchema>;
-export type CoevalJudgeConfig = Extract<JudgeConfig, { type: 'coeval' }>;
+export type RubristJudgeConfig = Extract<JudgeConfig, { type: 'rubrist' }>;
 export type ScopeConfig = z.infer<typeof scopeConfigSchema>;
 export type TrustClass = z.infer<typeof trustClassSchema>;
 export type TrustPolicy = z.infer<typeof trustPolicySchema>;

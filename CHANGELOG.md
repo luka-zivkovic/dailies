@@ -5,6 +5,16 @@ versioning while the public API remains pre-1.0.
 
 ## Unreleased
 
+- Rename the consumed evidence provider Coeval to Rubrist (ADR-0007, owner
+  decision 2026-09-22). Vendored contract IDs are now `rubrist/<name>/v1` and
+  `rubrist-canonical-json/v1`; the configuration judge/provider `type` is
+  `rubrist`; report evidence kinds are `rubrist_receipt_v1` and
+  `rubrist_binary_calibration_v1`; exported names follow (for example
+  `verifyRubristReceipt`); `src/coeval.ts` and `scripts/mock-coeval.mjs` are
+  now `src/rubrist.ts` and `scripts/mock-rubrist.mjs`. The old spellings are
+  not accepted as aliases. Vendored contracts are re-vendored byte-identical
+  from Rubrist, and derived digests and examples are regenerated. The
+  `dailies` plugin is bumped to 0.3.1.
 - Propose ADR-0006 for Promptfoo, DeepEval, and Braintrust result intake.
   It records that imported results are `self_reported` under ADR-0001 and
   lists the questions that need a decision first: candidate-execution

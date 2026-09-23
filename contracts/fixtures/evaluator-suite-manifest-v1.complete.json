@@ -1,5 +1,5 @@
 {
-  "contract": "coeval/evaluator-suite-manifest/v1",
+  "contract": "rubrist/evaluator-suite-manifest/v1",
   "schemaVersion": 1,
   "manifestId": "suite_manifest_support_quality_1",
   "suiteId": "suite_support_quality",
@@ -38,5 +38,5 @@
     }
   ],
   "trialPlan": null,
-  "manifestDigest": "sha256:b5272076f80976a5a04dd8b5413741a53fca91524963650f341e7b37dc5c2288"
+  "manifestDigest": "sha256:8f9574b4d3ebf63dcfc19ca866bf4725fd4fec312c67179aa8b4468df78f9db2"
 }

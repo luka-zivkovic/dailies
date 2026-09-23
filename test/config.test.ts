@@ -52,34 +52,34 @@ describe('config validation', () => {
     expect(config.judge).toEqual({ type: 'http', url: 'http://localhost:9090/judge' });
   });
 
-  it('accepts a pinned Coeval judge and applies bounded polling defaults', () => {
+  it('accepts a pinned Rubrist judge and applies bounded polling defaults', () => {
     const config = parseConfig({
       ...validConfig,
       judge: {
-        type: 'coeval',
-        url: 'https://coeval.example',
+        type: 'rubrist',
+        url: 'https://rubrist.example',
         headers: { authorization: 'Bearer secret' },
         skillVersionId: 'skill-version-1',
       },
     });
     expect(config.judge).toMatchObject({
-      type: 'coeval',
+      type: 'rubrist',
       skillVersionId: 'skill-version-1',
       pollIntervalMs: 1_000,
       pollTimeoutMs: 300_000,
     });
   });
 
-  it('rejects unpinned Coeval judges and polling values outside hard bounds', () => {
+  it('rejects unpinned Rubrist judges and polling values outside hard bounds', () => {
     expect(() => parseConfig({
       ...validConfig,
-      judge: { type: 'coeval', url: 'https://coeval.example' },
+      judge: { type: 'rubrist', url: 'https://rubrist.example' },
     })).toThrow();
     expect(() => parseConfig({
       ...validConfig,
       judge: {
-        type: 'coeval',
-        url: 'https://coeval.example',
+        type: 'rubrist',
+        url: 'https://rubrist.example',
         skillVersionId: 'v1',
         pollIntervalMs: 30_001,
       },
@@ -87,8 +87,8 @@ describe('config validation', () => {
     expect(() => parseConfig({
       ...validConfig,
       judge: {
-        type: 'coeval',
-        url: 'https://coeval.example',
+        type: 'rubrist',
+        url: 'https://rubrist.example',
         skillVersionId: 'v1',
         pollTimeoutMs: 1_800_001,
       },

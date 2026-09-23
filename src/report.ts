@@ -1,9 +1,9 @@
 import { z } from 'zod';
 import {
-  coevalAssessmentReceiptSchema,
-  coevalEvidenceOperationSchema,
-  verifyCoevalReceipt,
-} from './coeval.js';
+  rubristAssessmentReceiptSchema,
+  rubristEvidenceOperationSchema,
+  verifyRubristReceipt,
+} from './rubrist.js';
 import {
   scopeConfigSchema,
   scopeKindSchema,
@@ -214,24 +214,24 @@ const totalsSchema = z.object({
   allErrored: z.boolean(),
 }).strict();
 
-const coevalEvidenceSchema = z.object({
-  provider: z.literal('coeval'),
+const rubristEvidenceSchema = z.object({
+  provider: z.literal('rubrist'),
   /** Dailies-owned pinned judge identity, checked against any retained receipt. */
   skillVersionId: z.string().min(1),
   /** Eval run returned by the batch submit, independent of any retained receipt. */
   evalRunId: z.string().min(1).optional(),
   status: z.enum(['complete', 'incomplete', 'failed']),
-  operations: z.array(coevalEvidenceOperationSchema).min(1).max(10_000),
-  receipt: coevalAssessmentReceiptSchema.optional(),
+  operations: z.array(rubristEvidenceOperationSchema).min(1).max(10_000),
+  receipt: rubristAssessmentReceiptSchema.optional(),
 }).strict();
 
 const commonReportFields = {
-  judgeType: z.enum(['exact-match', 'http', 'coeval']),
+  judgeType: z.enum(['exact-match', 'http', 'rubrist']),
   startedAt: z.string(),
   finishedAt: z.string(),
   thresholds: thresholdsSchema,
   totals: totalsSchema,
-  evidence: coevalEvidenceSchema.optional(),
+  evidence: rubristEvidenceSchema.optional(),
 };
 
 const reportV3ShapeSchema = z.object({
@@ -263,30 +263,30 @@ export const reportV3Schema = reportV3ShapeSchema.superRefine((report, ctx) => {
   const itemsNeedingJudgeEvidence = report.items.filter(
     (item) => item.outcome !== 'error' || item.errorStage === 'judge',
   );
-  if (report.judgeType === 'coeval') {
+  if (report.judgeType === 'rubrist') {
     if (report.items.some((item) => item.attempts.judge !== undefined)) {
       ctx.addIssue({
         code: 'custom',
         path: ['items'],
-        message: 'Coeval items cannot fabricate per-item judge attempts; use evidence.operations',
+        message: 'Rubrist items cannot fabricate per-item judge attempts; use evidence.operations',
       });
     }
   } else if (itemsNeedingJudgeEvidence.some((item) => item.attempts.judge === undefined)) {
     ctx.addIssue({
       code: 'custom',
       path: ['items'],
-      message: 'non-Coeval completed and judge-error items require judge attempts',
+      message: 'non-Rubrist completed and judge-error items require judge attempts',
     });
   }
   const submittedItems = report.items.filter(
     (item) => item.attempts.candidate.at(-1)?.outcome === 'success',
   );
-  if (report.judgeType !== 'coeval') {
+  if (report.judgeType !== 'rubrist') {
     if (evidence !== undefined) {
       ctx.addIssue({
         code: 'custom',
         path: ['evidence'],
-        message: 'non-Coeval reports cannot carry Coeval evidence',
+        message: 'non-Rubrist reports cannot carry Rubrist evidence',
       });
     }
     return;
@@ -295,7 +295,7 @@ export const reportV3Schema = reportV3ShapeSchema.superRefine((report, ctx) => {
     ctx.addIssue({
       code: 'custom',
       path: ['evidence'],
-      message: 'Coeval reports with submitted candidates require evidence audit',
+      message: 'Rubrist reports with submitted candidates require evidence audit',
     });
     return;
   }
@@ -304,7 +304,7 @@ export const reportV3Schema = reportV3ShapeSchema.superRefine((report, ctx) => {
       ctx.addIssue({
         code: 'custom',
         path: ['evidence'],
-        message: 'all-candidate-failure Coeval reports cannot carry provider operations',
+        message: 'all-candidate-failure Rubrist reports cannot carry provider operations',
       });
     }
     return;
@@ -320,7 +320,7 @@ export const reportV3Schema = reportV3ShapeSchema.superRefine((report, ctx) => {
     ctx.addIssue({
       code: 'custom',
       path: ['evidence', 'operations'],
-      message: 'Coeval operations must start with exactly one submit',
+      message: 'Rubrist operations must start with exactly one submit',
     });
   }
   const firstReceipt = phases.indexOf('receipt');
@@ -335,7 +335,7 @@ export const reportV3Schema = reportV3ShapeSchema.superRefine((report, ctx) => {
     ctx.addIssue({
       code: 'custom',
       path: ['evidence', 'operations'],
-      message: 'Coeval operations must be submit, polls, then at most one receipt',
+      message: 'Rubrist operations must be submit, polls, then at most one receipt',
     });
   }
   const failedOperationIndex = evidence.operations.findIndex(operationFailed);
@@ -343,7 +343,7 @@ export const reportV3Schema = reportV3ShapeSchema.superRefine((report, ctx) => {
     ctx.addIssue({
       code: 'custom',
       path: ['evidence', 'operations'],
-      message: 'a failed Coeval operation must terminate collection',
+      message: 'a failed Rubrist operation must terminate collection',
     });
   }
   const submitSucceeded = evidence.operations[0]?.attempts.at(-1)?.outcome === 'success';
@@ -384,7 +384,7 @@ export const reportV3Schema = reportV3ShapeSchema.superRefine((report, ctx) => {
       ctx.addIssue({
         code: 'custom',
         path: ['items'],
-        message: 'failed Coeval collection must match every submitted item judge error',
+        message: 'failed Rubrist collection must match every submitted item judge error',
       });
     }
     return;
@@ -431,7 +431,7 @@ export const reportV3Schema = reportV3ShapeSchema.superRefine((report, ctx) => {
     ctx.addIssue({
       code: 'custom',
       path: ['items'],
-      message: 'Coeval-submitted items require candidate_output',
+      message: 'Rubrist-submitted items require candidate_output',
     });
     return;
   }
@@ -444,7 +444,7 @@ export const reportV3Schema = reportV3ShapeSchema.superRefine((report, ctx) => {
     return;
   }
   try {
-    const verification = verifyCoevalReceipt(
+    const verification = verifyRubristReceipt(
       evidence.receipt,
       evidence.receipt,
       evidence.evalRunId,
@@ -469,7 +469,7 @@ export const reportV3Schema = reportV3ShapeSchema.superRefine((report, ctx) => {
           ctx.addIssue({
             code: 'custom',
             path: ['items'],
-            message: `report outcome does not match Coeval receipt for ${item.id}`,
+            message: `report outcome does not match Rubrist receipt for ${item.id}`,
           });
         }
       }
@@ -482,7 +482,7 @@ export const reportV3Schema = reportV3ShapeSchema.superRefine((report, ctx) => {
       ctx.addIssue({
         code: 'custom',
         path: ['items'],
-        message: 'incomplete Coeval receipt requires incomplete judge errors',
+        message: 'incomplete Rubrist receipt requires incomplete judge errors',
       });
     }
   } catch (error) {
@@ -552,7 +552,7 @@ export const reportScopeSchema = z.object({
 
 const trustDerivationSchema = z.enum([
   'exact_match_v1',
-  'coeval_receipt_v1',
+  'rubrist_receipt_v1',
   'http_judge_v1',
 ]);
 
@@ -579,21 +579,21 @@ const reportV4ShapeSchema = z.object({
   items: z.array(itemResultSchema),
 }).strict();
 
-function expectedTrust(judgeType: 'exact-match' | 'http' | 'coeval'): {
+function expectedTrust(judgeType: 'exact-match' | 'http' | 'rubrist'): {
   class: TrustClass;
-  derivation: 'exact_match_v1' | 'coeval_receipt_v1' | 'http_judge_v1';
+  derivation: 'exact_match_v1' | 'rubrist_receipt_v1' | 'http_judge_v1';
 } {
   if (judgeType === 'exact-match') {
     return { class: 'deterministic', derivation: 'exact_match_v1' };
   }
-  if (judgeType === 'coeval') {
-    return { class: 'verified', derivation: 'coeval_receipt_v1' };
+  if (judgeType === 'rubrist') {
+    return { class: 'verified', derivation: 'rubrist_receipt_v1' };
   }
   return { class: 'self_reported', derivation: 'http_judge_v1' };
 }
 
 export const reportSchema = reportV4ShapeSchema.superRefine((report, ctx) => {
-  // Reuse the frozen v3 integrity and Coeval-linkage contract without allowing
+  // Reuse the frozen v3 integrity and Rubrist-linkage contract without allowing
   // the v4 trust fields to mutate its semantics.
   const legacyItems = report.items.map(({ trustClass: _trustClass, ...item }) => item);
   const legacyCandidate = {
@@ -962,10 +962,10 @@ export function renderMarkdown(report: Report): string {
     '',
   ];
 
-  if (report.evidence?.provider === 'coeval') {
+  if (report.evidence?.provider === 'rubrist') {
     const { evalRunId, receipt, operations } = report.evidence;
     lines.push(
-      '## Coeval evidence audit',
+      '## Rubrist evidence audit',
       '',
       `- Status: ${report.evidence.status}`,
       `- Pinned skill version: ${report.evidence.skillVersionId}`,

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Regenerates the runnable examples under fixtures/examples/ from the
-// vendored Coeval contract fixtures in contracts/fixtures/. Run after
+// vendored Rubrist contract fixtures in contracts/fixtures/. Run after
 // `npm run build`; the test suite checks that the committed files match.
 //
 //   node scripts/build-examples.mjs            # writes fixtures/examples/
@@ -15,15 +15,15 @@ import {
   expectedBinaryCalibrationIdentity,
   parseCanonicalBinaryCalibrationBytes,
 } from '../dist/binary-calibration.js';
-import { canonicalJson } from '../dist/coeval.js';
+import { canonicalJson } from '../dist/rubrist.js';
 import { parseSuiteConfig } from '../dist/config-v5.js';
 import { parseSuiteConfigV6 } from '../dist/config-v6.js';
 import { verifyEvaluatorSuiteManifest } from '../dist/suite-manifest.js';
 
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 
-/** The mock Coeval stub's default listen address (scripts/mock-coeval.mjs). */
-export const MOCK_COEVAL_URL = 'http://127.0.0.1:4820';
+/** The mock Rubrist stub's default listen address (scripts/mock-rubrist.mjs). */
+export const MOCK_RUBRIST_URL = 'http://127.0.0.1:4820';
 
 const CASES = [
   {
@@ -140,8 +140,8 @@ export async function buildExamples(outDir) {
         manifestDigest: manifest.manifestDigest,
       },
       provider: {
-        type: 'coeval',
-        url: MOCK_COEVAL_URL,
+        type: 'rubrist',
+        url: MOCK_RUBRIST_URL,
         pollIntervalMs: 100,
         evidenceDeadlineMs: 30_000,
       },

@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
-import { canonicalJson, sha256Digest } from '../src/coeval.js';
+import { canonicalJson, sha256Digest } from '../src/rubrist.js';
 import { parseSuiteConfig } from '../src/config-v5.js';
 import {
   candidateExecutionIdentity,
@@ -139,7 +139,7 @@ function receipt(
   return result;
 }
 
-async function mockCoeval(
+async function mockRubrist(
   manifest: EvaluatorSuiteManifest,
   modes: Record<string, MemberMode> = {},
 ): Promise<{ server: Server; url: string; submissions: Submission[]; readonly maxSubmitInFlight: number }> {
@@ -235,7 +235,7 @@ async function fixture(
     }));
   });
   const candidatePort = await listen(candidateServer);
-  const coeval = await mockCoeval(manifest, modes);
+  const rubrist = await mockRubrist(manifest, modes);
   const config = parseSuiteConfig({
     schemaVersion: 5,
     inputs: { type: 'jsonl', path: inputPath, digest: sha256Bytes(inputBytes) },
@@ -260,8 +260,8 @@ async function fixture(
         manifestDigest: manifest.manifestDigest,
       },
       provider: {
-        type: 'coeval',
-        url: coeval.url,
+        type: 'rubrist',
+        url: rubrist.url,
         pollIntervalMs: 1,
         evidenceDeadlineMs: 1_000,
       },
@@ -287,7 +287,7 @@ async function fixture(
   return {
     config,
     manifest,
-    coeval,
+    rubrist,
     candidateServer,
     get candidateCalls() { return candidateCalls; },
   };
@@ -320,10 +320,10 @@ describe('criterion suite runner', () => {
     try {
       await expect(runSuiteRelease(test.config)).rejects.toThrow(/unsupported by Dailies v5/);
       expect(test.candidateCalls).toBe(0);
-      expect(test.coeval.submissions).toHaveLength(0);
+      expect(test.rubrist.submissions).toHaveLength(0);
     } finally {
       close(test.candidateServer);
-      close(test.coeval.server);
+      close(test.rubrist.server);
     }
   });
 
@@ -344,7 +344,7 @@ describe('criterion suite runner', () => {
         .toContain('# Criterion release report: PROMOTE');
     } finally {
       close(test.candidateServer);
-      close(test.coeval.server);
+      close(test.rubrist.server);
     }
   });
 
@@ -376,7 +376,7 @@ describe('criterion suite runner', () => {
       expect(cli.stdout).toContain(`decision: ${expectedDecision}`);
     } finally {
       close(test.candidateServer);
-      close(test.coeval.server);
+      close(test.rubrist.server);
     }
   });
 
@@ -387,9 +387,9 @@ describe('criterion suite runner', () => {
         now: () => new Date('2026-08-22T12:00:00.000Z'),
       });
       expect(test.candidateCalls).toBe(2);
-      expect(test.coeval.submissions).toHaveLength(2);
-      expect(test.coeval.maxSubmitInFlight).toBeGreaterThan(1);
-      expect(new Set(test.coeval.submissions.map((entry) => entry.skillVersionId))).toEqual(
+      expect(test.rubrist.submissions).toHaveLength(2);
+      expect(test.rubrist.maxSubmitInFlight).toBeGreaterThan(1);
+      expect(new Set(test.rubrist.submissions.map((entry) => entry.skillVersionId))).toEqual(
         new Set(test.manifest.members.map((member) => member.skillVersionId)),
       );
       expect(report).toMatchObject({
@@ -441,14 +441,14 @@ describe('criterion suite runner', () => {
       }
     } finally {
       close(test.candidateServer);
-      close(test.coeval.server);
+      close(test.rubrist.server);
     }
   });
 
   it('lets a complete blocking failure outrank a different digest-valid incomplete receipt', async () => {
     const base = await fixture();
     close(base.candidateServer);
-    close(base.coeval.server);
+    close(base.rubrist.server);
     const incompleteSkill = base.manifest.members[0]!.skillVersionId;
     const test = await fixture(['advisory', 'blocking'], { [incompleteSkill]: 'incomplete' });
     try {
@@ -461,14 +461,14 @@ describe('criterion suite runner', () => {
       expect(report.criteria[1]?.policyResult.rulePassed).toBe(false);
     } finally {
       close(test.candidateServer);
-      close(test.coeval.server);
+      close(test.rubrist.server);
     }
   });
 
   it('makes required receipt-binding corruption inconclusive even alongside a block', async () => {
     const base = await fixture();
     close(base.candidateServer);
-    close(base.coeval.server);
+    close(base.rubrist.server);
     const tamperedSkill = base.manifest.members[0]!.skillVersionId;
     const test = await fixture(['advisory', 'blocking'], { [tamperedSkill]: 'binding-tamper' });
     try {
@@ -506,7 +506,7 @@ describe('criterion suite runner', () => {
       expect(reportV5Schema.safeParse(zeroRequest).success).toBe(false);
     } finally {
       close(test.candidateServer);
-      close(test.coeval.server);
+      close(test.rubrist.server);
     }
   });
 
@@ -528,18 +528,18 @@ describe('criterion suite runner', () => {
         status: 'error',
         errorKind: 'execution',
       });
-      expect(test.coeval.submissions.every((submission) => submission.items.length === 1)).toBe(true);
+      expect(test.rubrist.submissions.every((submission) => submission.items.length === 1)).toBe(true);
       expect(reportV5Schema.safeParse(report).success).toBe(true);
     } finally {
       close(test.candidateServer);
-      close(test.coeval.server);
+      close(test.rubrist.server);
     }
   });
 
   it('makes a shared-deadline poll timeout a reproducible integrity failure', async () => {
     const base = await fixture();
     close(base.candidateServer);
-    close(base.coeval.server);
+    close(base.rubrist.server);
     const pendingSkill = base.manifest.members[0]!.skillVersionId;
     const test = await fixture(['advisory', 'advisory'], { [pendingSkill]: 'pending' });
     test.config.suite.provider.evidenceDeadlineMs = 200;
@@ -560,7 +560,7 @@ describe('criterion suite runner', () => {
       expect(renderSuiteMarkdown(report)).toContain('Evidence reason:');
     } finally {
       close(test.candidateServer);
-      close(test.coeval.server);
+      close(test.rubrist.server);
     }
   });
 
@@ -578,14 +578,14 @@ describe('criterion suite runner', () => {
       expect(renderSuiteMarkdown(report)).toContain('verified (not admissible)');
     } finally {
       close(test.candidateServer);
-      close(test.coeval.server);
+      close(test.rubrist.server);
     }
   });
 
   it('allows optional advisory incompleteness without changing a satisfied decision', async () => {
     const base = await fixture();
     close(base.candidateServer);
-    close(base.coeval.server);
+    close(base.rubrist.server);
     const incompleteSkill = base.manifest.members[0]!.skillVersionId;
     const test = await fixture(['advisory', 'advisory'], { [incompleteSkill]: 'incomplete' });
     test.config.policy.criteria[0]!.evidenceRequirement = 'optional';
@@ -599,7 +599,7 @@ describe('criterion suite runner', () => {
       expect(renderSuiteMarkdown(report)).toContain('unavailable (incomplete_evidence)');
     } finally {
       close(test.candidateServer);
-      close(test.coeval.server);
+      close(test.rubrist.server);
     }
   });
 
@@ -653,7 +653,7 @@ describe('criterion suite runner', () => {
       expect(reportV5Schema.safeParse(blocked).success).toBe(true);
     } finally {
       close(test.candidateServer);
-      close(test.coeval.server);
+      close(test.rubrist.server);
     }
   });
 
@@ -677,7 +677,7 @@ describe('criterion suite runner', () => {
       expect(canonicalJson(serialSemantics)).toBe(canonicalJson(parallelSemantics));
     } finally {
       close(test.candidateServer);
-      close(test.coeval.server);
+      close(test.rubrist.server);
     }
   });
 
@@ -717,12 +717,12 @@ describe('criterion suite runner', () => {
       expect(second.executionPolicyDigest).toBe(first.executionPolicyDigest);
 
       expect(providerExecutionIdentity({
-        type: 'coeval',
+        type: 'rubrist',
         url: test.config.suite.provider.url,
         headers: { 'X-Other': 'irrelevant' },
       }).identityDigest).not.toBe(first.executionPolicy.provider.identityDigest);
       expect(providerExecutionIdentity({
-        type: 'coeval',
+        type: 'rubrist',
         url: `${test.config.suite.provider.url}/other`,
         headers: test.config.suite.provider.headers,
       }).identityDigest).not.toBe(first.executionPolicy.provider.identityDigest);
@@ -747,7 +747,7 @@ describe('criterion suite runner', () => {
       }).identityDigest).not.toBe(first.executionPolicy.candidate.identityDigest);
     } finally {
       close(test.candidateServer);
-      close(test.coeval.server);
+      close(test.rubrist.server);
     }
   });
 });
