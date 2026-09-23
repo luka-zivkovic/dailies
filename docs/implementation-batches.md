@@ -519,20 +519,24 @@ artifacts.
 - Append-only, project-scoped decision, action, and outcome records with
   canonical content digests and submitter provenance kept outside the record
   content. The record contract stays `production-decision-record/v1`.
-- Write-time conflict rejection, idempotent duplicate records, and orphan
-  actions and outcomes that join when their decision arrives.
+- Write-time conflict rejection, idempotent duplicate records, orphan
+  actions and outcomes that join when their decision arrives, and rejection
+  of records dated more than five minutes after receipt.
 - API key capabilities. An ingest-only key appends records and nothing else;
   existing keys gain no ingest capability.
-- An atomic JSON Lines batch append under `/api/v1/`, with rate limits that
-  charge for records as well as requests, and an owner import through the
-  session UI over the same write path.
+- An atomic JSON Lines batch append under `/api/v1/` (at most 10,000 records
+  and 4 MiB) with its own configurable records-per-minute budget, and an
+  owner import through the session UI over the same write path.
 - Reports computed on read over an explicit window with server-supplied
-  `now` and an explicit record ceiling that fails instead of sampling.
-- Member-saved snapshots holding exact canonical report bytes, their digest,
-  build parameters, window, report version, and record-set digest.
-- Scheduled retention (90 days by default, owner-adjustable), owner erasure of
-  one decision's records, and owner snapshot deletion, each with an audit
-  entry.
+  `now`, a deterministic record order, and an explicit record ceiling that
+  fails instead of sampling.
+- Member-saved snapshots of stored-record reports holding exact canonical
+  report bytes, their digest, build parameters, window, report version, and
+  record-set digest.
+- Scheduled retention by receive time (90 days by default, owner-adjustable
+  between 1 and 730 days), owner erasure of one decision's records with a
+  tombstone, owner purge of a revoked key's records, and owner snapshot
+  deletion, each with an audit entry written in the same transaction.
 - The web view reads stored records and snapshots. The preview route stays
   compute-only.
 
@@ -541,12 +545,14 @@ low-confidence production sample, and drift or model-change notifications.
 ADR-0013 records them as follow-ups that each need their own decision.
 
 Exit gate: an identical retry writes nothing new; a conflicting decision is
-rejected without affecting later reports; an ingest key cannot judge or read
-and an existing key cannot ingest; no stored row holds state or question
-text; a build over the ceiling fails explicitly; a saved snapshot's bytes and
-digest never change; retention, erasure, and snapshot deletion leave audit
-entries; and receipt v1, suite manifest v1, and binary-calibration v1 bytes
-are unchanged.
+rejected without affecting later reports; a future-dated record is rejected;
+an ingest key cannot judge or read and an existing key cannot ingest; no
+stored row holds state or question text; two builds over the same records are
+identical; a build over the ceiling fails explicitly; a saved snapshot's
+bytes and digest never change; an erased decision ID cannot be re-ingested; a
+purge removes exactly the revoked key's records; retention, erasure, purge,
+and snapshot deletion leave audit entries; and receipt v1, suite manifest v1,
+and binary-calibration v1 bytes are unchanged.
 
 ## Cross-product test requirements
 
@@ -598,8 +604,9 @@ historical semantics and must be accepted before their runtime batch:
     append-only open coding, flat taxonomy revision, failure-code promotion,
     candidate evaluator lifecycle, and honest component measurements are fixed
     by Rubrist ADR-0010.
-11. **Resolved for Batch 7:** production outcome monitoring scope, record
-    persistence, ingest key capabilities, report snapshots, and retention are
-    fixed by Rubrist ADR-0013.
+11. **Resolved for Batch 7:** record persistence, ingest key capabilities,
+    report snapshots, retention, and erasure for production outcome
+    monitoring, which Rubrist's `PRODUCT.md` places in its charter, are fixed
+    by Rubrist ADR-0013.
 
 Resolve each in the contract phase of its owning batch before runtime code.
