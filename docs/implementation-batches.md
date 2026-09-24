@@ -1,8 +1,8 @@
 # Portfolio implementation batches
 
-Status: **Batch 6 product foundations complete: Rubrist Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5; Batch 7 Rubrist production outcome monitoring is planned under Rubrist ADR-0013**
+Status: **Batch 6 product foundations complete: Rubrist Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5; Batch 7 Rubrist production outcome monitoring is complete under Rubrist ADR-0013**
 
-Last reviewed: 2026-09-23
+Last reviewed: 2026-09-24
 
 This file is intentionally vendored in Rubrist, Dailies, and Casefile. Update
 all three copies together.
@@ -496,8 +496,10 @@ independent evidence rather than the authored regression corpora.
 
 ## Batch 7 — Rubrist production outcome monitoring
 
-Implementation status: **planned**. Decision gate 11 was accepted on
-2026-09-23 and is recorded in Rubrist ADR-0013.
+Implementation status: **complete and independently reviewed on
+2026-09-24**. Decision gate 11 was accepted on 2026-09-23 and is recorded in
+Rubrist ADR-0013. Every slice was reviewed by an independent agent against its
+exact diff, and each review's correctness findings were resolved before merge.
 
 This batch is Rubrist-only. Dailies and Casefile runtimes do not change, and
 production monitoring reports are not a Dailies evidence contract. Monitoring
@@ -527,7 +529,7 @@ artifacts.
 - An atomic JSON Lines batch append under `/api/v1/` (at most 10,000 records
   and 4 MiB) with its own configurable records-per-minute budget, and an
   owner import through the session UI over the same write path.
-- Reports computed on read over an explicit window with server-supplied
+- Reports computed on read over a stated window (either bound may be open) with server-supplied
   `now`, a deterministic record order, and an explicit record ceiling that
   fails instead of sampling.
 - Member-saved snapshots of stored-record reports holding exact canonical
@@ -547,11 +549,13 @@ ADR-0013 records them as follow-ups that each need their own decision.
 Exit gate: an identical retry writes nothing new; a conflicting decision is
 rejected without affecting later reports; a future-dated record is rejected;
 an ingest key cannot judge or read and an existing key cannot ingest; no
-stored row holds state or question text; two builds over the same records are
-identical; a build over the ceiling fails explicitly; a saved snapshot's
+stored row holds state or question text; two builds over the same records at
+the same server time are byte-identical; a build over the ceiling fails
+explicitly; a saved snapshot's
 bytes and digest never change; an erased decision ID cannot be re-ingested; a
-purge removes exactly the revoked key's records; retention, erasure, purge,
-and snapshot deletion leave audit entries; and receipt v1, suite manifest v1,
+purge removes exactly the revoked key's records, including a request that
+authenticated before the revoke; retention runs, erasure, purge, and snapshot
+deletion leave audit entries; and receipt v1, suite manifest v1,
 and binary-calibration v1 bytes are unchanged.
 
 ## Cross-product test requirements
