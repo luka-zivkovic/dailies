@@ -1,8 +1,8 @@
 # Portfolio implementation batches
 
-Status: **Batch 6 product foundations complete: Rubrist Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5; Batch 7 Rubrist production outcome monitoring is planned under Rubrist ADR-0013**
+Status: **Batch 6 product foundations complete: Rubrist Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5; Batch 7 Rubrist production outcome monitoring is complete under Rubrist ADR-0013**
 
-Last reviewed: 2026-09-23
+Last reviewed: 2026-09-24
 
 This file is intentionally vendored in Rubrist, Dailies, and Casefile. Update
 all three copies together.
@@ -496,8 +496,10 @@ independent evidence rather than the authored regression corpora.
 
 ## Batch 7 — Rubrist production outcome monitoring
 
-Implementation status: **planned**. Decision gate 11 was accepted on
-2026-09-23 and is recorded in Rubrist ADR-0013.
+Implementation status: **complete and independently reviewed on
+2026-09-24**. Decision gate 11 was accepted on 2026-09-23 and is recorded in
+Rubrist ADR-0013. Every slice was reviewed by an independent agent against its
+exact diff, and each review's correctness findings were resolved before merge.
 
 This batch is Rubrist-only. Dailies and Casefile runtimes do not change, and
 production monitoring reports are not a Dailies evidence contract. Monitoring
