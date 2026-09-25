@@ -1,0 +1,137 @@
+{
+  "contract": "rubrist/assessment-receipt/v2",
+  "definition": {
+    "kind": "typed-question",
+    "question": {
+      "type": "noul",
+      "digest": "sha256:34355112d37d9a305a6bbfe2e1bcc825bf638253d5225f801334d917c21e1fee"
+    },
+    "polarity": "true_is_pass",
+    "threshold": 0.62,
+    "rationale": "not_provided"
+  },
+  "question": {
+    "type": "noul",
+    "instructions": "The reply stays within the stated refund policy.",
+    "criteria": {
+      "true": "Every refund offered is allowed.",
+      "false": "A refund is offered outside the policy."
+    }
+  },
+  "candidates": [
+    {
+      "id": "a",
+      "input": "refund request a",
+      "output": "reply a"
+    },
+    {
+      "id": "b",
+      "input": "refund request b",
+      "output": "reply b"
+    },
+    {
+      "id": "c",
+      "input": "refund request c",
+      "output": "reply c"
+    }
+  ],
+  "receipt": {
+    "contract": "rubrist/assessment-receipt/v2",
+    "schemaVersion": 2,
+    "receiptId": "receipt-contract-v2-run-2",
+    "evalRunId": "contract-v2-run-2",
+    "projectId": "project-contract",
+    "skillId": "skill-contract",
+    "skillVersionId": "skill-version-contract-3",
+    "status": "incomplete",
+    "run": {
+      "status": "canceled",
+      "totalItems": 3,
+      "passItems": 1,
+      "failItems": 0,
+      "abstainedItems": 0,
+      "failedItems": 1,
+      "notAttemptedItems": 1,
+      "agreedItems": 1
+    },
+    "evaluator": {
+      "basis": "rubrist/evaluator-identity/v2",
+      "definitionDigest": "sha256:4ce367b4c6511c98e6a0ea6dd5d142dfa379b7523c7fb9b8aba0f76ebae4e3dc",
+      "executionBinding": {
+        "provider": "typesafe",
+        "endpoint": {
+          "kind": "managed"
+        },
+        "modelId": "jev-1.13.0",
+        "modelVersion": "jev-1.13.0",
+        "sampling": {
+          "temperature": null,
+          "topP": null
+        },
+        "reasoning": null,
+        "outputTokenLimit": null,
+        "verdictProtocol": "typed-question/v1",
+        "routing": null
+      }
+    },
+    "skillDigest": "sha256:44a3d7d6f4bb07dcb57dafe33c50ce905bde19e4ab583eaf304ea96d9e662497",
+    "datasetDigest": "sha256:151b1f8d779b4259875c39fd797e34a714b06f53222b8cd490194841c69e2c4d",
+    "items": [
+      {
+        "clientItemId": "a",
+        "caseId": "case-contract-refund-a",
+        "contentDigest": "sha256:8d2be0b47e3541659dc0fcb22c91320d175c64d8dc9b856a01ea7d56a014ab48",
+        "result": {
+          "state": "outcome",
+          "outcome": "pass"
+        },
+        "verdictId": "verdict-contract-refund-a",
+        "evaluatorScore": {
+          "value": 0.81,
+          "kind": "native_probability"
+        },
+        "observed": {
+          "model": "jev-1.13.0",
+          "requestId": "req-refund-a",
+          "responseId": null,
+          "systemFingerprint": null,
+          "upstreamProvider": null,
+          "thinkingReturned": null,
+          "reasoningTokens": null
+        }
+      },
+      {
+        "clientItemId": "b",
+        "caseId": "case-contract-refund-b",
+        "contentDigest": "sha256:238d16d3c40f7a31bd3e038dbab01e0754198cc92e6b48d96a5612f3a7a81e71",
+        "result": {
+          "state": "failure",
+          "failureKind": "provider_timeout"
+        },
+        "verdictId": null,
+        "evaluatorScore": null,
+        "observed": {
+          "model": null,
+          "requestId": null,
+          "responseId": null,
+          "systemFingerprint": null,
+          "upstreamProvider": null,
+          "thinkingReturned": null,
+          "reasoningTokens": null
+        }
+      },
+      {
+        "clientItemId": "c",
+        "caseId": "case-contract-refund-c",
+        "contentDigest": "sha256:b1005cc6b26bd2642006a12ad8c9a6aff48e9406e7f1b1cd2c37c6aab739271b",
+        "result": {
+          "state": "not_attempted"
+        },
+        "verdictId": null,
+        "evaluatorScore": null,
+        "observed": null
+      }
+    ],
+    "evidenceDigest": "sha256:56a8513fba3c316d653b0fb4132a36f8dc9ca6cff409c598f926ceb5c879b0c5"
+  }
+}

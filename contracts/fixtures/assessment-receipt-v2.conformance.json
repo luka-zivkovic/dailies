@@ -1,0 +1,1469 @@
+{
+  "contract": "rubrist/assessment-receipt/v2",
+  "baseFixture": "assessment-receipt-v2.complete.json",
+  "cases": [
+    {
+      "name": "positive-control-complete-with-abstention",
+      "structural": "accept",
+      "semantic": "accept",
+      "mutations": []
+    },
+    {
+      "name": "positive-control-incomplete-typed-question",
+      "structural": "accept",
+      "semantic": "accept",
+      "mutations": [],
+      "baseFixture": "assessment-receipt-v2.incomplete.json"
+    },
+    {
+      "name": "prompted-abstention-without-score-is-valid",
+      "structural": "accept",
+      "semantic": "accept",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/2/evaluatorScore",
+          "value": null
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "openrouter-binding-records-its-upstream",
+      "structural": "accept",
+      "semantic": "accept",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/provider",
+          "value": "openrouter"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/modelId",
+          "value": "anthropic/claude-sonnet-4.6"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/modelVersion",
+          "value": "anthropic/claude-sonnet-4.6"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/verdictProtocol",
+          "value": "openai.structured-output/v1"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/reasoning",
+          "value": {
+            "family": "openrouter",
+            "enabled": true,
+            "effort": "high",
+            "maxTokens": null
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/outputTokenLimit",
+          "value": null
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/routing",
+          "value": {
+            "requireParameters": true,
+            "allowFallbacks": false
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/items/0/observed/model",
+          "value": "anthropic/claude-sonnet-4.6"
+        },
+        {
+          "op": "replace",
+          "path": "/items/0/observed/upstreamProvider",
+          "value": "Anthropic"
+        },
+        {
+          "op": "replace",
+          "path": "/items/0/observed/thinkingReturned",
+          "value": true
+        },
+        {
+          "op": "replace",
+          "path": "/items/0/observed/reasoningTokens",
+          "value": 312
+        },
+        {
+          "op": "recompute-skill-digest"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "custom-endpoint-binding",
+      "structural": "accept",
+      "semantic": "accept",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/provider",
+          "value": "custom"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/endpoint",
+          "value": {
+            "kind": "custom",
+            "baseUrlDigest": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/modelId",
+          "value": "llama-3.3-70b"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/modelVersion",
+          "value": "llama-3.3-70b"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/reasoning",
+          "value": null
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/outputTokenLimit",
+          "value": null
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/verdictProtocol",
+          "value": "prompted-json/v1"
+        },
+        {
+          "op": "recompute-skill-digest"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "openai-binding-records-a-base-url-override",
+      "structural": "accept",
+      "semantic": "accept",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/provider",
+          "value": "openai"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/endpoint",
+          "value": {
+            "kind": "custom",
+            "baseUrlDigest": "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/modelId",
+          "value": "gpt-5"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/modelVersion",
+          "value": "gpt-5"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/reasoning",
+          "value": {
+            "family": "openai",
+            "effort": "low"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/verdictProtocol",
+          "value": "openai.structured-output/v1"
+        },
+        {
+          "op": "recompute-skill-digest"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "mock-binding",
+      "structural": "accept",
+      "semantic": "accept",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/provider",
+          "value": "mock"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/modelId",
+          "value": "mock-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/modelVersion",
+          "value": "1"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/sampling",
+          "value": {
+            "temperature": null,
+            "topP": null
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/reasoning",
+          "value": null
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/outputTokenLimit",
+          "value": null
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/verdictProtocol",
+          "value": "mock/v1"
+        },
+        {
+          "op": "recompute-skill-digest"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "unknown-root-field",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "add",
+          "path": "/calibrationRef",
+          "value": "not-part-of-v2"
+        }
+      ]
+    },
+    {
+      "name": "unknown-run-field",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "add",
+          "path": "/run/unexpected",
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "embedded-definition-refused",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "add",
+          "path": "/evaluator/definition",
+          "value": {
+            "kind": "prompted",
+            "rubricMarkdown": "secret rubric"
+          }
+        }
+      ]
+    },
+    {
+      "name": "unknown-binding-field",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "add",
+          "path": "/evaluator/executionBinding/baseUrl",
+          "value": "https://example.invalid"
+        }
+      ]
+    },
+    {
+      "name": "unknown-item-field",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "add",
+          "path": "/items/0/rationale",
+          "value": "not recorded in receipts"
+        }
+      ]
+    },
+    {
+      "name": "unknown-observed-field",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "add",
+          "path": "/items/0/observed/unexpected",
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "unknown-result-field",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "add",
+          "path": "/items/0/result/unexpected",
+          "value": true
+        }
+      ]
+    },
+    {
+      "name": "v1-schema-version",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/schemaVersion",
+          "value": 1
+        }
+      ]
+    },
+    {
+      "name": "wrong-contract-id",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/contract",
+          "value": "rubrist/assessment-receipt/v1"
+        }
+      ]
+    },
+    {
+      "name": "malformed-digest",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evidenceDigest",
+          "value": "sha256:not-a-digest"
+        }
+      ]
+    },
+    {
+      "name": "ambiguous-is-not-an-outcome",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/0/result/outcome",
+          "value": "ambiguous"
+        }
+      ]
+    },
+    {
+      "name": "unknown-failure-kind",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/1/result",
+          "value": {
+            "state": "failure",
+            "failureKind": "provider_overloaded"
+          }
+        }
+      ],
+      "baseFixture": "assessment-receipt-v2.incomplete.json"
+    },
+    {
+      "name": "score-out-of-range",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/0/evaluatorScore/value",
+          "value": 1.2
+        }
+      ]
+    },
+    {
+      "name": "unknown-score-kind",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/0/evaluatorScore/kind",
+          "value": "calibrated_probability"
+        }
+      ]
+    },
+    {
+      "name": "unset-setting-omitted-instead-of-null",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "remove",
+          "path": "/evaluator/executionBinding/sampling/topP"
+        }
+      ]
+    },
+    {
+      "name": "protocol-from-another-provider",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/verdictProtocol",
+          "value": "openai.structured-output/v1"
+        }
+      ]
+    },
+    {
+      "name": "anthropic-without-token-limit",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/outputTokenLimit",
+          "value": null
+        }
+      ]
+    },
+    {
+      "name": "custom-endpoint-on-anthropic",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/endpoint",
+          "value": {
+            "kind": "custom",
+            "baseUrlDigest": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+          }
+        }
+      ]
+    },
+    {
+      "name": "reasoning-family-mismatch",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/reasoning",
+          "value": {
+            "family": "openai",
+            "effort": "low"
+          }
+        }
+      ]
+    },
+    {
+      "name": "thinking-budget-below-minimum",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/reasoning/thinking",
+          "value": {
+            "type": "enabled",
+            "budgetTokens": 100
+          }
+        }
+      ]
+    },
+    {
+      "name": "typesafe-with-temperature",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/sampling/temperature",
+          "value": 0
+        }
+      ],
+      "baseFixture": "assessment-receipt-v2.incomplete.json"
+    },
+    {
+      "name": "typesafe-with-prompted-protocol",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/verdictProtocol",
+          "value": "prompted-json/v1"
+        }
+      ],
+      "baseFixture": "assessment-receipt-v2.incomplete.json"
+    },
+    {
+      "name": "openrouter-without-routing",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/provider",
+          "value": "openrouter"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/verdictProtocol",
+          "value": "openai.structured-output/v1"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/reasoning",
+          "value": {
+            "family": "openrouter",
+            "enabled": true,
+            "effort": "high",
+            "maxTokens": null
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/outputTokenLimit",
+          "value": null
+        }
+      ]
+    },
+    {
+      "name": "openrouter-effort-and-budget",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/provider",
+          "value": "openrouter"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/verdictProtocol",
+          "value": "openai.structured-output/v1"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/reasoning",
+          "value": {
+            "family": "openrouter",
+            "enabled": true,
+            "effort": "high",
+            "maxTokens": 4000
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/outputTokenLimit",
+          "value": null
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/routing",
+          "value": {
+            "requireParameters": true,
+            "allowFallbacks": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "empty-verdict-id",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/0/verdictId",
+          "value": ""
+        }
+      ]
+    },
+    {
+      "name": "custom-provider-on-managed-endpoint",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/provider",
+          "value": "custom"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/reasoning",
+          "value": null
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/outputTokenLimit",
+          "value": null
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/verdictProtocol",
+          "value": "prompted-json/v1"
+        }
+      ]
+    },
+    {
+      "name": "routing-on-a-direct-binding",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/routing",
+          "value": {
+            "requireParameters": true,
+            "allowFallbacks": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "typesafe-with-reasoning",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/reasoning",
+          "value": {
+            "family": "openai",
+            "effort": "low"
+          }
+        }
+      ],
+      "baseFixture": "assessment-receipt-v2.incomplete.json"
+    },
+    {
+      "name": "typesafe-with-top-p",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/sampling/topP",
+          "value": 0.9
+        }
+      ],
+      "baseFixture": "assessment-receipt-v2.incomplete.json"
+    },
+    {
+      "name": "typesafe-with-token-limit",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/outputTokenLimit",
+          "value": 256
+        }
+      ],
+      "baseFixture": "assessment-receipt-v2.incomplete.json"
+    },
+    {
+      "name": "mock-with-temperature",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/provider",
+          "value": "mock"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/modelId",
+          "value": "mock-v1"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/modelVersion",
+          "value": "1"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/sampling",
+          "value": {
+            "temperature": 0,
+            "topP": null
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/reasoning",
+          "value": null
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/outputTokenLimit",
+          "value": null
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/verdictProtocol",
+          "value": "mock/v1"
+        }
+      ]
+    },
+    {
+      "name": "openrouter-disabled-reasoning-with-effort",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/provider",
+          "value": "openrouter"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/verdictProtocol",
+          "value": "openai.structured-output/v1"
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/reasoning",
+          "value": {
+            "family": "openrouter",
+            "enabled": false,
+            "effort": "low",
+            "maxTokens": null
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/outputTokenLimit",
+          "value": null
+        },
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/routing",
+          "value": {
+            "requireParameters": true,
+            "allowFallbacks": false
+          }
+        }
+      ]
+    },
+    {
+      "name": "proto-key-at-root",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "add",
+          "path": "/__proto__",
+          "value": {
+            "status": "complete"
+          }
+        }
+      ]
+    },
+    {
+      "name": "proto-key-in-binding",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "add",
+          "path": "/evaluator/executionBinding/__proto__",
+          "value": {
+            "routing": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "proto-key-in-observation",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "add",
+          "path": "/items/0/observed/__proto__",
+          "value": {
+            "model": null
+          }
+        }
+      ]
+    },
+    {
+      "name": "empty-receipt",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items",
+          "value": []
+        },
+        {
+          "op": "replace",
+          "path": "/run/totalItems",
+          "value": 0
+        },
+        {
+          "op": "replace",
+          "path": "/run/passItems",
+          "value": 0
+        },
+        {
+          "op": "replace",
+          "path": "/run/failItems",
+          "value": 0
+        },
+        {
+          "op": "replace",
+          "path": "/run/abstainedItems",
+          "value": 0
+        },
+        {
+          "op": "replace",
+          "path": "/run/agreedItems",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "name": "integer-beyond-safe-range",
+      "structural": "reject",
+      "semantic": "not-run",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/0/observed/reasoningTokens",
+          "value": 9007199254740992
+        }
+      ]
+    },
+    {
+      "name": "tampered-evidence-digest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "evidenceDigest mismatch",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evidenceDigest",
+          "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ]
+    },
+    {
+      "name": "binding-changed-without-skill-digest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "skillDigest mismatch",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/sampling/temperature",
+          "value": 0.5
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "definition-digest-changed-without-skill-digest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "skillDigest mismatch",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/definitionDigest",
+          "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "evaluator-substituted-for-manifest-member",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "skillDigest does not match the expected evaluator",
+      "expectedSkillDigest": "sha256:b237708d5c9293a8b1ce9b32b242e0e519ab1bc2c65621f4dbe5dcf80ac46c2e",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/evaluator/executionBinding/sampling/temperature",
+          "value": 0.5
+        },
+        {
+          "op": "recompute-skill-digest"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "items-out-of-order",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "not ordered by clientItemId",
+      "mutations": [
+        {
+          "op": "reverse",
+          "path": "/items"
+        },
+        {
+          "op": "recompute-dataset-digest"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "tampered-item-content-digest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "contentDigest mismatch",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/0/contentDigest",
+          "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "op": "recompute-dataset-digest"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "tampered-dataset-digest",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "datasetDigest mismatch",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/datasetDigest",
+          "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "duplicate-client-item-id",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "clientItemId values must be unique",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/1/clientItemId",
+          "value": "a"
+        },
+        {
+          "op": "recompute-dataset-digest"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "outcome-without-verdict-id",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "verdictId must be present exactly",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/0/verdictId",
+          "value": null
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "failure-with-verdict-id",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "verdictId must be present exactly",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/1/verdictId",
+          "value": "verdict-invented"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ],
+      "baseFixture": "assessment-receipt-v2.incomplete.json"
+    },
+    {
+      "name": "unattempted-item-with-verdict-id",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "verdictId must be present exactly",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/2/verdictId",
+          "value": "verdict-invented"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ],
+      "baseFixture": "assessment-receipt-v2.incomplete.json"
+    },
+    {
+      "name": "unattempted-item-with-score",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "evaluatorScore is only recorded with an outcome",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/2/evaluatorScore",
+          "value": {
+            "value": 0.5,
+            "kind": "native_probability"
+          }
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ],
+      "baseFixture": "assessment-receipt-v2.incomplete.json"
+    },
+    {
+      "name": "score-with-failure",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "evaluatorScore is only recorded with an outcome",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/1/evaluatorScore",
+          "value": {
+            "value": 0.5,
+            "kind": "native_probability"
+          }
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ],
+      "baseFixture": "assessment-receipt-v2.incomplete.json"
+    },
+    {
+      "name": "llm-score-labelled-native-probability",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "evaluatorScore kind does not match",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/0/evaluatorScore/kind",
+          "value": "native_probability"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "typed-question-score-labelled-self-reported",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "evaluatorScore kind does not match",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/0/evaluatorScore/kind",
+          "value": "self_reported_score"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ],
+      "baseFixture": "assessment-receipt-v2.incomplete.json"
+    },
+    {
+      "name": "typed-question-abstention",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "typed-question outcomes are pass or fail",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/0/result/outcome",
+          "value": "abstain"
+        },
+        {
+          "op": "replace",
+          "path": "/run/passItems",
+          "value": 0
+        },
+        {
+          "op": "replace",
+          "path": "/run/abstainedItems",
+          "value": 1
+        },
+        {
+          "op": "replace",
+          "path": "/run/agreedItems",
+          "value": 0
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ],
+      "baseFixture": "assessment-receipt-v2.incomplete.json"
+    },
+    {
+      "name": "typed-question-outcome-without-probability",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "typed-question outcomes are pass or fail",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/0/evaluatorScore",
+          "value": null
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ],
+      "baseFixture": "assessment-receipt-v2.incomplete.json"
+    },
+    {
+      "name": "attempted-item-without-observation",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "observed provenance must be present exactly",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/0/observed",
+          "value": null
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "unattempted-item-with-observation",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "observed provenance must be present exactly",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/2/observed",
+          "value": {
+            "model": null,
+            "requestId": null,
+            "responseId": null,
+            "systemFingerprint": null,
+            "upstreamProvider": null,
+            "thinkingReturned": null,
+            "reasoningTokens": null
+          }
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ],
+      "baseFixture": "assessment-receipt-v2.incomplete.json"
+    },
+    {
+      "name": "upstream-on-a-direct-binding",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "upstreamProvider is recorded only for OpenRouter",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/0/observed/upstreamProvider",
+          "value": "Anthropic"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "run-total-counter-mismatch",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "run counters are inconsistent",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/run/totalItems",
+          "value": 4
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "abstention-counted-as-pass",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "run counters are inconsistent",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/run/passItems",
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/run/abstainedItems",
+          "value": 0
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "agreed-counter-exceeds-decided",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "run counters are inconsistent",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/run/agreedItems",
+          "value": 3
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "complete-claim-with-failure-and-unattempted",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "claims complete",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/status",
+          "value": "complete"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ],
+      "baseFixture": "assessment-receipt-v2.incomplete.json"
+    },
+    {
+      "name": "complete-claim-on-canceled-run",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "claims complete",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/items/1/result",
+          "value": {
+            "state": "outcome",
+            "outcome": "fail"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/items/1/verdictId",
+          "value": "verdict-contract-refund-b"
+        },
+        {
+          "op": "replace",
+          "path": "/items/1/evaluatorScore",
+          "value": {
+            "value": 0.2,
+            "kind": "native_probability"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/items/2/result",
+          "value": {
+            "state": "outcome",
+            "outcome": "fail"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/items/2/verdictId",
+          "value": "verdict-contract-refund-c"
+        },
+        {
+          "op": "replace",
+          "path": "/items/2/evaluatorScore",
+          "value": {
+            "value": 0.3,
+            "kind": "native_probability"
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/items/2/observed",
+          "value": {
+            "model": "jev-1.13.0",
+            "requestId": null,
+            "responseId": null,
+            "systemFingerprint": null,
+            "upstreamProvider": null,
+            "thinkingReturned": null,
+            "reasoningTokens": null
+          }
+        },
+        {
+          "op": "replace",
+          "path": "/run/failItems",
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/run/failedItems",
+          "value": 0
+        },
+        {
+          "op": "replace",
+          "path": "/run/notAttemptedItems",
+          "value": 0
+        },
+        {
+          "op": "replace",
+          "path": "/status",
+          "value": "complete"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ],
+      "baseFixture": "assessment-receipt-v2.incomplete.json"
+    },
+    {
+      "name": "incomplete-claim-with-complete-evidence",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "claims incomplete",
+      "mutations": [
+        {
+          "op": "replace",
+          "path": "/status",
+          "value": "incomplete"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "candidate-coverage-gap",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "exact clientItemId coverage",
+      "mutations": [
+        {
+          "op": "remove",
+          "path": "/items/2"
+        },
+        {
+          "op": "replace",
+          "path": "/run/totalItems",
+          "value": 2
+        },
+        {
+          "op": "replace",
+          "path": "/run/abstainedItems",
+          "value": 0
+        },
+        {
+          "op": "recompute-dataset-digest"
+        },
+        {
+          "op": "recompute-evidence-digest"
+        }
+      ]
+    },
+    {
+      "name": "eval-run-identity-mismatch",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "evalRunId mismatch",
+      "expectedEvalRunId": "different-eval-run",
+      "mutations": []
+    },
+    {
+      "name": "skill-version-identity-mismatch",
+      "structural": "accept",
+      "semantic": "reject",
+      "errorIncludes": "skillVersionId mismatch",
+      "expectedSkillVersionId": "different-skill-version",
+      "mutations": []
+    }
+  ]
+}

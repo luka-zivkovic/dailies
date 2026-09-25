@@ -1,0 +1,1114 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://rubrist.dev/contracts/assessment-receipt-v2.schema.json",
+  "title": "Rubrist Assessment Receipt v2",
+  "description": "Closed, policy-free evidence emitted for a Rubrist release_evidence run (ADR-0014).",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "schemaVersion",
+    "receiptId",
+    "evalRunId",
+    "projectId",
+    "skillId",
+    "skillVersionId",
+    "status",
+    "run",
+    "evaluator",
+    "skillDigest",
+    "datasetDigest",
+    "items",
+    "evidenceDigest"
+  ],
+  "properties": {
+    "contract": {
+      "const": "rubrist/assessment-receipt/v2"
+    },
+    "schemaVersion": {
+      "const": 2
+    },
+    "receiptId": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "evalRunId": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "projectId": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "skillId": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "skillVersionId": {
+      "$ref": "#/$defs/nonEmptyString"
+    },
+    "status": {
+      "enum": [
+        "complete",
+        "incomplete"
+      ]
+    },
+    "run": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "totalItems",
+        "passItems",
+        "failItems",
+        "abstainedItems",
+        "failedItems",
+        "notAttemptedItems",
+        "agreedItems"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "pending",
+            "running",
+            "completed",
+            "failed",
+            "canceled"
+          ]
+        },
+        "totalItems": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "passItems": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "failItems": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "abstainedItems": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "failedItems": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "notAttemptedItems": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        },
+        "agreedItems": {
+          "$ref": "#/$defs/nonNegativeInteger"
+        }
+      }
+    },
+    "evaluator": {
+      "$ref": "#/$defs/evaluator"
+    },
+    "skillDigest": {
+      "$ref": "#/$defs/sha256Digest"
+    },
+    "datasetDigest": {
+      "$ref": "#/$defs/sha256Digest"
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/item"
+      }
+    },
+    "evidenceDigest": {
+      "$ref": "#/$defs/sha256Digest"
+    }
+  },
+  "$defs": {
+    "nonEmptyString": {
+      "type": "string",
+      "minLength": 1
+    },
+    "nonNegativeInteger": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "sha256Digest": {
+      "type": "string",
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "evaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "basis",
+        "definitionDigest",
+        "executionBinding"
+      ],
+      "properties": {
+        "basis": {
+          "const": "rubrist/evaluator-identity/v2"
+        },
+        "definitionDigest": {
+          "$ref": "#/$defs/sha256Digest"
+        },
+        "executionBinding": {
+          "$ref": "#/$defs/executionBinding"
+        }
+      }
+    },
+    "executionBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "provider",
+        "endpoint",
+        "modelId",
+        "modelVersion",
+        "sampling",
+        "reasoning",
+        "outputTokenLimit",
+        "verdictProtocol",
+        "routing"
+      ],
+      "properties": {
+        "provider": {
+          "enum": [
+            "mock",
+            "anthropic",
+            "openai",
+            "openrouter",
+            "custom",
+            "typesafe"
+          ]
+        },
+        "endpoint": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "managed"
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "baseUrlDigest"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "custom"
+                },
+                "baseUrlDigest": {
+                  "$ref": "#/$defs/sha256Digest"
+                }
+              }
+            }
+          ]
+        },
+        "modelId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "modelVersion": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 240
+        },
+        "sampling": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "temperature",
+            "topP"
+          ],
+          "properties": {
+            "temperature": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 2
+                }
+              ]
+            },
+            "topP": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                }
+              ]
+            }
+          }
+        },
+        "reasoning": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/reasoning"
+            }
+          ]
+        },
+        "outputTokenLimit": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000000
+            }
+          ]
+        },
+        "verdictProtocol": {
+          "enum": [
+            "anthropic.structured-output/v1",
+            "anthropic.forced-tool/v1",
+            "openai.structured-output/v1",
+            "openai.forced-function/v1",
+            "prompted-json/v1",
+            "typed-question/v1",
+            "mock/v1"
+          ]
+        },
+        "routing": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "requireParameters",
+                "allowFallbacks"
+              ],
+              "properties": {
+                "requireParameters": {
+                  "const": true
+                },
+                "allowFallbacks": {
+                  "const": false
+                }
+              }
+            }
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "const": "anthropic"
+              }
+            },
+            "required": [
+              "provider"
+            ]
+          },
+          "then": {
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "verdictProtocol": {
+                    "enum": [
+                      "anthropic.structured-output/v1",
+                      "anthropic.forced-tool/v1",
+                      "prompted-json/v1"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "endpoint": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "managed"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "routing": {
+                    "type": "null"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "reasoning": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "family": {
+                            "const": "anthropic"
+                          }
+                        },
+                        "required": [
+                          "family"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "outputTokenLimit": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 1000000
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "const": "openai"
+              }
+            },
+            "required": [
+              "provider"
+            ]
+          },
+          "then": {
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "verdictProtocol": {
+                    "enum": [
+                      "openai.structured-output/v1",
+                      "openai.forced-function/v1",
+                      "prompted-json/v1"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "routing": {
+                    "type": "null"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "reasoning": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "family": {
+                            "const": "openai"
+                          }
+                        },
+                        "required": [
+                          "family"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "const": "openrouter"
+              }
+            },
+            "required": [
+              "provider"
+            ]
+          },
+          "then": {
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "verdictProtocol": {
+                    "enum": [
+                      "openai.structured-output/v1",
+                      "openai.forced-function/v1",
+                      "prompted-json/v1"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "endpoint": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "managed"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "reasoning": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "family": {
+                            "const": "openrouter"
+                          }
+                        },
+                        "required": [
+                          "family"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "routing": {
+                    "type": "object"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "const": "custom"
+              }
+            },
+            "required": [
+              "provider"
+            ]
+          },
+          "then": {
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "verdictProtocol": {
+                    "enum": [
+                      "openai.structured-output/v1",
+                      "openai.forced-function/v1",
+                      "prompted-json/v1"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "routing": {
+                    "type": "null"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "reasoning": {
+                    "oneOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "family": {
+                            "const": "openai"
+                          }
+                        },
+                        "required": [
+                          "family"
+                        ]
+                      }
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "endpoint": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "custom"
+                      }
+                    }
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "const": "typesafe"
+              }
+            },
+            "required": [
+              "provider"
+            ]
+          },
+          "then": {
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "verdictProtocol": {
+                    "enum": [
+                      "typed-question/v1"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "endpoint": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "managed"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "routing": {
+                    "type": "null"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "sampling": {
+                    "type": "object",
+                    "properties": {
+                      "temperature": {
+                        "type": "null"
+                      },
+                      "topP": {
+                        "type": "null"
+                      }
+                    }
+                  },
+                  "reasoning": {
+                    "type": "null"
+                  },
+                  "outputTokenLimit": {
+                    "type": "null"
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "if": {
+            "type": "object",
+            "properties": {
+              "provider": {
+                "const": "mock"
+              }
+            },
+            "required": [
+              "provider"
+            ]
+          },
+          "then": {
+            "allOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "verdictProtocol": {
+                    "enum": [
+                      "mock/v1"
+                    ]
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "endpoint": {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "const": "managed"
+                      }
+                    }
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "routing": {
+                    "type": "null"
+                  }
+                }
+              },
+              {
+                "type": "object",
+                "properties": {
+                  "sampling": {
+                    "type": "object",
+                    "properties": {
+                      "temperature": {
+                        "type": "null"
+                      },
+                      "topP": {
+                        "type": "null"
+                      }
+                    }
+                  },
+                  "reasoning": {
+                    "type": "null"
+                  },
+                  "outputTokenLimit": {
+                    "type": "null"
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "reasoning": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "family",
+            "thinking",
+            "effort"
+          ],
+          "properties": {
+            "family": {
+              "const": "anthropic"
+            },
+            "thinking": {
+              "oneOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type"
+                  ],
+                  "properties": {
+                    "type": {
+                      "const": "disabled"
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "budgetTokens"
+                  ],
+                  "properties": {
+                    "type": {
+                      "const": "enabled"
+                    },
+                    "budgetTokens": {
+                      "type": "integer",
+                      "minimum": 1024,
+                      "maximum": 9007199254740991
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type"
+                  ],
+                  "properties": {
+                    "type": {
+                      "const": "adaptive"
+                    }
+                  }
+                }
+              ]
+            },
+            "effort": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high",
+                    "xhigh",
+                    "max"
+                  ]
+                }
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "family",
+            "effort"
+          ],
+          "properties": {
+            "family": {
+              "const": "openai"
+            },
+            "effort": {
+              "enum": [
+                "none",
+                "minimal",
+                "low",
+                "medium",
+                "high"
+              ]
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "family",
+            "enabled",
+            "effort",
+            "maxTokens"
+          ],
+          "properties": {
+            "family": {
+              "const": "openrouter"
+            },
+            "enabled": {
+              "type": "boolean"
+            },
+            "effort": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "enum": [
+                    "low",
+                    "medium",
+                    "high"
+                  ]
+                }
+              ]
+            },
+            "maxTokens": {
+              "oneOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "integer",
+                  "minimum": 1,
+                  "maximum": 9007199254740991
+                }
+              ]
+            }
+          },
+          "not": {
+            "type": "object",
+            "properties": {
+              "effort": {
+                "type": "string"
+              },
+              "maxTokens": {
+                "type": "integer"
+              }
+            }
+          },
+          "if": {
+            "type": "object",
+            "properties": {
+              "enabled": {
+                "const": false
+              }
+            }
+          },
+          "then": {
+            "type": "object",
+            "properties": {
+              "effort": {
+                "type": "null"
+              },
+              "maxTokens": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "clientItemId",
+        "caseId",
+        "contentDigest",
+        "result",
+        "verdictId",
+        "evaluatorScore",
+        "observed"
+      ],
+      "properties": {
+        "clientItemId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "caseId": {
+          "$ref": "#/$defs/nonEmptyString"
+        },
+        "contentDigest": {
+          "$ref": "#/$defs/sha256Digest"
+        },
+        "result": {
+          "oneOf": [
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "state",
+                "outcome"
+              ],
+              "properties": {
+                "state": {
+                  "const": "outcome"
+                },
+                "outcome": {
+                  "enum": [
+                    "pass",
+                    "fail",
+                    "abstain"
+                  ]
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "state",
+                "failureKind"
+              ],
+              "properties": {
+                "state": {
+                  "const": "failure"
+                },
+                "failureKind": {
+                  "enum": [
+                    "provider_rejected_request",
+                    "provider_unavailable",
+                    "provider_authentication",
+                    "provider_rate_limit",
+                    "provider_timeout",
+                    "provider_transport",
+                    "provider_protocol",
+                    "invalid_evaluator_output",
+                    "outcome_unknown",
+                    "internal"
+                  ]
+                }
+              }
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "state"
+              ],
+              "properties": {
+                "state": {
+                  "const": "not_attempted"
+                }
+              }
+            }
+          ]
+        },
+        "verdictId": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/nonEmptyString"
+            }
+          ]
+        },
+        "evaluatorScore": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "value",
+                "kind"
+              ],
+              "properties": {
+                "value": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 1
+                },
+                "kind": {
+                  "enum": [
+                    "native_probability",
+                    "self_reported_score"
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "observed": {
+          "oneOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "model",
+                "requestId",
+                "responseId",
+                "systemFingerprint",
+                "upstreamProvider",
+                "thinkingReturned",
+                "reasoningTokens"
+              ],
+              "properties": {
+                "model": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "requestId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "responseId": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "systemFingerprint": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "upstreamProvider": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "thinkingReturned": {
+                  "type": [
+                    "boolean",
+                    "null"
+                  ]
+                },
+                "reasoningTokens": {
+                  "oneOf": [
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}

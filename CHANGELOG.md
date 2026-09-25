@@ -5,6 +5,12 @@ versioning while the public API remains pre-1.0.
 
 ## Unreleased
 
+- Vendor Rubrist's assessment receipt v2, evaluator suite manifest v2, and
+  binary calibration v2 contracts byte-identically, with their conformance
+  corpora, and verify them independently (ADR-0008 decision 1, Rubrist Batch
+  8A). v2 evidence names the evaluator by a definition digest and the exact
+  execution binding. Nothing consumes v2 yet: configuration, policy, and
+  reports stay on v1 until Rubrist emits v2, then switch in place.
 - Remove read-only inspection of historical v3 reports and the captured v3
   fixtures (ADR-0008, founder decision 2026-09-25). Nothing reads a v3 report
   any more; report v4 keeps the same integrity and Rubrist-linkage rules it
