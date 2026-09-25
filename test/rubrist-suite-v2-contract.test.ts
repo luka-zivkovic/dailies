@@ -82,7 +82,12 @@ function applyMutation(manifest: Record<string, unknown>, mutation: Mutation): v
     else delete (parent as Record<string, unknown>)[key];
     return;
   }
-  if (Array.isArray(parent)) parent[Number(key)] = mutation.value;
+  if (Array.isArray(parent)) {
+    // RFC 6902: add inserts (or appends at "-"); replace overwrites.
+    if (mutation.op === 'add') parent.splice(key === '-' ? parent.length : Number(key), 0, mutation.value);
+    else parent[Number(key)] = mutation.value;
+    return;
+  }
   // add and replace create an own member, even for a __proto__ key, as JSON.parse does.
   else Object.defineProperty(parent, key, { value: mutation.value, enumerable: true, writable: true, configurable: true });
 }

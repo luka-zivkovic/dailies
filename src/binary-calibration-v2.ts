@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { canonicalJson, sha256Digest } from './rubrist.js';
-import { rubristEvaluatorIdentitySchema } from './rubrist-v2.js';
+import { rubristEvaluatorIdentitySchema, rubristSkillDigestV2 } from './rubrist-v2.js';
 
 // Rubrist binary calibration v2 (contracts/binary-calibration-v2.md), verified
 // independently of Rubrist's runtime. It keeps every v1 rule except what
@@ -892,7 +892,7 @@ function verifyExpectedIdentity(
   const actual = expectedBinaryCalibrationIdentity(artifact) as unknown as Record<string, unknown>;
   const expectation = expected as unknown as Record<string, unknown>;
   const actualKeys = Object.keys(actual);
-  const unexpectedKeys = Object.keys(expectation).filter((key) => !(key in actual));
+  const unexpectedKeys = Object.keys(expectation).filter((key) => !Object.hasOwn(actual, key));
   if (unexpectedKeys.length > 0) {
     throw new BinaryCalibrationIntegrityError(
       'identity_mismatch',
@@ -942,7 +942,7 @@ export function verifyBinaryCalibrationArtifact(
     );
   }
 
-  if (artifact.evaluator.skillDigest !== sha256Digest(artifact.evaluator.identity)) {
+  if (artifact.evaluator.skillDigest !== rubristSkillDigestV2(artifact.evaluator.identity)) {
     throw new BinaryCalibrationIntegrityError('digest_mismatch', 'skillDigest does not match its evaluator identity');
   }
   if (artifact.evaluator.requestedBindingDigest !== sha256Digest(artifact.evaluator.identity.executionBinding)) {

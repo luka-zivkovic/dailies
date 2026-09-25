@@ -95,7 +95,10 @@ export interface RubristReceiptV2Expectations {
 
 export interface RubristReceiptV2Verification {
   status: 'complete' | 'incomplete';
-  /** Pass or fail per clientItemId; abstentions, failures, and unattempted items have no label. */
+  /**
+   * Pass or fail per clientItemId, for a complete receipt only, as in v1: an
+   * incomplete receipt yields no labels. Abstentions have no label.
+   */
   labels: Map<string, 'pass' | 'fail'>;
 }
 
@@ -175,6 +178,7 @@ export function verifyRubristReceiptV2(
   }
   if (expected.candidates !== undefined) {
     const candidates = new Map(expected.candidates.map((candidate) => [candidate.id, candidate]));
+    if (candidates.size !== expected.candidates.length) fail('candidate clientItemId values must be unique');
     const expectedIds = [...candidates.keys()].sort(byCodeUnit);
     if (ids.length !== expectedIds.length || ids.some((id, index) => id !== expectedIds[index])) {
       fail('does not have exact clientItemId coverage');
@@ -188,8 +192,10 @@ export function verifyRubristReceiptV2(
   }
 
   const labels = new Map<string, 'pass' | 'fail'>();
-  for (const item of receipt.items) {
-    if (item.result.state === 'outcome' && item.result.outcome !== 'abstain') labels.set(item.clientItemId, item.result.outcome);
+  if (receipt.status === 'complete') {
+    for (const item of receipt.items) {
+      if (item.result.state === 'outcome' && item.result.outcome !== 'abstain') labels.set(item.clientItemId, item.result.outcome);
+    }
   }
   return { status: receipt.status, labels };
 }

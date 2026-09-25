@@ -87,7 +87,12 @@ function applyMutation(receipt: Record<string, unknown>, mutation: Mutation): vo
     else delete (parent as Record<string, unknown>)[key];
     return;
   }
-  if (Array.isArray(parent)) parent[Number(key)] = mutation.value;
+  if (Array.isArray(parent)) {
+    // RFC 6902: add inserts (or appends at "-"); replace overwrites.
+    if (mutation.op === 'add') parent.splice(key === '-' ? parent.length : Number(key), 0, mutation.value);
+    else parent[Number(key)] = mutation.value;
+    return;
+  }
   // add and replace create an own member, even for a __proto__ key, as JSON.parse does.
   else Object.defineProperty(parent, key, { value: mutation.value, enumerable: true, writable: true, configurable: true });
 }
@@ -112,9 +117,18 @@ describe('vendored Rubrist assessment receipt v2 (Dailies ADR-0008)', () => {
     const complete = vector('assessment-receipt-v2.complete.json');
     expect(verifyRubristReceiptV2(complete.receipt, { candidates: complete.candidates }))
       .toEqual({ status: 'complete', labels: new Map([['a', 'pass'], ['b', 'fail']]) });
+    // As in v1, an incomplete receipt yields no labels, even for items with an outcome.
     const incomplete = vector('assessment-receipt-v2.incomplete.json');
     expect(verifyRubristReceiptV2(incomplete.receipt, { candidates: incomplete.candidates }))
-      .toEqual({ status: 'incomplete', labels: new Map([['a', 'pass']]) });
+      .toEqual({ status: 'incomplete', labels: new Map() });
+  });
+
+  it('refuses duplicate candidate ids, which would hide a candidate from linkage', () => {
+    const complete = vector('assessment-receipt-v2.complete.json');
+    const [first] = complete.candidates;
+    const duplicated = [{ ...first!, input: 'bogus', output: 'bogus' }, ...complete.candidates];
+    expect(() => verifyRubristReceiptV2(complete.receipt, { candidates: duplicated }))
+      .toThrow(/candidate clientItemId values must be unique/);
   });
 
   it('keeps JSON Schema and the Dailies runtime schema aligned over the portable corpus', () => {

@@ -170,6 +170,8 @@ describe('vendored Rubrist binary calibration v2 contract (Dailies ADR-0008)', (
     // The private ledger is Rubrist's alone; only its commitment digest is public.
     expect(() => bytes('binary-calibration-private-ledger-v2.schema.json')).toThrow();
     expect(() => bytes('fixtures/binary-calibration-private-ledger-v2.complete.json')).toThrow();
+    expect(() => bytes('fixtures/binary-calibration-private-ledger-v2.incomplete.json')).toThrow();
+    expect(() => bytes('binary-calibration-private-ledger-v2.md')).toThrow();
   });
 
   it('accepts all four exact canonical transport fixtures with complete expected identity', () => {
@@ -202,6 +204,11 @@ describe('vendored Rubrist binary calibration v2 contract (Dailies ADR-0008)', (
       ...expected,
       unexpected: 'not part of the identity contract',
     } as ExpectedBinaryCalibrationIdentity)).toThrow(/unknown fields: unexpected/);
+    // Inherited property names are not identity fields either.
+    expect(() => verifyBinaryCalibrationArtifact(complete, {
+      ...expected,
+      constructor: 'not part of the identity contract',
+    } as unknown as ExpectedBinaryCalibrationIdentity)).toThrow(/unknown fields: constructor/);
   });
 
   it('rejects BOM, invalid UTF-8, invalid JSON, and noncanonical transport bytes', () => {
@@ -242,6 +249,7 @@ describe('vendored Rubrist binary calibration v2 contract (Dailies ADR-0008)', (
       if (testCase.semantic === 'accept') {
         expect(verify, testCase.name).not.toThrow();
       } else {
+        expect(testCase.errorIncludes, `${testCase.name} states why it is rejected`).toBeTruthy();
         expect(verify, testCase.name).toThrow(testCase.errorIncludes);
       }
     }

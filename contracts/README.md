@@ -57,6 +57,10 @@ contracts, and fixtures (ADR-0008 decision 2).
 
 ## Compatibility policy
 
+The v1 rules below hold until the ADR-0008 switch, which deletes v1. The v2
+contracts are closed in the same way: every vendored v2 file is pinned by
+digest, an unknown field is refused, and nothing converts between v1 and v2.
+
 - Rubrist owns the canonical assessment-receipt contract. Dailies vendors and
   independently verifies a pinned copy rather than importing Rubrist runtime
   types. See Dailies' [decision index](../docs/decisions/README.md) and
