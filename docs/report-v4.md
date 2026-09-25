@@ -79,18 +79,12 @@ Complete but inadmissible evidence yields `inconclusive`. Candidate execution
 failure remains a Dailies-owned `block`; evidence transport or protocol
 failure remains `inconclusive`. The precedence is fixed in ADR-0005.
 
-## Historical reports
+## Report inspection
 
-`parseReportForInspection` accepts valid v5, v4, and historical v3 reports as
-distinct return variants. V3 is read-only and is never upgraded or used for
-release-policy execution. V4 remains its own single-criterion contract rather
-than being upgraded into v5. Versions 1, 2, unknown versions, and objects
+`parseReportForInspection` accepts valid v4, v5, and v6 reports as distinct
+return variants and never upgrades one into another. Historical v3 reports are
+no longer readable (ADR-0008). Versions 1 to 3, unknown versions, and objects
 without an explicit version are rejected with a version diagnostic.
-
-`fixtures/report-v3-exact.json`, `fixtures/report-v3-http.json`, and
-`fixtures/report-v3-rubrist-incomplete.json` were captured from the pre-v4
-`a6d494f` runtime. Compatibility tests validate and return those historical
-objects byte-for-byte so later live-schema changes cannot silently redefine v3.
 
 The v4 execution schema never accepts a v3 report, and configuration without
 an explicit v4 scope/trust contract is rejected before execution.

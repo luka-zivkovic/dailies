@@ -4,8 +4,8 @@ Status: **implemented Batch 3 contract**
 
 Version 5 adds customer-owned criterion release policy over a pinned,
 policy-free Rubrist evaluator-suite manifest. It is additive: v4 configuration
-continues to execute with v4 semantics and produces a v4 report. Historical
-v3 and v4 reports are never upgraded into v5.
+continues to execute with v4 semantics and produces a v4 report. A v4 report
+is never upgraded into v5.
 
 ## Evidence boundary
 

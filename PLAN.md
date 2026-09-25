@@ -32,8 +32,7 @@ The local CLI is the current product surface. It:
 - requires exact-byte JSONL identity and a declared evidence scope;
 - derives deterministic, verified, or self-reported trust and enforces the
   safe admissibility default; and
-- emits a scope-bound v4 tri-state release report while retaining a separate
-  read-only v3 inspection parser.
+- emits a scope-bound v4 tri-state release report.
 - additively consumes a pinned Rubrist evaluator-suite manifest with separate
   criterion receipts in v5, applies explicit customer criterion policy, and
   retains v4 execution compatibility; and
