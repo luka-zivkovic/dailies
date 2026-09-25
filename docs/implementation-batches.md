@@ -562,12 +562,13 @@ and binary-calibration v1 bytes are unchanged.
 
 Implementation status: **planned**. Decision gate 12 was accepted on
 2026-09-25 and is recorded in Rubrist ADR-0014, including the founder's
-answers to its four open questions. Every slice gets an independent review
+answers to its four open questions and two later decisions: receipts carry a
+definition digest, and v2 replaces v1. Every slice gets an independent review
 against its exact diff, and each review's correctness findings are resolved
 before merge.
 
-This batch changes Rubrist and Dailies. Dailies vendors and verifies the v2
-contracts; Casefile's runtime does not change.
+This batch changes Rubrist and Dailies. Both switch to the v2 contracts in
+one window and drop v1 support; Casefile's runtime does not change.
 
 Goal: anyone can bind any model as an evaluator. Evidence states exactly what
 was sent, with which verdict protocol and reasoning. A typed-question model
@@ -582,13 +583,18 @@ such as TypeSafe Jev can be an optional evaluator provider.
   - the shared outcome and failure taxonomy, with `not_attempted`;
   - completeness that counts an abstention as an outcome;
   - `evaluatorScore` with its source;
-  - `skillDigest` v2.
+  - the execution binding and the definition digest, never the rubric,
+    prompt, or question text;
+  - `skillDigest` v2, computed from the basis, the definition digest, and
+    the binding.
 - `binary-calibration/v2` and its private ledger v2,
-  `evaluator-suite-manifest/v2`, and `skill-format/v2`. A v2 binding is
-  never exported as v1.
+  `evaluator-suite-manifest/v2`, and `skill-format/v2`, which carries the
+  full definition.
 - Schemas, canonicalization, positive and negative fixtures, and
-  conformance vectors. Dailies vendors v2 and verifies v2 alongside v1
-  before Rubrist emits any v2 evidence.
+  conformance vectors.
+- v2 replaces v1. Dailies switches to v2 in the same window, and neither
+  repository keeps code that emits or verifies v1. The v1 contract documents
+  and fixtures stay unchanged in `contracts/` as superseded history.
 
 ### 8B — judge runtime
 
@@ -660,8 +666,8 @@ such as TypeSafe Jev can be an optional evaluator provider.
   and version `claude-sonnet-4-6`, temperature 0 with `topP` unset,
   thinking `disabled` at effort `high`, `anthropic.structured-output/v1`,
   and an output token limit of 1,200. It is saved unresolved.
-- Evaluator versions created after rollout emit v2 receipts, calibration,
-  and manifests. v1 versions keep emitting v1 until retired.
+- Every evaluator version emits v2 receipts, calibration, and manifests.
+  The v1 emitters are removed.
 
 ### 8E — typed-question evaluators (#101)
 
@@ -710,10 +716,12 @@ Exit gate:
   `skillDigest`.
 - A receipt with an abstention is `complete`. Any failure or
   `not_attempted` item makes it `incomplete`.
-- Exporting a v2 binding as `skill-format/v1` is refused.
-- Receipt v1, suite manifest v1, and binary-calibration v1 bytes and
-  fixtures are unchanged and still verify.
-- Dailies verifies v2 and v1 side by side.
+- A receipt carries the definition digest and never the rubric, prompt, or
+  question text. Dailies recomputes `skillDigest` v2 from it.
+- No code in Rubrist or Dailies emits or verifies a v1 receipt,
+  calibration, suite manifest, or `skill-format/v1`. The frozen v1
+  documents and fixtures in `contracts/` are unchanged.
+- Dailies verifies v2.
 
 **The founder's four decisions**
 
