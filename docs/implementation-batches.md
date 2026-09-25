@@ -616,21 +616,29 @@ such as TypeSafe Jev can be an optional evaluator provider.
   `capabilities` and OpenRouter `supported_parameters`.
 - The dated `rubrist-reasoning-defaults/v1` table of documented default
   reasoning, with its sources.
-- A capability check before save, with at most 6 probes. It reads the
-  capability data and the table, selects the protocol, and tests whether
-  the model accepts temperature and each reasoning mode. Mechanism
-  rejections move to the next protocol; parameter rejections mark that
-  parameter rejected.
+- A capability check before save, with at most 6 probes. Protocol probes
+  send no optional settings. On the protocol that succeeds, it tests
+  temperature with the default reasoning, and tests the default (or a
+  middle) reasoning value and the no-reasoning setting. Mechanism
+  rejections move to the next protocol; parameter and value rejections mark
+  that parameter or value rejected, and an unattributed rejection counts as
+  a value rejection.
 - Resolution after save sends one confirming probe with the exact saved
-  request and never changes the binding. For an unresolved binding, the
-  first governed gate that needs it runs resolution with at most 3 probes.
-  All probes use a fixed, non-sensitive input.
+  request, plus a temperature probe with the saved reasoning where
+  temperature is unset, and never changes the binding. An unresolved
+  binding resolves at the first governed gate or run that needs it, or on
+  demand, with at most 3 probes. All probes use a fixed, non-sensitive
+  input.
 - Resolution records with status `resolved`, `unresolved`, or `failed`, the
-  credential source, and the probe cost.
+  settings each probe sent, the credential source, and the probe cost. Only
+  a rejected or protocol-breaking confirming probe sets `failed`; transient,
+  authentication, and invalid-output errors leave a binding unresolved.
 - Deterministic protocol defaults when probes can't run.
 - A re-check before sealed calibration authorization and before any
-  governed run starts, so no sealed item is exposed when the resolution no
-  longer holds.
+  governed run starts, with one to three probes that also re-test unset
+  temperature and reasoning, so no sealed item is exposed when the
+  resolution no longer holds. It is recorded with the run it guards and
+  never changes the resolution record.
 
 ### 8D — persistence, gates, and evidence emission
 
@@ -638,12 +646,14 @@ such as TypeSafe Jev can be an optional evaluator provider.
   in place under ADR-0011.
 - Governed gates require:
   - a resolved binding;
-  - an explicit temperature where the model accepts one;
-  - explicit reasoning where the provider family has a reasoning shape and
-    the model accepts a setting.
-- The seeded default binding: `claude-sonnet-4-6`, temperature 0, thinking
-  `disabled` at effort `high`, `anthropic.structured-output/v1`, and an
-  output token limit of 1,200. It is saved unresolved.
+  - an explicit temperature unless the model rejects the parameter itself
+    with the saved reasoning;
+  - explicit reasoning unless the provider family has no reasoning shape
+    or the model rejects the reasoning parameter itself.
+- The seeded default binding: `anthropic` on its managed endpoint, model id
+  and version `claude-sonnet-4-6`, temperature 0 with `topP` unset,
+  thinking `disabled` at effort `high`, `anthropic.structured-output/v1`,
+  and an output token limit of 1,200. It is saved unresolved.
 - Evaluator versions created after rollout emit v2 receipts, calibration,
   and manifests. v1 versions keep emitting v1 until retired.
 
@@ -658,10 +668,11 @@ such as TypeSafe Jev can be an optional evaluator provider.
 
 ### 8F — authoring UI
 
-- A model picker driven by the capability check. It hides sampling fields
-  the model rejects and offers only the reasoning modes the model accepts.
-  It pre-fills the documented default reasoning, which the author saves
-  explicitly.
+- A model picker driven by the capability check. It hides a sampling or
+  reasoning field the model rejects outright, offers the family's reasoning
+  modes except those the model rejects, and marks untested modes
+  "confirmed at resolution". It pre-fills the documented default reasoning,
+  which the author saves explicitly.
 - Resolution status and probe outcome shown to the author, and
   typed-question evaluator authoring.
 
@@ -681,7 +692,7 @@ Exit gate:
   fails resolution with the provider's message. Resolution never changes a
   saved binding.
 - A resolution that no longer holds stops a governed run before any sealed
-  exposure.
+  exposure. A transient probe error never fails a binding.
 - `OPENAI_BASE_URL` is never applied unless the binding records it.
 - `jev-latest` is refused at governed gates.
 
