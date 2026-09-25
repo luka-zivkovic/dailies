@@ -3,7 +3,7 @@ import {
   aggregate,
   compareOutcome,
   decideExitCode,
-  decideVerdict,
+  decideDecision,
   EXIT_BLOCK,
   EXIT_PROMOTE,
   EXIT_RUN_ERROR,
@@ -193,7 +193,7 @@ describe('decideExitCode', () => {
   });
 });
 
-describe('decideVerdict', () => {
+describe('decideDecision thresholds with admissible trust', () => {
   const totals = {
     total: 10,
     passed: 9,
@@ -217,15 +217,15 @@ describe('decideVerdict', () => {
   };
 
   it('promotes when pass rate and regressions are within thresholds', () => {
-    expect(decideVerdict(totals, { minPassRate: 0.9, maxRegressions: 1 })).toBe('promote');
+    expect(decideDecision(totals, { minPassRate: 0.9, maxRegressions: 1 }, true)).toBe('promote');
   });
 
   it('blocks when pass rate is below the threshold', () => {
-    expect(decideVerdict(totals, { minPassRate: 0.95, maxRegressions: 5 })).toBe('block');
+    expect(decideDecision(totals, { minPassRate: 0.95, maxRegressions: 5 }, true)).toBe('block');
   });
 
   it('blocks when regressions exceed the threshold even if pass rate is fine', () => {
-    expect(decideVerdict(totals, { minPassRate: 0.5, maxRegressions: 0 })).toBe('block');
+    expect(decideDecision(totals, { minPassRate: 0.5, maxRegressions: 0 }, true)).toBe('block');
   });
 
   it('is inconclusive when any item lacks completed judge evidence', () => {
@@ -239,7 +239,7 @@ describe('decideVerdict', () => {
       evaluationCoverage: 0.9,
       passRate: 0.8,
     };
-    expect(decideVerdict(partial, { minPassRate: 0.5, maxRegressions: 10 })).toBe(
+    expect(decideDecision(partial, { minPassRate: 0.5, maxRegressions: 10 }, true)).toBe(
       'inconclusive',
     );
   });
@@ -256,7 +256,7 @@ describe('decideVerdict', () => {
       passRate: 0.9,
       regressions: 0,
     };
-    expect(decideVerdict(candidateFailure, { minPassRate: 0.5, maxRegressions: 10 })).toBe(
+    expect(decideDecision(candidateFailure, { minPassRate: 0.5, maxRegressions: 10 }, true)).toBe(
       'block',
     );
   });
@@ -274,7 +274,7 @@ describe('decideVerdict', () => {
       passRate: 0.9,
       regressions: 0,
     };
-    expect(decideVerdict(protocolFailure, { minPassRate: 0.5, maxRegressions: 10 })).toBe(
+    expect(decideDecision(protocolFailure, { minPassRate: 0.5, maxRegressions: 10 }, true)).toBe(
       'inconclusive',
     );
   });

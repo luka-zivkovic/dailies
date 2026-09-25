@@ -3,3 +3,4 @@ dist
 .ai/
 shadow-out/
 dailies-out/
+.DS_Store

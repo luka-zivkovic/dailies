@@ -1,5 +1,5 @@
 import { createHash } from 'node:crypto';
-import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { createServer, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -329,50 +329,19 @@ describe('report/config v4 scope and trust contract', () => {
     }
   });
 
-  it('parses v3 only for inspection without upgrading it and rejects unsupported versions', async () => {
+  it('inspects only current reports and refuses v3 and other unsupported versions', async () => {
     const { config } = await fixture();
     const current = await runShadow(config);
-    const legacy = asLegacyV3(current);
-    const inspected = parseReportForInspection(legacy);
-    expect(inspected).toMatchObject({ schemaVersion: 3, readOnly: true });
-    expect(inspected.report).toBe(legacy);
-    expect(inspected.report).toMatchObject({ schemaVersion: 3, verdict: 'promote' });
-    expect('decision' in inspected.report).toBe(false);
-    expect(reportSchema.safeParse(legacy).success).toBe(false);
-
+    expect(parseReportForInspection(current)).toMatchObject({ schemaVersion: 4 });
     expect(reportSchema.safeParse({ ...current, verdict: 'promote' }).success).toBe(false);
-    expect(() => parseReportForInspection({ ...legacy, decision: 'promote' }))
-      .toThrow();
 
-    expect(parseReportForInspection(current)).toMatchObject({ schemaVersion: 4, readOnly: false });
-    for (const version of [undefined, 1, 2, 6]) {
-      const candidate = { ...legacy, ...(version === undefined ? {} : { schemaVersion: version }) };
+    // ADR-0008 removed historical v3 inspection before launch.
+    const legacy = asLegacyV3(current);
+    expect(reportSchema.safeParse(legacy).success).toBe(false);
+    for (const version of [undefined, 1, 2, 3, 6]) {
+      const candidate: Record<string, unknown> = { ...legacy, ...(version === undefined ? {} : { schemaVersion: version }) };
       if (version === undefined) delete candidate.schemaVersion;
       expect(() => parseReportForInspection(candidate)).toThrow(/report schema version/i);
-    }
-
-    const historicalBytes = await readFile(
-      new URL('../fixtures/report-v3-exact.json', import.meta.url),
-      'utf8',
-    );
-    const historical = JSON.parse(historicalBytes) as unknown;
-    const historicalInspection = parseReportForInspection(historical);
-    expect(historicalInspection).toMatchObject({ schemaVersion: 3, readOnly: true });
-    expect(`${JSON.stringify(historicalInspection.report, null, 2)}\n`).toBe(historicalBytes);
-
-    for (const fixtureName of [
-      'report-v3-http.json',
-      'report-v3-rubrist-incomplete.json',
-    ]) {
-      const historicalMinifiedBytes = await readFile(
-        new URL(`../fixtures/${fixtureName}`, import.meta.url),
-        'utf8',
-      );
-      const historicalMinified = JSON.parse(historicalMinifiedBytes) as unknown;
-      const historicalMinifiedInspection = parseReportForInspection(historicalMinified);
-      expect(historicalMinifiedInspection).toMatchObject({ schemaVersion: 3, readOnly: true });
-      expect(`${JSON.stringify(historicalMinifiedInspection.report)}\n`)
-        .toBe(historicalMinifiedBytes);
     }
   });
 });

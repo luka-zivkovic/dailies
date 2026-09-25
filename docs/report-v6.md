@@ -5,7 +5,7 @@ Status: **CURRENT additive contract**
 Report v6 records one Dailies release decision that combines the unchanged
 suite assessment flow from report v5 with separately scoped, policy-free Rubrist
 binary-calibration evidence. It does not change assessment receipt v1,
-evaluator-suite manifest v1, or reports v3 through v5.
+evaluator-suite manifest v1, or reports v4 and v5.
 
 ## Inputs and execution boundary
 

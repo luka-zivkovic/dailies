@@ -367,7 +367,7 @@ describe('calibration-aware report v6', () => {
     expect(parseCanonicalCalibrationReportV6Bytes(first)).toEqual(report);
     const raw = structuredClone(report);
     const inspection = parseReportForInspection(raw);
-    expect(inspection).toMatchObject({ schemaVersion: 6, readOnly: false });
+    expect(inspection).toMatchObject({ schemaVersion: 6 });
     expect(inspection.report).toEqual(report);
     expect(inspection.report).not.toBe(raw);
   });

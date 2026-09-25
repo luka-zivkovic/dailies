@@ -7,7 +7,6 @@ import type { Config } from '../src/config.js';
 import {
   compareOutcome,
   decideDecision,
-  decideVerdict,
   type Comparison,
   type Totals,
 } from '../src/report.js';
@@ -172,16 +171,6 @@ describe('decision monotonicity', () => {
             for (const strictRate of rates.filter((rate) => rate >= lenientRate)) {
               for (let strictMax = 0; strictMax <= 3; strictMax += 1) {
                 for (let lenientMax = strictMax; lenientMax <= 3; lenientMax += 1) {
-                  const lenient = decideVerdict(totals, {
-                    minPassRate: lenientRate,
-                    maxRegressions: lenientMax,
-                  });
-                  const strict = decideVerdict(totals, {
-                    minPassRate: strictRate,
-                    maxRegressions: strictMax,
-                  });
-                  if (strict === 'promote') expect(lenient).toBe('promote');
-
                   const lenientDecision = decideDecision(totals, {
                     minPassRate: lenientRate,
                     maxRegressions: lenientMax,
@@ -211,9 +200,6 @@ describe('decision monotonicity', () => {
           for (const minPassRate of [0, 0.5, 0.8, 1]) {
             for (const maxRegressions of [0, 1, 3]) {
               const thresholds = { minPassRate, maxRegressions };
-              if (decideVerdict(before, thresholds) === 'promote') {
-                expect(decideVerdict(after, thresholds)).toBe('promote');
-              }
               if (decideDecision(before, thresholds, true) === 'promote') {
                 expect(decideDecision(after, thresholds, true)).toBe('promote');
               }

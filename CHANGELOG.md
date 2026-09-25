@@ -5,6 +5,11 @@ versioning while the public API remains pre-1.0.
 
 ## Unreleased
 
+- Remove read-only inspection of historical v3 reports and the captured v3
+  fixtures (ADR-0008, founder decision 2026-09-25). Nothing reads a v3 report
+  any more; report v4 keeps the same integrity and Rubrist-linkage rules it
+  previously borrowed from the v3 schema.
+
 ## 0.4.0 — 2026-09-23
 
 - Publish the Rubrist-compatible consumer and align the npm package, GitHub

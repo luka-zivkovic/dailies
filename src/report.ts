@@ -27,7 +27,6 @@ import {
   type CalibrationSuiteReport,
 } from './report-v6.js';
 
-export const LEGACY_REPORT_SCHEMA_VERSION = 3;
 export const REPORT_SCHEMA_VERSION = 4;
 
 export const itemOutcomeSchema = z.enum(['pass', 'fail', 'error']);
@@ -78,17 +77,6 @@ const itemResultFields = {
 };
 
 const itemResultBaseSchema = z.object(itemResultFields).strict();
-// V3 used Zod's default object behavior for judge payloads. Keep that exact
-// inspection behavior even though current HTTP responses are strict.
-const judgeResultV3Schema = z.object({
-  score: z.number(),
-  pass: z.boolean(),
-  reason: z.string().optional(),
-});
-const itemResultV3BaseSchema = z.object({
-  ...itemResultFields,
-  judge: judgeResultV3Schema.optional(),
-}).strict();
 
 function refineItemResult(
   item: z.infer<typeof itemResultBaseSchema>,
@@ -172,9 +160,6 @@ function refineItemResult(
   }
 }
 
-/** Frozen v3 item contract, available only for historical inspection. */
-export const itemResultV3Schema = itemResultV3BaseSchema.superRefine(refineItemResult);
-
 /** Current v4 item contract. Trust is attached only to completed evidence. */
 export const itemResultSchema = itemResultBaseSchema.extend({
   trustClass: trustClassSchema.optional(),
@@ -234,28 +219,19 @@ const commonReportFields = {
   evidence: rubristEvidenceSchema.optional(),
 };
 
-const reportV3ShapeSchema = z.object({
-  schemaVersion: z.literal(LEGACY_REPORT_SCHEMA_VERSION),
-  ...commonReportFields,
-  verdict: z.enum(['promote', 'block', 'inconclusive']),
-  items: z.array(itemResultV3Schema),
-}).strict();
+type SingleCriterionReportCore = Pick<
+  z.infer<typeof reportV4ShapeSchema>,
+  'judgeType' | 'thresholds' | 'totals' | 'evidence' | 'items'
+>;
 
-export const reportV3Schema = reportV3ShapeSchema.superRefine((report, ctx) => {
+/** Totals, judge-evidence, and Rubrist-linkage rules of every single-criterion report. */
+function refineSingleCriterionEvidence(report: SingleCriterionReportCore, ctx: z.RefinementCtx): void {
   const expectedTotals = aggregate(report.items);
   if (JSON.stringify(report.totals) !== JSON.stringify(expectedTotals)) {
     ctx.addIssue({
       code: 'custom',
       path: ['totals'],
       message: 'totals must exactly equal aggregate(items)',
-    });
-  }
-  const expectedVerdict = decideVerdict(expectedTotals, report.thresholds);
-  if (report.verdict !== expectedVerdict) {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['verdict'],
-      message: `verdict must be ${expectedVerdict}`,
     });
   }
 
@@ -492,7 +468,7 @@ export const reportV3Schema = reportV3ShapeSchema.superRefine((report, ctx) => {
       message: error instanceof Error ? error.message : String(error),
     });
   }
-});
+}
 
 export const reportTrustPolicySchema = z.object({
   admissibleClasses: z.array(trustClassSchema).min(1),
@@ -593,26 +569,7 @@ function expectedTrust(judgeType: 'exact-match' | 'http' | 'rubrist'): {
 }
 
 export const reportSchema = reportV4ShapeSchema.superRefine((report, ctx) => {
-  // Reuse the frozen v3 integrity and Rubrist-linkage contract without allowing
-  // the v4 trust fields to mutate its semantics.
-  const legacyItems = report.items.map(({ trustClass: _trustClass, ...item }) => item);
-  const legacyCandidate = {
-    schemaVersion: LEGACY_REPORT_SCHEMA_VERSION,
-    judgeType: report.judgeType,
-    startedAt: report.startedAt,
-    finishedAt: report.finishedAt,
-    thresholds: report.thresholds,
-    totals: report.totals,
-    verdict: decideVerdict(report.totals, report.thresholds),
-    ...(report.evidence === undefined ? {} : { evidence: report.evidence }),
-    items: legacyItems,
-  };
-  const legacy = reportV3Schema.safeParse(legacyCandidate);
-  if (!legacy.success) {
-    for (const issue of legacy.error.issues) {
-      ctx.addIssue({ ...issue, path: issue.path });
-    }
-  }
+  refineSingleCriterionEvidence(report, ctx);
 
   const expected = expectedTrust(report.judgeType);
   const hasCompletedEvidence = report.totals.evaluated > 0;
@@ -754,44 +711,36 @@ export const reportSchema = reportV4ShapeSchema.superRefine((report, ctx) => {
 });
 
 export type ItemResult = z.infer<typeof itemResultSchema>;
-export type ItemResultV3 = z.infer<typeof itemResultV3Schema>;
 export type Report = z.infer<typeof reportSchema>;
-export type ReportV3 = z.infer<typeof reportV3Schema>;
 export type ItemOutcome = z.infer<typeof itemOutcomeSchema>;
 export type Comparison = z.infer<typeof comparisonSchema>;
 export type ErrorStage = z.infer<typeof errorStageSchema>;
 export type { ErrorKind };
-export type Verdict = ReportV3['verdict'];
 export type Decision = Report['decision'];
 
 export type ReportInspection =
-  | { schemaVersion: 3; readOnly: true; report: ReportV3 }
-  | { schemaVersion: 4; readOnly: false; report: Report }
-  | { schemaVersion: 5; readOnly: false; report: SuiteReport }
-  | { schemaVersion: 6; readOnly: false; report: CalibrationSuiteReport };
+  | { schemaVersion: 4; report: Report }
+  | { schemaVersion: 5; report: SuiteReport }
+  | { schemaVersion: 6; report: CalibrationSuiteReport };
 
-/** Parse v3 through v6 reports without normalizing or upgrading versions. */
+/** Parse v4 through v6 reports without normalizing or upgrading versions. */
 export function parseReportForInspection(raw: unknown): ReportInspection {
   if (typeof raw !== 'object' || raw === null || !('schemaVersion' in raw)) {
     throw new Error('unsupported report schema version: missing');
   }
   const version = (raw as { schemaVersion?: unknown }).schemaVersion;
-  if (version === LEGACY_REPORT_SCHEMA_VERSION) {
-    reportV3Schema.parse(raw);
-    return { schemaVersion: 3, readOnly: true, report: raw as ReportV3 };
-  }
   if (version === REPORT_SCHEMA_VERSION) {
     reportSchema.parse(raw);
-    return { schemaVersion: 4, readOnly: false, report: raw as Report };
+    return { schemaVersion: 4, report: raw as Report };
   }
   if (version === SUITE_REPORT_SCHEMA_VERSION) {
     reportV5Schema.parse(raw);
-    return { schemaVersion: 5, readOnly: false, report: raw as SuiteReport };
+    return { schemaVersion: 5, report: raw as SuiteReport };
   }
   if (version === CALIBRATION_REPORT_SCHEMA_VERSION) {
     try {
       const report = reportV6Schema.parse(raw);
-      return { schemaVersion: 6, readOnly: false, report };
+      return { schemaVersion: 6, report };
     } catch (error) {
       throw new Error(
         `invalid report schema version 6: ${error instanceof Error ? error.message : String(error)}`,
@@ -862,30 +811,7 @@ export function aggregate(items: ItemResult[]): Totals {
   };
 }
 
-export function decideVerdict(
-  totals: Totals,
-  thresholds: { minPassRate: number; maxRegressions: number },
-): Verdict {
-  // A judge/protocol error compromises the evidence, even when threshold slack
-  // would otherwise allow the run to pass. Mixed candidate+judge failures are
-  // therefore inconclusive too.
-  if (totals.judgeErrored > 0 || totals.protocolErrored > 0) {
-    return 'inconclusive';
-  }
-  // Every v0 input is required. A candidate that cannot execute one of them is
-  // a release failure, even though it is not a judged baseline regression.
-  if (totals.candidateErrored > 0) return 'block';
-  // Defensive coverage guard for schema drift or a future non-error outcome.
-  if (totals.evaluated < totals.total || totals.evaluationCoverage < 1) {
-    return 'inconclusive';
-  }
-  return totals.passRate >= thresholds.minPassRate &&
-    totals.regressions <= thresholds.maxRegressions
-      ? 'promote'
-      : 'block';
-}
-
-/** Apply the Batch 1B trust gate after the frozen v3 evidence precedence. */
+/** Apply the Batch 1B trust gate after the single-criterion evidence precedence. */
 export function decideDecision(
   totals: Totals,
   thresholds: { minPassRate: number; maxRegressions: number },
