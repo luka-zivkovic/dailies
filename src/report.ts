@@ -716,13 +716,12 @@ export type ItemOutcome = z.infer<typeof itemOutcomeSchema>;
 export type Comparison = z.infer<typeof comparisonSchema>;
 export type ErrorStage = z.infer<typeof errorStageSchema>;
 export type { ErrorKind };
-export type Verdict = 'promote' | 'block' | 'inconclusive';
 export type Decision = Report['decision'];
 
 export type ReportInspection =
-  | { schemaVersion: 4; readOnly: false; report: Report }
-  | { schemaVersion: 5; readOnly: false; report: SuiteReport }
-  | { schemaVersion: 6; readOnly: false; report: CalibrationSuiteReport };
+  | { schemaVersion: 4; report: Report }
+  | { schemaVersion: 5; report: SuiteReport }
+  | { schemaVersion: 6; report: CalibrationSuiteReport };
 
 /** Parse v4 through v6 reports without normalizing or upgrading versions. */
 export function parseReportForInspection(raw: unknown): ReportInspection {
@@ -732,16 +731,16 @@ export function parseReportForInspection(raw: unknown): ReportInspection {
   const version = (raw as { schemaVersion?: unknown }).schemaVersion;
   if (version === REPORT_SCHEMA_VERSION) {
     reportSchema.parse(raw);
-    return { schemaVersion: 4, readOnly: false, report: raw as Report };
+    return { schemaVersion: 4, report: raw as Report };
   }
   if (version === SUITE_REPORT_SCHEMA_VERSION) {
     reportV5Schema.parse(raw);
-    return { schemaVersion: 5, readOnly: false, report: raw as SuiteReport };
+    return { schemaVersion: 5, report: raw as SuiteReport };
   }
   if (version === CALIBRATION_REPORT_SCHEMA_VERSION) {
     try {
       const report = reportV6Schema.parse(raw);
-      return { schemaVersion: 6, readOnly: false, report };
+      return { schemaVersion: 6, report };
     } catch (error) {
       throw new Error(
         `invalid report schema version 6: ${error instanceof Error ? error.message : String(error)}`,
@@ -810,29 +809,6 @@ export function aggregate(items: ItemResult[]): Totals {
     comparisonCounts,
     allErrored,
   };
-}
-
-export function decideVerdict(
-  totals: Totals,
-  thresholds: { minPassRate: number; maxRegressions: number },
-): Verdict {
-  // A judge/protocol error compromises the evidence, even when threshold slack
-  // would otherwise allow the run to pass. Mixed candidate+judge failures are
-  // therefore inconclusive too.
-  if (totals.judgeErrored > 0 || totals.protocolErrored > 0) {
-    return 'inconclusive';
-  }
-  // Every v0 input is required. A candidate that cannot execute one of them is
-  // a release failure, even though it is not a judged baseline regression.
-  if (totals.candidateErrored > 0) return 'block';
-  // Defensive coverage guard for schema drift or a future non-error outcome.
-  if (totals.evaluated < totals.total || totals.evaluationCoverage < 1) {
-    return 'inconclusive';
-  }
-  return totals.passRate >= thresholds.minPassRate &&
-    totals.regressions <= thresholds.maxRegressions
-      ? 'promote'
-      : 'block';
 }
 
 /** Apply the Batch 1B trust gate after the single-criterion evidence precedence. */

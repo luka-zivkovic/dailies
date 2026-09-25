@@ -416,7 +416,6 @@ describe('criterion suite runner', () => {
       expect(reportV5Schema.safeParse(report).success).toBe(true);
       expect(parseReportForInspection(report)).toMatchObject({
         schemaVersion: 5,
-        readOnly: false,
       });
 
       const mutations: Array<[string, (candidate: Record<string, any>) => void]> = [

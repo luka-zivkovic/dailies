@@ -179,7 +179,6 @@ export {
   comparisonSchema,
   decideDecision,
   decideExitCode,
-  decideVerdict,
   EXIT_BLOCK,
   EXIT_PROMOTE,
   EXIT_RUN_ERROR,
@@ -199,7 +198,6 @@ export {
   type Report,
   type ReportInspection,
   type Totals,
-  type Verdict,
 } from './report.js';
 export {
   aggregateCriterionItems,

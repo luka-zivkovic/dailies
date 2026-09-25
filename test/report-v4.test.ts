@@ -332,13 +332,13 @@ describe('report/config v4 scope and trust contract', () => {
   it('inspects only current reports and refuses v3 and other unsupported versions', async () => {
     const { config } = await fixture();
     const current = await runShadow(config);
-    expect(parseReportForInspection(current)).toMatchObject({ schemaVersion: 4, readOnly: false });
+    expect(parseReportForInspection(current)).toMatchObject({ schemaVersion: 4 });
     expect(reportSchema.safeParse({ ...current, verdict: 'promote' }).success).toBe(false);
 
     // ADR-0008 removed historical v3 inspection before launch.
     const legacy = asLegacyV3(current);
     expect(reportSchema.safeParse(legacy).success).toBe(false);
-    for (const version of [undefined, 1, 2, 3]) {
+    for (const version of [undefined, 1, 2, 3, 6]) {
       const candidate: Record<string, unknown> = { ...legacy, ...(version === undefined ? {} : { schemaVersion: version }) };
       if (version === undefined) delete candidate.schemaVersion;
       expect(() => parseReportForInspection(candidate)).toThrow(/report schema version/i);
