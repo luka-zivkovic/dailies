@@ -1,0 +1,151 @@
+{
+  "contract": "rubrist/assessment-receipt/v2",
+  "definition": {
+    "kind": "prompted",
+    "rubricMarkdown": "# The reply answers the question\n\nPass when the reply answers what was asked.",
+    "prompt": "Judge the output against the rubric.\n\n{{rubric}}",
+    "verdictKind": "binary",
+    "outputSchema": {
+      "type": "object"
+    },
+    "scalarRange": null,
+    "categoricalChoiceScores": null
+  },
+  "candidates": [
+    {
+      "id": "a",
+      "input": "question-a",
+      "output": "answer-a"
+    },
+    {
+      "id": "b",
+      "input": "question-b",
+      "output": "answer-b"
+    },
+    {
+      "id": "c",
+      "input": "question-c",
+      "output": "answer-c"
+    }
+  ],
+  "receipt": {
+    "contract": "rubrist/assessment-receipt/v2",
+    "schemaVersion": 2,
+    "receiptId": "receipt-contract-v2-run-1",
+    "evalRunId": "contract-v2-run-1",
+    "projectId": "project-contract",
+    "skillId": "skill-contract",
+    "skillVersionId": "skill-version-contract-2",
+    "status": "complete",
+    "run": {
+      "status": "completed",
+      "totalItems": 3,
+      "passItems": 1,
+      "failItems": 1,
+      "abstainedItems": 1,
+      "failedItems": 0,
+      "notAttemptedItems": 0,
+      "agreedItems": 2
+    },
+    "evaluator": {
+      "basis": "rubrist/evaluator-identity/v2",
+      "definitionDigest": "sha256:baa54e1a08fdaef39ed50815f15bb99c0515fd8e8cc798f37c689ea345f8bfb0",
+      "executionBinding": {
+        "provider": "anthropic",
+        "endpoint": {
+          "kind": "managed"
+        },
+        "modelId": "claude-sonnet-4-6",
+        "modelVersion": "claude-sonnet-4-6",
+        "sampling": {
+          "temperature": 0,
+          "topP": null
+        },
+        "reasoning": {
+          "family": "anthropic",
+          "thinking": {
+            "type": "disabled"
+          },
+          "effort": "high"
+        },
+        "outputTokenLimit": 1200,
+        "verdictProtocol": "anthropic.structured-output/v1",
+        "routing": null
+      }
+    },
+    "skillDigest": "sha256:b237708d5c9293a8b1ce9b32b242e0e519ab1bc2c65621f4dbe5dcf80ac46c2e",
+    "datasetDigest": "sha256:74831cbbfc260622d63a17d64806a18013755af284dc52c259450de7a5d7e512",
+    "items": [
+      {
+        "clientItemId": "a",
+        "caseId": "case-contract-a",
+        "contentDigest": "sha256:1339d14bc212a46f7deeedec3355924c32fd94824c14fcf3a02649a67c65e18d",
+        "result": {
+          "state": "outcome",
+          "outcome": "pass"
+        },
+        "verdictId": "verdict-contract-a",
+        "evaluatorScore": {
+          "value": 0.91,
+          "kind": "self_reported_score"
+        },
+        "observed": {
+          "model": "claude-sonnet-4-6",
+          "requestId": "req-a",
+          "responseId": "resp-a",
+          "systemFingerprint": null,
+          "upstreamProvider": null,
+          "thinkingReturned": false,
+          "reasoningTokens": null
+        }
+      },
+      {
+        "clientItemId": "b",
+        "caseId": "case-contract-b",
+        "contentDigest": "sha256:2210a5dd3f23f18b826999f928949ddded4c00df7cdcceecb8e15d35664bacd4",
+        "result": {
+          "state": "outcome",
+          "outcome": "fail"
+        },
+        "verdictId": "verdict-contract-b",
+        "evaluatorScore": {
+          "value": 0.07,
+          "kind": "self_reported_score"
+        },
+        "observed": {
+          "model": "claude-sonnet-4-6",
+          "requestId": "req-b",
+          "responseId": "resp-b",
+          "systemFingerprint": null,
+          "upstreamProvider": null,
+          "thinkingReturned": false,
+          "reasoningTokens": null
+        }
+      },
+      {
+        "clientItemId": "c",
+        "caseId": "case-contract-c",
+        "contentDigest": "sha256:c76bbeb1b64d61d22663e09d193936816b290539f3df0dbe1bb0d276babe25d7",
+        "result": {
+          "state": "outcome",
+          "outcome": "abstain"
+        },
+        "verdictId": "verdict-contract-c",
+        "evaluatorScore": {
+          "value": 0.48,
+          "kind": "self_reported_score"
+        },
+        "observed": {
+          "model": "claude-sonnet-4-6",
+          "requestId": "req-c",
+          "responseId": "resp-c",
+          "systemFingerprint": null,
+          "upstreamProvider": null,
+          "thinkingReturned": false,
+          "reasoningTokens": null
+        }
+      }
+    ],
+    "evidenceDigest": "sha256:ff34eaf7fb41e4b538eb790cba541a81e1252d8f78df70ad532c126665f4b8e7"
+  }
+}

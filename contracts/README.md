@@ -30,6 +30,31 @@ are intentionally not vendored and are inaccessible to Dailies. The public
 artifact exposes only its opaque commitment. Dailies must not attempt to
 dereference that commitment or treat it as per-observation evidence.
 
+## Rubrist v2 evidence (verified, not yet consumed)
+
+Rubrist ADR-0014 replaces the v1 evaluator identity with a definition digest
+plus the exact execution binding. Under Dailies ADR-0008 Dailies vendors the v2
+contracts byte-identically and verifies them independently now, before
+anything consumes them:
+
+- `rubrist/assessment-receipt/v2`: schema, specification, complete and
+  incomplete fixtures, and conformance corpus, verified by
+  `src/rubrist-receipt-v2.ts`.
+- `rubrist/evaluator-suite-manifest/v2`: schema, specification, fixture, and
+  corpus, verified by `src/suite-manifest-v2.ts`.
+- `rubrist/binary-calibration/v2`: schema, specification, complete, repeated,
+  incomplete, and typed-question fixtures, and the 114-case corpus, verified
+  by `src/binary-calibration-v2.ts`. The Wilson reference is unchanged. The
+  private ledger v2 is not vendored, for the same reason as v1.
+
+`src/rubrist-v2.ts` holds what the three share: the evaluator identity and
+execution binding schema, `skillDigest` v2, and the raw-document guards. v2
+evidence carries the definition digest, never rubric text.
+
+Configuration, policy, and reports still consume v1. When Rubrist emits v2
+(its Batch 8D), Dailies switches in place and deletes the v1 verifiers,
+contracts, and fixtures (ADR-0008 decision 2).
+
 ## Compatibility policy
 
 - Rubrist owns the canonical assessment-receipt contract. Dailies vendors and
