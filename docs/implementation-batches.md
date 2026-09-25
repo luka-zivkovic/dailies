@@ -1,6 +1,6 @@
 # Portfolio implementation batches
 
-Status: **Batch 6 product foundations complete: Rubrist Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5; Batch 7 Rubrist production outcome monitoring is complete under Rubrist ADR-0013; Batch 8 model-agnostic evaluator execution is accepted under Rubrist ADR-0014 and not yet started**
+Status: **Batch 6 product foundations complete: Rubrist Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5; Batch 7 Rubrist production outcome monitoring is complete under Rubrist ADR-0013; Batch 8 model-agnostic evaluator execution is planned under Rubrist ADR-0014**
 
 Last reviewed: 2026-09-25
 
@@ -560,11 +560,14 @@ and binary-calibration v1 bytes are unchanged.
 
 ## Batch 8 — Model-agnostic evaluator execution and evidence v2
 
-Implementation status: **accepted, not started**. Decision gate 12 was
-accepted on 2026-09-25 and is recorded in Rubrist ADR-0014, including the
-founder's answers to its four open questions. Every slice gets an independent
-review against its exact diff, and each review's correctness findings are
-resolved before merge.
+Implementation status: **planned**. Decision gate 12 was accepted on
+2026-09-25 and is recorded in Rubrist ADR-0014, including the founder's
+answers to its four open questions. Every slice gets an independent review
+against its exact diff, and each review's correctness findings are resolved
+before merge.
+
+This batch changes Rubrist and Dailies. Dailies vendors and verifies the v2
+contracts; Casefile's runtime does not change.
 
 Goal: anyone can bind any model as an evaluator. Evidence states exactly what
 was sent, with which verdict protocol and reasoning. A typed-question model
@@ -591,8 +594,14 @@ such as TypeSafe Jev can be an optional evaluator provider.
 - Versioned verdict protocols: `anthropic.structured-output/v1`,
   `anthropic.forced-tool/v1`, `openai.structured-output/v1`,
   `openai.forced-function/v1`, `prompted-json/v1` with a strict
-  single-object parse, `typed-question/v1`, and `mock/v1`. Each pins its
-  injected text, schema transform, token-limit parameter, and parse rule.
+  single-object parse, `typed-question/v1`, and `mock/v1`. Each pins:
+  - the judge preamble, protocol and verdict-instruction text;
+  - the user-message wrapper and evidence serialization;
+  - the output schema and its descriptions, and the schema transform;
+  - the token-limit parameter;
+  - the parse rule.
+- The default, seed, and web starter prompt templates stop naming the
+  verdict mechanism; the protocol text supplies it.
 - Optional sampling parameters, where unset means not sent; a typed
   reasoning shape per provider family; the output token limit in the
   binding; the endpoint identity; and OpenRouter
@@ -605,6 +614,9 @@ such as TypeSafe Jev can be an optional evaluator provider.
 
 - Capability data where the provider publishes it: Anthropic
   `capabilities` and OpenRouter `supported_parameters`.
+- The dated `rubrist-reasoning-defaults/v1` table of documented default
+  reasoning, with its sources. A pre-save lookup that reads it and the
+  capability data.
 - At most 4 probe calls on a fixed, non-sensitive input, including one
   explicit-temperature probe when temperature is unset.
 - Resolution records with status `resolved`, `unresolved`, or `failed`, the
@@ -618,8 +630,13 @@ such as TypeSafe Jev can be an optional evaluator provider.
 
 - v2 bindings and resolution records persisted, with the baseline edited
   in place under ADR-0011.
-- Governed gates require a resolved binding, an explicit temperature where
-  the model accepts one, and explicit reasoning.
+- Governed gates require:
+  - a resolved binding;
+  - an explicit temperature where the model accepts one;
+  - explicit reasoning where the provider family has a reasoning shape and
+    the model accepts a setting.
+- The seeded default binding: `claude-sonnet-4-6`, temperature 0, and
+  reasoning `disabled`.
 - Evaluator versions created after rollout emit v2 receipts, calibration,
   and manifests. v1 versions keep emitting v1 until retired.
 
@@ -634,9 +651,10 @@ such as TypeSafe Jev can be an optional evaluator provider.
 
 ### 8F — authoring UI
 
-- A model picker driven by the resolution. It hides sampling fields the
-  model rejects, offers only supported reasoning modes, and shows the
-  provider's default reasoning as the explicit starting value.
+- A model picker driven by the pre-save lookup. It hides sampling fields
+  the model rejects and offers the reasoning modes the capability data
+  lists. It pre-fills the documented default reasoning, which the author
+  saves explicitly.
 - Resolution status and probe outcome shown to the author, and
   typed-question evaluator authoring.
 
@@ -647,23 +665,44 @@ trace-length gate.
 
 Exit gate:
 
+**Models and resolution**
+
 - A `claude-opus-5-5`, `claude-sonnet-5`, and OpenRouter binding each
   resolve, judge, and run sealed calibration with one physical call per
   item.
-- The evidence states exactly what was sent, including unset parameters,
-  the protocol, and reasoning.
-- A binding requesting a parameter the model rejects fails resolution with
-  the provider's message.
+- A binding requesting a parameter or reasoning mode the model rejects
+  fails resolution with the provider's message. Resolution never changes a
+  saved binding.
 - A resolution that no longer holds stops a governed run before any sealed
   exposure.
+- `OPENAI_BASE_URL` is never applied unless the binding records it.
+- `jev-latest` is refused at governed gates.
+
+**Evidence**
+
+- The evidence states exactly what was sent, including unset parameters,
+  the protocol, and reasoning.
 - A change to injected text produces a new protocol version and a new
   `skillDigest`.
-- A Jev evaluator without a threshold is refused, and one with a threshold
-  calibrates on sealed truth with its probability recorded as
-  `native_probability`.
+- A receipt with an abstention is `complete`. Any failure or
+  `not_attempted` item makes it `incomplete`.
+- Exporting a v2 binding as `skill-format/v1` is refused.
 - Receipt v1, suite manifest v1, and binary-calibration v1 bytes and
   fixtures are unchanged and still verify.
 - Dailies verifies v2 and v1 side by side.
+
+**The founder's four decisions**
+
+- Q1: a governed gate refuses an unset temperature or reasoning setting
+  where the model accepts one, and the picker hides fields the model
+  rejects.
+- Q2: a new binding starts from the documented default reasoning, saved
+  explicitly and covered by `skillDigest`.
+- Q3: `prompted-json/v1` rejects JSON wrapped in prose as
+  `invalid_evaluator_output`.
+- Q4: a Jev evaluator without a threshold is refused. One with a threshold
+  calibrates on sealed truth, and its receipts carry `evaluatorScore` with
+  kind `native_probability`.
 
 ## Cross-product test requirements
 
@@ -719,7 +758,8 @@ historical semantics and must be accepted before their runtime batch:
     report snapshots, retention, and erasure for production outcome
     monitoring, which Rubrist's `PRODUCT.md` places in its charter, are fixed
     by Rubrist ADR-0013.
-12. **Resolved for Batch 8:** model-agnostic execution fixes:
+12. **Resolved for Batch 8:** Rubrist ADR-0014 fixes these parts of
+    model-agnostic evaluator execution:
     - exact bindings;
     - capability resolution;
     - versioned verdict protocols;
@@ -727,7 +767,5 @@ historical semantics and must be accepted before their runtime batch:
     - `assessment-receipt/v2`, `binary-calibration/v2`,
       `evaluator-suite-manifest/v2`, and `skill-format/v2`;
     - typed-question evaluators.
-
-    Rubrist ADR-0014 fixes all of these.
 
 Resolve each in the contract phase of its owning batch before runtime code.

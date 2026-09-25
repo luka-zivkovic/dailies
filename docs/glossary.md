@@ -2,7 +2,7 @@
 
 Status: **active shared vocabulary**
 
-Last reviewed: 2026-09-23
+Last reviewed: 2026-09-25
 
 This file is intentionally vendored in Rubrist, Dailies, and Casefile. Update
 all three copies together. Product-specific scope is defined by each repo's
@@ -19,6 +19,20 @@ all three copies together. Product-specific scope is defined by each repo's
   a release should ship.
 - **Judging skill:** Rubrist's versioned evaluator definition: rubric, prompt,
   output contract, and requested model binding.
+- **Execution binding:** The part of an evaluator version's identity that
+  states exactly what is sent to the model: provider, endpoint, model,
+  sampling and reasoning settings (unset means not sent), output token
+  limit, and verdict protocol.
+- **Resolution record:** What Rubrist learned about an execution binding
+  from provider capability data and probe calls. It confirms or fails the
+  binding and is not part of evaluator identity.
+- **Verdict protocol:** A versioned way of obtaining a structured verdict
+  from a model, such as native structured output or a forced tool call. It
+  pins everything injected around the judging skill.
+- **Typed-question evaluator:** An evaluator whose model answers a typed
+  question, such as a yes-or-no question, with a probability instead of a
+  written verdict. A declared threshold maps the probability to pass or
+  fail.
 - **Human truth:** A reviewed human label or adjudicated result with rater and
   provenance information. It is reference evidence, not an LLM prediction.
 - **Dataset revision:** An immutable, content-identified snapshot of cases,
