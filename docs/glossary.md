@@ -17,8 +17,9 @@ all three copies together. Product-specific scope is defined by each repo's
 - **Evaluator suite:** A versioned, policy-free grouping of independently
   judged criteria and their pinned evaluators. A suite does not decide whether
   a release should ship.
-- **Judging skill:** Rubrist's versioned evaluator definition: rubric, prompt,
-  output contract, and requested model binding.
+- **Judging skill:** Rubrist's versioned evaluator: its definition (rubric,
+  prompt, and output contract) and the model binding it runs with. From
+  evidence v2, that binding is an execution binding.
 - **Execution binding:** The part of an evaluator version's identity that
   states exactly what is sent to the model: provider, endpoint, model,
   sampling and reasoning settings (unset means not sent), output token

@@ -615,10 +615,16 @@ such as TypeSafe Jev can be an optional evaluator provider.
 - Capability data where the provider publishes it: Anthropic
   `capabilities` and OpenRouter `supported_parameters`.
 - The dated `rubrist-reasoning-defaults/v1` table of documented default
-  reasoning, with its sources. A pre-save lookup that reads it and the
-  capability data.
-- At most 4 probe calls on a fixed, non-sensitive input, including one
-  explicit-temperature probe when temperature is unset.
+  reasoning, with its sources.
+- A capability check before save, with at most 6 probes. It reads the
+  capability data and the table, selects the protocol, and tests whether
+  the model accepts temperature and each reasoning mode. Mechanism
+  rejections move to the next protocol; parameter rejections mark that
+  parameter rejected.
+- Resolution after save sends one confirming probe with the exact saved
+  request and never changes the binding. For an unresolved binding, the
+  first governed gate that needs it runs resolution with at most 3 probes.
+  All probes use a fixed, non-sensitive input.
 - Resolution records with status `resolved`, `unresolved`, or `failed`, the
   credential source, and the probe cost.
 - Deterministic protocol defaults when probes can't run.
@@ -635,8 +641,9 @@ such as TypeSafe Jev can be an optional evaluator provider.
   - an explicit temperature where the model accepts one;
   - explicit reasoning where the provider family has a reasoning shape and
     the model accepts a setting.
-- The seeded default binding: `claude-sonnet-4-6`, temperature 0, and
-  reasoning `disabled`.
+- The seeded default binding: `claude-sonnet-4-6`, temperature 0, thinking
+  `disabled` at effort `high`, `anthropic.structured-output/v1`, and an
+  output token limit of 1,200. It is saved unresolved.
 - Evaluator versions created after rollout emit v2 receipts, calibration,
   and manifests. v1 versions keep emitting v1 until retired.
 
@@ -651,10 +658,10 @@ such as TypeSafe Jev can be an optional evaluator provider.
 
 ### 8F — authoring UI
 
-- A model picker driven by the pre-save lookup. It hides sampling fields
-  the model rejects and offers the reasoning modes the capability data
-  lists. It pre-fills the documented default reasoning, which the author
-  saves explicitly.
+- A model picker driven by the capability check. It hides sampling fields
+  the model rejects and offers only the reasoning modes the model accepts.
+  It pre-fills the documented default reasoning, which the author saves
+  explicitly.
 - Resolution status and probe outcome shown to the author, and
   typed-question evaluator authoring.
 
@@ -694,8 +701,9 @@ Exit gate:
 **The founder's four decisions**
 
 - Q1: a governed gate refuses an unset temperature or reasoning setting
-  where the model accepts one, and the picker hides fields the model
-  rejects.
+  where the resolution record shows the model accepting one. For
+  `claude-opus-5-5`, the picker hides the temperature field the capability
+  check shows it rejects.
 - Q2: a new binding starts from the documented default reasoning, saved
   explicitly and covered by `skillDigest`.
 - Q3: `prompted-json/v1` rejects JSON wrapped in prose as
