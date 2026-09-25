@@ -594,12 +594,12 @@ such as TypeSafe Jev can be an optional evaluator provider.
   full definition and, for a typed-question evaluator, the question text.
 - Schemas, canonicalization, positive and negative fixtures, and
   conformance vectors.
-- v2 replaces v1. Dailies switches to v2 in the same window, and neither
-  repository keeps code that emits or verifies v1. The v1 contract documents
-  and fixtures stay unchanged in `contracts/` as superseded history.
-- A Dailies decision, on the pre-launch basis of its ADR-0007, for the
-  Dailies-owned side: a report and configuration version with v2 evidence
-  kinds, and removal of v1 re-verification from historical-report
+- v2 replaces v1. Dailies switches to v2 in the same window as Rubrist's 8D
+  switch, and after it neither repository keeps code, documents, or fixtures
+  for v1.
+- Dailies ADR-0008 for the Dailies-owned side: Dailies vendors and verifies
+  the v2 contracts in 8A, switches its configuration and report formats to
+  v2 evidence in place in the same window as 8D, and removes v3 report
   inspection.
 
 ### 8B — judge runtime
@@ -694,6 +694,14 @@ such as TypeSafe Jev can be an optional evaluator provider.
 - Resolution status and probe outcome shown to the author, and
   typed-question evaluator authoring.
 
+### 8G — launch baseline
+
+- Every contract and format restarts at v1 (Rubrist ADR-0014 decision 7).
+  Rubrist's v2 contracts and the evaluator identity basis take the v1 names,
+  and Dailies' configuration and report formats restart at v1.
+- Superseded contract documents, fixtures, and code are deleted in all three
+  repositories, and the vendored copies follow.
+
 Not in this batch: #102 uncertainty selection, which needs its own decision
 on ADR-0008 selection provenance; `choice` and `score` typed questions,
 which wait for ADR-0004 categorical and scalar calibration; and any
@@ -725,12 +733,10 @@ Exit gate:
 - A receipt carries the definition digest and never the rubric, prompt, or
   question text. Dailies recomputes `skillDigest` v2 from the receipt's
   binding and definition digest.
-- No code in Rubrist or Dailies emits or verifies a v1 receipt,
-  calibration, calibration private ledger, suite manifest, or
-  `skill-format/v1`. The frozen v1 documents and fixtures in `contracts/`
-  are unchanged.
-- Dailies verifies v2, and its report and configuration contracts name v2
-  evidence kinds under its own recorded decision.
+- Dailies verifies the new evidence and nothing older, under its ADR-0008.
+- After the launch baseline, every contract and format in the three
+  repositories is at v1, and no superseded contract, fixture, or code
+  remains.
 
 **The founder's four decisions**
 
