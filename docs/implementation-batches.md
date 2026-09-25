@@ -583,8 +583,9 @@ such as TypeSafe Jev can be an optional evaluator provider.
   - completeness that counts an abstention as an outcome;
   - `evaluatorScore` with its source;
   - `skillDigest` v2.
-- `binary-calibration/v2` and its private ledger v2, `evaluator-suite-manifest/v2`,
-  and `skill-format/v2`. A v2 binding is never exported as v1.
+- `binary-calibration/v2` and its private ledger v2,
+  `evaluator-suite-manifest/v2`, and `skill-format/v2`. A v2 binding is
+  never exported as v1.
 - Schemas, canonicalization, positive and negative fixtures, and
   conformance vectors. Dailies vendors v2 and verifies v2 alongside v1
   before Rubrist emits any v2 evidence.
@@ -620,12 +621,14 @@ such as TypeSafe Jev can be an optional evaluator provider.
   send no optional settings. On the protocol that succeeds, it tests
   temperature with the default reasoning, and tests the default (or a
   middle) reasoning value and the no-reasoning setting. Mechanism
-  rejections move to the next protocol; parameter and value rejections mark
-  that parameter or value rejected, and an unattributed rejection counts as
-  a value rejection.
+  rejections, and any unattributed rejection of a protocol probe, move to
+  the next protocol. Parameter and value rejections mark that parameter or
+  value rejected, and an unattributed rejection of a temperature or
+  reasoning probe counts as a value rejection.
 - Resolution after save sends one confirming probe with the exact saved
   request, plus a temperature probe with the saved reasoning where
-  temperature is unset, and never changes the binding. An unresolved
+  temperature is unset and no such probe has a recorded outcome, and never
+  changes the binding. An unresolved
   binding resolves at the first governed gate or run that needs it, or on
   demand, with at most 3 probes. All probes use a fixed, non-sensitive
   input.
@@ -633,6 +636,8 @@ such as TypeSafe Jev can be an optional evaluator provider.
   settings each probe sent, the credential source, and the probe cost. Only
   a rejected or protocol-breaking confirming probe sets `failed`; transient,
   authentication, and invalid-output errors leave a binding unresolved.
+  The record keeps the latest attempt; an earlier unresolved attempt is
+  recorded against what triggered it.
 - Deterministic protocol defaults when probes can't run.
 - A re-check before sealed calibration authorization and before any
   governed run starts, with one to three probes that also re-test unset
@@ -646,8 +651,9 @@ such as TypeSafe Jev can be an optional evaluator provider.
   in place under ADR-0011.
 - Governed gates require:
   - a resolved binding;
-  - an explicit temperature unless the model rejects the parameter itself
-    with the saved reasoning;
+  - an explicit temperature unless the family takes no sampling settings
+    (`typesafe`, `mock`) or the model rejects the parameter itself with the
+    saved reasoning;
   - explicit reasoning unless the provider family has no reasoning shape
     or the model rejects the reasoning parameter itself.
 - The seeded default binding: `anthropic` on its managed endpoint, model id
@@ -712,9 +718,11 @@ Exit gate:
 **The founder's four decisions**
 
 - Q1: a governed gate refuses an unset temperature or reasoning setting
-  where the resolution record shows the model accepting one. For
-  `claude-opus-5-5`, the picker hides the temperature field the capability
-  check shows it rejects.
+  unless the family has no such setting or the resolution record shows the
+  model rejecting that parameter itself (for temperature, with the saved
+  reasoning). A value-only or unattributed rejection still requires an
+  explicit value. For `claude-opus-5-5`, the picker hides the temperature
+  field the capability check shows it rejects.
 - Q2: a new binding starts from the documented default reasoning, saved
   explicitly and covered by `skillDigest`.
 - Q3: `prompted-json/v1` rejects JSON wrapped in prose as
