@@ -266,8 +266,9 @@ multi-criterion imports and UI selection, and canonical policy-free suite
 manifest v1 artifacts while leaving receipt v1 unchanged. Dailies v5 vendors
 and verifies that contract, collects separate criterion receipts, and applies
 explicit mandatory, blocking, advisory, or formula-defined compensatory
-customer policy without a default weighted average. V3/v4 Dailies artifacts
-remain read-only/compatible.
+customer policy without a default weighted average. V4 Dailies artifacts
+remain compatible; v3 report inspection was removed under Dailies ADR-0008
+(2026-09-25).
 
 ### Rubrist
 
@@ -562,15 +563,17 @@ and binary-calibration v1 bytes are unchanged.
 
 Implementation status: **planned**. Decision gate 12 was accepted on
 2026-09-25 and is recorded in Rubrist ADR-0014, including the founder's
-answers to its four open questions and two later decisions: receipts carry a
-definition digest, and v2 replaces v1. The first 8A slice (#125, shared
+answers to its four open questions and three later decisions: receipts
+carry a definition digest, v2 replaces v1, and a launch baseline restarts
+every versioned identifier at v1. The first 8A slice (#125, shared
 identity contracts) is merged; its `skillDigestV2` moves to the
 definition-digest construction (#127) before first use. Every slice gets an independent review
 against its exact diff, and each review's correctness findings are resolved
 before merge.
 
 This batch changes Rubrist and Dailies. Both switch to the v2 contracts in
-one window and drop v1 support; Casefile's runtime does not change.
+one window and drop v1 support. Casefile changes only in the launch baseline
+(8G), which renumbers its formats.
 
 Goal: anyone can bind any model as an evaluator. Evidence states exactly what
 was sent, with which verdict protocol and reasoning. A typed-question model
@@ -696,9 +699,18 @@ such as TypeSafe Jev can be an optional evaluator provider.
 
 ### 8G — launch baseline
 
-- Every contract and format restarts at v1 (Rubrist ADR-0014 decision 7).
-  Rubrist's v2 contracts and the evaluator identity basis take the v1 names,
-  and Dailies' configuration and report formats restart at v1.
+- Every versioned identifier restarts at v1 (Rubrist ADR-0014 decision 7):
+  - Rubrist: the v2 evidence contracts, the evaluator identity basis,
+    `rubrist/production-calibration/v2`, and its metric definition;
+  - Dailies: configuration and report versions 4 to 6, release policy v2,
+    and the `rubrist_receipt_v2` and `rubrist_binary_calibration_v2`
+    evidence kinds, which return to `_v1` names (Dailies ADR-0008);
+  - Casefile: report version 2 and the `casefile-artifact-content/v2`
+    content-hash basis, which changes every artifact digest and lock
+    (Casefile ADR-0003).
+- Dailies' single-criterion, suite, and calibration-aware formats can't all
+  share one version number while they stay separate, so a recorded Dailies
+  decision on keeping or consolidating them comes first.
 - Superseded contract documents, fixtures, and code are deleted in all three
   repositories, and the vendored copies follow.
 

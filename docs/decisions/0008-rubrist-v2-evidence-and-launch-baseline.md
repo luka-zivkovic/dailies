@@ -60,12 +60,16 @@ the best end state.
    renumbers every format anyway.
 3. **Remove v3 report inspection now.** `parseReportForInspection` stops
    reading v3 reports, and the captured v3 fixtures are deleted.
-4. **Restart at v1 with Rubrist's launch baseline (Batch 8G).** Dailies'
-   configuration and report formats restart at v1, and the vendored Rubrist
-   contracts take their v1 names. That slice also decides whether the
-   single-criterion, suite, and calibration-aware formats stay separate or
-   are consolidated. No product capability is removed without the founder's
-   decision.
+4. **Restart at v1 with Rubrist's launch baseline (Batch 8G).** Every
+   versioned identifier in Dailies restarts at v1: configuration and report
+   versions 4 to 6, release policy v2, and the `rubrist_receipt_v2` and
+   `rubrist_binary_calibration_v2` evidence kinds, which return to `_v1`
+   names; the vendored Rubrist contracts take their v1 names. The
+   single-criterion, suite, and calibration-aware formats can't all share
+   one version number while they stay separate, and both configuration
+   loading and `parseReportForInspection` choose a format by version, so a
+   recorded Dailies decision on keeping or consolidating them comes before
+   8G. No product capability is removed without the founder's decision.
 
 ## Consequences
 
