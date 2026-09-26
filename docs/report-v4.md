@@ -3,7 +3,7 @@
 Status: **accepted Batch 1B contract**
 
 Version 4 makes evidence scope and trust part of the release decision. Its
-Rubrist evidence is assessment receipt v2 (ADR-0008), and it does not introduce
+Rubrist evidence is the assessment receipt, `rubrist/assessment-receipt/v1` (ADR-0008), and it does not introduce
 multi-criterion policy.
 It remains an executable compatibility contract after additive v5 introduced
 criterion suites; v4 artifacts are never reinterpreted as suite evidence.
@@ -40,7 +40,7 @@ Trust is derived from the integration path and cannot be supplied by a judge:
 | Judge path | Trust class | Derivation |
 | --- | --- | --- |
 | Exact match | `deterministic` | `exact_match_v1` |
-| Fully verified Rubrist receipt path | `verified` | `rubrist_receipt_v2` |
+| Fully verified Rubrist receipt path | `verified` | `rubrist_receipt_v1` |
 | Generic HTTP judge | `self_reported` | `http_judge_v1` |
 
 Completed item evidence records the derived class. Candidate or judge errors

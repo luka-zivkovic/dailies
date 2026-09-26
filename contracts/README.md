@@ -1,40 +1,39 @@
 # Vendored Rubrist evidence contracts
 
-Rubrist ADR-0014 replaced the v1 evaluator identity with a definition digest
-plus the exact execution binding. Dailies vendors Rubrist's v2 evidence
-contracts byte-identically and verifies them independently, and every report
-format consumes them (Dailies ADR-0008). No v1 verifier, contract, or fixture
-remains.
+Rubrist's evaluator identity is a definition digest plus the exact execution
+binding (Rubrist ADR-0014). Dailies vendors Rubrist's evidence contracts
+byte-identically and verifies them independently, and every report format
+consumes them (Dailies ADR-0008 and ADR-0010).
 
-- `rubrist/assessment-receipt/v2`: schema, specification, complete and
+- `rubrist/assessment-receipt/v1`: schema, specification, complete and
   incomplete fixtures, and conformance corpus, verified by
-  `src/rubrist-receipt-v2.ts`. Reports v4 to v6 consume it through the
-  `rubrist_receipt_v2` evidence kind. Each item has exactly one outcome
+  `src/rubrist-receipt.ts`. Reports v4 to v6 consume it through the
+  `rubrist_receipt_v1` evidence kind. Each item has exactly one outcome
   (`pass`, `fail`, or `abstain`), failure, or `not_attempted` result; an
   abstention leaves a receipt complete, and Dailies counts it as not passing
   (ADR-0009).
-- `rubrist/evaluator-suite-manifest/v2`: schema, specification, fixture, and
-  corpus, verified by `src/suite-manifest-v2.ts`. The manifest binds ordered
+- `rubrist/evaluator-suite-manifest/v1`: schema, specification, fixture, and
+  corpus, verified by `src/suite-manifest.ts`. The manifest binds ordered
   criterion definitions to exact evaluator versions while each criterion
   produces its own receipt. Dailies pins and verifies the manifest before
   candidate or provider execution, then supplies the customer-owned release
   roles and thresholds that the producer contract deliberately excludes.
-- `rubrist/binary-calibration/v2`: schema, specification, complete, repeated,
+- `rubrist/binary-calibration/v1`: schema, specification, complete, repeated,
   incomplete, and typed-question fixtures, the 114-case corpus, and the
   independent Wilson-score reference, verified by
-  `src/binary-calibration-v2.ts`. Report v6 consumes it through the
-  `rubrist_binary_calibration_v2` evidence kind. The verifier checks exact
+  `src/binary-calibration.ts`. Report v6 consumes it through the
+  `rubrist_binary_calibration_v1` evidence kind. The verifier checks exact
   canonical bytes, artifact and requested-binding digests, aggregate
   conservation, metric and binary64 interval recomputation, provider grouping,
   lifecycle state, and the complete expected-identity tuple without importing
   Rubrist runtime code.
 
-`src/rubrist-v2.ts` holds what the three share: the evaluator identity and
-execution binding schema, `skillDigest` v2, and the raw-document guards, and
-`src/rubrist-canonical.ts` holds Rubrist's canonical JSON. v2 evidence carries
-the definition digest, never rubric text.
+`src/rubrist-identity.ts` holds what the three share: the evaluator identity
+and execution binding schema, `skillDigest`, and the raw-document guards, and
+`src/rubrist-canonical.ts` holds Rubrist's canonical JSON. The evidence
+carries the definition digest, never rubric text.
 
-The private `rubrist/binary-calibration-private-ledger/v2` schema and fixture
+The private `rubrist/binary-calibration-private-ledger/v1` schema and fixture
 are intentionally not vendored and are inaccessible to Dailies. The public
 artifact exposes only its opaque commitment. Dailies must not attempt to
 dereference that commitment or treat it as per-observation evidence.
@@ -51,7 +50,7 @@ dereference that commitment or treat it as per-observation evidence.
 - Dailies owns release policy. Receipt fixtures must never contain thresholds,
   promote/block decisions, rollout configuration, or overrides.
 - Calibration and uncertainty do not extend the receipt. They use the
-  separate, closed `rubrist/binary-calibration/v2` artifact.
+  separate, closed `rubrist/binary-calibration/v1` artifact.
 - The suite manifest is independently closed and content addressed. Dailies
   accepts only exact canonical bytes with the configured manifest identity and
   digest. It never selects an unpinned latest suite.

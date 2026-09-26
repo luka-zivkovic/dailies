@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://rubrist.dev/contracts/evaluator-suite-manifest-v2.schema.json",
-  "title": "Rubrist evaluator suite manifest v2",
+  "$id": "https://rubrist.dev/contracts/evaluator-suite-manifest-v1.schema.json",
+  "title": "Rubrist evaluator suite manifest v1",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -17,10 +17,10 @@
   ],
   "properties": {
     "contract": {
-      "const": "rubrist/evaluator-suite-manifest/v2"
+      "const": "rubrist/evaluator-suite-manifest/v1"
     },
     "schemaVersion": {
-      "const": 2
+      "const": 1
     },
     "manifestId": {
       "$ref": "#/$defs/nonEmptyString"

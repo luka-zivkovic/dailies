@@ -63,7 +63,7 @@ export {
   type BinaryCalibrationTrial,
   type ExactRational,
   type ExpectedBinaryCalibrationIdentity,
-} from './binary-calibration-v2.js';
+} from './binary-calibration.js';
 export {
   CALIBRATION_POLICY_REASON_ORDER,
   calibrationCollectionIncompleteReasonSchema,
@@ -115,21 +115,21 @@ export {
   RUBRIST_EVALUATOR_IDENTITY_BASIS,
   rubristEvaluatorIdentitySchema,
   rubristExecutionBindingSchema,
-  rubristSkillDigestV2,
+  rubristSkillDigest,
   type RubristEvaluatorIdentity,
   type RubristExecutionBinding,
-} from './rubrist-v2.js';
+} from './rubrist-identity.js';
 export {
-  RUBRIST_RECEIPT_V2_CONTRACT,
-  parseCanonicalRubristReceiptV2Bytes,
-  rubristReceiptV2Schema,
-  verifyRubristReceiptV2,
+  RUBRIST_RECEIPT_CONTRACT,
+  parseCanonicalRubristReceiptBytes,
+  rubristReceiptSchema,
+  verifyRubristReceipt,
   type RubristOutcome,
-  type RubristReceiptV2,
-  type RubristReceiptV2Expectations,
-  type RubristReceiptV2Item,
-  type RubristReceiptV2Verification,
-} from './rubrist-receipt-v2.js';
+  type RubristReceipt,
+  type RubristReceiptExpectations,
+  type RubristReceiptItem,
+  type RubristReceiptVerification,
+} from './rubrist-receipt.js';
 export {
   ERROR_KINDS,
   OperationError,
@@ -306,19 +306,19 @@ export {
   type RunCalibrationSuiteOptions,
 } from './suite-runner-v6.js';
 export {
-  evaluatorSuiteCriterionDigestV2,
-  evaluatorSuiteManifestV2Digest,
-  evaluatorSuiteManifestV2MemberSchema,
-  evaluatorSuiteManifestV2Schema,
-  evaluatorSuiteTrialPlanV2Schema,
-  loadEvaluatorSuiteManifestV2,
-  parseCanonicalEvaluatorSuiteManifestV2Bytes,
-  verifyEvaluatorSuiteManifestV2,
-  verifyReceiptV2ManifestBinding,
-  type EvaluatorSuiteManifestV2,
-  type EvaluatorSuiteManifestV2Member,
-  type ExpectedEvaluatorSuiteManifestV2,
-} from './suite-manifest-v2.js';
+  evaluatorSuiteCriterionDigest,
+  evaluatorSuiteManifestDigest,
+  evaluatorSuiteManifestMemberSchema,
+  evaluatorSuiteManifestSchema,
+  evaluatorSuiteTrialPlanSchema,
+  loadEvaluatorSuiteManifest,
+  parseCanonicalEvaluatorSuiteManifestBytes,
+  verifyEvaluatorSuiteManifest,
+  verifyReceiptManifestBinding,
+  type EvaluatorSuiteManifest,
+  type EvaluatorSuiteManifestMember,
+  type ExpectedEvaluatorSuiteManifest,
+} from './suite-manifest.js';
 export {
   DIGEST_SUPPORTED_SCHEMA_VERSIONS,
   formatDigestSyncResult,

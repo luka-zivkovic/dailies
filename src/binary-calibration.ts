@@ -1,11 +1,11 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { canonicalJson, sha256Digest } from './rubrist-canonical.js';
-import { rubristEvaluatorIdentitySchema, rubristSkillDigestV2 } from './rubrist-v2.js';
+import { rubristEvaluatorIdentitySchema, rubristSkillDigest } from './rubrist-identity.js';
 
-// Rubrist binary calibration v2 (contracts/binary-calibration-v2.md), verified
+// Rubrist binary calibration (contracts/binary-calibration-v1.md), verified
 // independently of Rubrist's runtime. It keeps every v1 rule except what
-// Rubrist ADR-0014 changes: the evaluator is the v2 evaluator identity with
+// Rubrist ADR-0014 changes: the evaluator is the evaluator identity with
 // skillDigest and requestedBindingDigest recomputed from it, errors use the
 // shared failure taxonomy, never-attempted items are `notAttempted`, provider
 // groups record the OpenRouter upstream, and a typed-question evaluator never
@@ -98,7 +98,7 @@ const criterionSchema = z.object({
 const evaluatorSchema = z.object({
   skillId: publicStringSchema,
   skillVersionId: publicStringSchema,
-  // The same object receipt v2 carries as `evaluator`: basis, definition digest, execution binding.
+  // The same object receipt carries as `evaluator`: basis, definition digest, execution binding.
   identity: rubristEvaluatorIdentitySchema,
   skillDigest: digestSchema,
   outputContractDigest: digestSchema,
@@ -321,8 +321,8 @@ const trialSchema = z.object({
 }).strict();
 
 export const binaryCalibrationArtifactSchema = z.object({
-  contract: z.literal('rubrist/binary-calibration/v2'),
-  schemaVersion: z.literal(2),
+  contract: z.literal('rubrist/binary-calibration/v1'),
+  schemaVersion: z.literal(1),
   canonicalizationVersion: z.literal('rubrist-canonical-json/v1'),
   artifactId: publicStringSchema,
   calibrationRunId: publicStringSchema,
@@ -356,7 +356,7 @@ export const binaryCalibrationArtifactSchema = z.object({
   trialPlan: trialPlanSchema,
   truthSupport: truthSupportSchema,
   privateLedger: z.object({
-    contract: z.literal('rubrist/binary-calibration-private-ledger/v2'),
+    contract: z.literal('rubrist/binary-calibration-private-ledger/v1'),
     commitmentDigest: digestSchema,
   }).strict(),
   trials: z.array(trialSchema).min(1).max(10),
@@ -544,7 +544,7 @@ function assertExactCalendarTimestamp(value: string): void {
 }
 
 // The only numbers that may be fractional: the execution binding's sampling
-// settings, serialized as ECMAScript does, exactly as in receipt v2.
+// settings, serialized as ECMAScript does, exactly as in receipt.
 const SAMPLING_PATHS = new Set([
   'evaluator.identity.executionBinding.sampling.temperature',
   'evaluator.identity.executionBinding.sampling.topP',
@@ -919,7 +919,7 @@ export function verifyBinaryCalibrationArtifact(
   if (!parsed.success) {
     throw new BinaryCalibrationIntegrityError(
       'invalid_structure',
-      `binary calibration artifact does not match v2 contract: ${parsed.error.message}`,
+      `binary calibration artifact does not match its contract: ${parsed.error.message}`,
       { cause: parsed.error },
     );
   }
@@ -942,7 +942,7 @@ export function verifyBinaryCalibrationArtifact(
     );
   }
 
-  if (artifact.evaluator.skillDigest !== rubristSkillDigestV2(artifact.evaluator.identity)) {
+  if (artifact.evaluator.skillDigest !== rubristSkillDigest(artifact.evaluator.identity)) {
     throw new BinaryCalibrationIntegrityError('digest_mismatch', 'skillDigest does not match its evaluator identity');
   }
   if (artifact.evaluator.requestedBindingDigest !== sha256Digest(artifact.evaluator.identity.executionBinding)) {

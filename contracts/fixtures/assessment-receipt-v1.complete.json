@@ -1,5 +1,5 @@
 {
-  "contract": "rubrist/assessment-receipt/v2",
+  "contract": "rubrist/assessment-receipt/v1",
   "definition": {
     "kind": "prompted",
     "rubricMarkdown": "# The reply answers the question\n\nPass when the reply answers what was asked.",
@@ -29,10 +29,10 @@
     }
   ],
   "receipt": {
-    "contract": "rubrist/assessment-receipt/v2",
-    "schemaVersion": 2,
-    "receiptId": "receipt-contract-v2-run-1",
-    "evalRunId": "contract-v2-run-1",
+    "contract": "rubrist/assessment-receipt/v1",
+    "schemaVersion": 1,
+    "receiptId": "receipt-contract-run-1",
+    "evalRunId": "contract-run-1",
     "projectId": "project-contract",
     "skillId": "skill-contract",
     "skillVersionId": "skill-version-contract-2",
@@ -48,7 +48,7 @@
       "agreedItems": 2
     },
     "evaluator": {
-      "basis": "rubrist/evaluator-identity/v2",
+      "basis": "rubrist/evaluator-identity/v1",
       "definitionDigest": "sha256:baa54e1a08fdaef39ed50815f15bb99c0515fd8e8cc798f37c689ea345f8bfb0",
       "executionBinding": {
         "provider": "anthropic",
@@ -73,7 +73,7 @@
         "routing": null
       }
     },
-    "skillDigest": "sha256:b237708d5c9293a8b1ce9b32b242e0e519ab1bc2c65621f4dbe5dcf80ac46c2e",
+    "skillDigest": "sha256:2370be636e2002c213cd5a8f3cd46479d32849141efec8b626d2223ee52343d2",
     "datasetDigest": "sha256:74831cbbfc260622d63a17d64806a18013755af284dc52c259450de7a5d7e512",
     "items": [
       {
@@ -146,6 +146,6 @@
         }
       }
     ],
-    "evidenceDigest": "sha256:ff34eaf7fb41e4b538eb790cba541a81e1252d8f78df70ad532c126665f4b8e7"
+    "evidenceDigest": "sha256:71697b8ac8c98d2784c57412459863dc99c70085b43dfff4eecd47d8df1a280a"
   }
 }

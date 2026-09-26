@@ -4,10 +4,10 @@ import { Ajv2020 } from 'ajv/dist/2020.js';
 import { describe, expect, it } from 'vitest';
 import { canonicalJson, sha256Digest, type RubristCandidateItem } from '../src/rubrist.js';
 import {
-  parseCanonicalRubristReceiptV2Bytes,
-  rubristReceiptV2Schema,
-  verifyRubristReceiptV2,
-} from '../src/rubrist-receipt-v2.js';
+  parseCanonicalRubristReceiptBytes,
+  rubristReceiptSchema,
+  verifyRubristReceipt,
+} from '../src/rubrist-receipt.js';
 
 type Mutation =
   | { op: 'add'; path: string; value: unknown }
@@ -39,18 +39,18 @@ interface Vector {
 const contractRoot = new URL('../contracts/', import.meta.url);
 // Byte-identical to Rubrist's published copies (Dailies ADR-0008).
 const pinnedFileDigests = {
-  schema: '701aed7aa5931fad30e876ce3e075c7b3d4de992e0b5eb4537ed26d26c5b7826',
-  specification: '7dc4c844c7da77559955f4bf0f5eb5a2b43ea899c84e5bd04889000b08f9b793',
-  complete: '23b972a1ba9e78c5ea074ea9fb9abf7df74c108c8a58d14f473ee82d910e00eb',
-  incomplete: 'bdfb4378c78410274a78cf6f7545ed7440e10b67693161a0c211123e10f317b0',
-  conformance: 'f9269a1b5d35fa76ddb05a9d47d3722c7abc121d5437237c3e3fb0dba0f54432',
+  schema: '3b572012a4cf6172ecee46e9de6e821a5bae431f2489ac39e85393f2fb2b5129',
+  specification: '443cc16d6e0c77309182890b8476826d0049be7acc68adb2e4c1f9e9b32e7fad',
+  complete: '2f5d3f00eb633da22472242c0c0a9abb2e5e7ab4e7c15bbe28dd2eae77ab20eb',
+  incomplete: '23e3022bf6d31dec1954bcd890d8c6be7bc5a5c9bba807e25aa053aecbf8cc3a',
+  conformance: '98924a3591381322f19c9aed9c981b78b6b233a684bb8f27dc6504f1ce363f73',
 } as const;
 
 const fileBytes = (path: string) => readFileSync(new URL(path, contractRoot));
 const loadJson = (path: string): unknown => JSON.parse(fileBytes(path).toString('utf8'));
 const fileDigest = (path: string) => createHash('sha256').update(fileBytes(path)).digest('hex');
 const vector = (name: string) => loadJson(`fixtures/${name}`) as Vector;
-const corpus = () => loadJson('fixtures/assessment-receipt-v2.conformance.json') as { baseFixture: string; cases: ConformanceCase[] };
+const corpus = () => loadJson('fixtures/assessment-receipt-v1.conformance.json') as { baseFixture: string; cases: ConformanceCase[] };
 
 function pointerTarget(root: unknown, pointer: string): { parent: unknown; key: string } {
   const segments = pointer.split('/').slice(1).map((segment) => segment.replace(/~1/g, '/').replace(/~0/g, '~'));
@@ -104,41 +104,41 @@ function materialize(testCase: ConformanceCase, base: string): { v: Vector; raw:
   return { v, raw: receipt };
 }
 
-describe('vendored Rubrist assessment receipt v2 (Dailies ADR-0008)', () => {
+describe('vendored Rubrist assessment receipt (Dailies ADR-0008)', () => {
   it('pins the vendored schema, specification, and vectors byte for byte', () => {
-    expect(fileDigest('assessment-receipt-v2.schema.json')).toBe(pinnedFileDigests.schema);
-    expect(fileDigest('assessment-receipt-v2.md')).toBe(pinnedFileDigests.specification);
-    expect(fileDigest('fixtures/assessment-receipt-v2.complete.json')).toBe(pinnedFileDigests.complete);
-    expect(fileDigest('fixtures/assessment-receipt-v2.incomplete.json')).toBe(pinnedFileDigests.incomplete);
-    expect(fileDigest('fixtures/assessment-receipt-v2.conformance.json')).toBe(pinnedFileDigests.conformance);
+    expect(fileDigest('assessment-receipt-v1.schema.json')).toBe(pinnedFileDigests.schema);
+    expect(fileDigest('assessment-receipt-v1.md')).toBe(pinnedFileDigests.specification);
+    expect(fileDigest('fixtures/assessment-receipt-v1.complete.json')).toBe(pinnedFileDigests.complete);
+    expect(fileDigest('fixtures/assessment-receipt-v1.incomplete.json')).toBe(pinnedFileDigests.incomplete);
+    expect(fileDigest('fixtures/assessment-receipt-v1.conformance.json')).toBe(pinnedFileDigests.conformance);
   });
 
   it('verifies both positive vectors with candidate linkage, recomputing skillDigest from the receipt alone', () => {
-    const complete = vector('assessment-receipt-v2.complete.json');
-    expect(verifyRubristReceiptV2(complete.receipt, { candidates: complete.candidates }))
+    const complete = vector('assessment-receipt-v1.complete.json');
+    expect(verifyRubristReceipt(complete.receipt, { candidates: complete.candidates }))
       .toEqual({ status: 'complete', outcomes: new Map([['a', 'pass'], ['b', 'fail'], ['c', 'abstain']]) });
     // An incomplete receipt yields no outcomes, even for items with one.
-    const incomplete = vector('assessment-receipt-v2.incomplete.json');
-    expect(verifyRubristReceiptV2(incomplete.receipt, { candidates: incomplete.candidates }))
+    const incomplete = vector('assessment-receipt-v1.incomplete.json');
+    expect(verifyRubristReceipt(incomplete.receipt, { candidates: incomplete.candidates }))
       .toEqual({ status: 'incomplete', outcomes: new Map() });
   });
 
   it('refuses duplicate candidate ids, which would hide a candidate from linkage', () => {
-    const complete = vector('assessment-receipt-v2.complete.json');
+    const complete = vector('assessment-receipt-v1.complete.json');
     const [first] = complete.candidates;
     const duplicated = [{ ...first!, input: 'bogus', output: 'bogus' }, ...complete.candidates];
-    expect(() => verifyRubristReceiptV2(complete.receipt, { candidates: duplicated }))
+    expect(() => verifyRubristReceipt(complete.receipt, { candidates: duplicated }))
       .toThrow(/candidate clientItemId values must be unique/);
   });
 
   it('keeps JSON Schema and the Dailies runtime schema aligned over the portable corpus', () => {
-    const validate = new Ajv2020({ strict: true, allErrors: true }).compile(loadJson('assessment-receipt-v2.schema.json') as object);
+    const validate = new Ajv2020({ strict: true, allErrors: true }).compile(loadJson('assessment-receipt-v1.schema.json') as object);
     const { baseFixture, cases } = corpus();
     for (const testCase of cases) {
       const { raw } = materialize(testCase, baseFixture);
       const expected = testCase.structural === 'accept';
       expect(validate(raw), `JSON Schema: ${testCase.name}`).toBe(expected);
-      expect(rubristReceiptV2Schema.safeParse(raw).success, `Dailies schema: ${testCase.name}`).toBe(expected);
+      expect(rubristReceiptSchema.safeParse(raw).success, `Dailies schema: ${testCase.name}`).toBe(expected);
     }
   });
 
@@ -146,7 +146,7 @@ describe('vendored Rubrist assessment receipt v2 (Dailies ADR-0008)', () => {
     const { baseFixture, cases } = corpus();
     for (const testCase of cases.filter((entry) => entry.semantic !== 'not-run')) {
       const { v, raw } = materialize(testCase, baseFixture);
-      const verify = () => verifyRubristReceiptV2(raw, {
+      const verify = () => verifyRubristReceipt(raw, {
         evalRunId: testCase.expectedEvalRunId,
         skillVersionId: testCase.expectedSkillVersionId,
         skillDigest: testCase.expectedSkillDigest,
@@ -162,20 +162,20 @@ describe('vendored Rubrist assessment receipt v2 (Dailies ADR-0008)', () => {
   });
 
   it('parses only exact canonical UTF-8 bytes without a byte-order mark', () => {
-    const receipt = vector('assessment-receipt-v2.incomplete.json').receipt;
+    const receipt = vector('assessment-receipt-v1.incomplete.json').receipt;
     const bytes = Buffer.from(canonicalJson(receipt), 'utf8');
-    expect(parseCanonicalRubristReceiptV2Bytes(bytes).receipt).toEqual(receipt);
-    expect(() => parseCanonicalRubristReceiptV2Bytes(Buffer.from(JSON.stringify(receipt, null, 2)))).toThrow('not exact canonical JSON');
-    expect(() => parseCanonicalRubristReceiptV2Bytes(Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), bytes]))).toThrow('not valid JSON');
-    expect(() => parseCanonicalRubristReceiptV2Bytes(Uint8Array.from([0xff]))).toThrow('not valid UTF-8');
+    expect(parseCanonicalRubristReceiptBytes(bytes).receipt).toEqual(receipt);
+    expect(() => parseCanonicalRubristReceiptBytes(Buffer.from(JSON.stringify(receipt, null, 2)))).toThrow('not exact canonical JSON');
+    expect(() => parseCanonicalRubristReceiptBytes(Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), bytes]))).toThrow('not valid JSON');
+    expect(() => parseCanonicalRubristReceiptBytes(Uint8Array.from([0xff]))).toThrow('not valid UTF-8');
   });
 
   it('refuses what JSON Schema cannot express: lone surrogates and hostile nesting', () => {
-    const receipt = structuredClone(vector('assessment-receipt-v2.complete.json').receipt) as Record<string, unknown>;
-    expect(rubristReceiptV2Schema.safeParse({ ...receipt, receiptId: 'receipt\ud800' }).success).toBe(false);
+    const receipt = structuredClone(vector('assessment-receipt-v1.complete.json').receipt) as Record<string, unknown>;
+    expect(rubristReceiptSchema.safeParse({ ...receipt, receiptId: 'receipt\ud800' }).success).toBe(false);
     let payload: unknown = 'leaf';
     for (let depth = 0; depth < 5_000; depth += 1) payload = [payload];
-    expect(() => rubristReceiptV2Schema.safeParse({ ...receipt, unexpected: payload })).not.toThrow();
-    expect(rubristReceiptV2Schema.safeParse({ ...receipt, unexpected: payload }).success).toBe(false);
+    expect(() => rubristReceiptSchema.safeParse({ ...receipt, unexpected: payload })).not.toThrow();
+    expect(rubristReceiptSchema.safeParse({ ...receipt, unexpected: payload }).success).toBe(false);
   });
 });

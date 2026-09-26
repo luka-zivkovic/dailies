@@ -2,17 +2,16 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { z } from 'zod';
 import { canonicalJson } from './rubrist-canonical.js';
-import type { RubristReceiptV2 } from './rubrist-receipt-v2.js';
-import { withRubristV2RawGuards } from './rubrist-v2.js';
+import type { RubristReceipt } from './rubrist-receipt.js';
+import { withRubristRawGuards } from './rubrist-identity.js';
 
-// Rubrist evaluator suite manifest v2 (contracts/evaluator-suite-manifest-v2.md),
-// verified independently of Rubrist's runtime. v1's shape and rules; members
-// carry the v2 skillDigest. It replaced manifest v1 (Dailies ADR-0008).
+// Rubrist evaluator suite manifest (contracts/evaluator-suite-manifest-v1.md),
+// verified independently of Rubrist's runtime; members carry the skillDigest.
 
 const digestSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
 const nonEmptyStringSchema = z.string().min(1);
 
-export const evaluatorSuiteManifestV2MemberSchema = z.object({
+export const evaluatorSuiteManifestMemberSchema = z.object({
   position: z.number().int().nonnegative().max(Number.MAX_SAFE_INTEGER),
   criterionId: nonEmptyStringSchema,
   criterionVersionId: nonEmptyStringSchema,
@@ -26,40 +25,40 @@ export const evaluatorSuiteManifestV2MemberSchema = z.object({
   applicability: z.object({ kind: z.literal('all_items') }).strict(),
 }).strict();
 
-export const evaluatorSuiteTrialPlanV2Schema = z.object({
+export const evaluatorSuiteTrialPlanSchema = z.object({
   kind: z.literal('independent_repetitions'),
   trialsPerItem: z.number().int().min(2).max(10),
 }).strict();
 
 const manifestObjectSchema = z.object({
-  contract: z.literal('rubrist/evaluator-suite-manifest/v2'),
-  schemaVersion: z.literal(2),
+  contract: z.literal('rubrist/evaluator-suite-manifest/v1'),
+  schemaVersion: z.literal(1),
   manifestId: nonEmptyStringSchema,
   suiteId: nonEmptyStringSchema,
   projectId: nonEmptyStringSchema,
   revision: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
-  members: z.array(evaluatorSuiteManifestV2MemberSchema).min(1),
-  trialPlan: evaluatorSuiteTrialPlanV2Schema.nullable(),
+  members: z.array(evaluatorSuiteManifestMemberSchema).min(1),
+  trialPlan: evaluatorSuiteTrialPlanSchema.nullable(),
   manifestDigest: digestSchema,
 }).strict();
 
-export const evaluatorSuiteManifestV2Schema = withRubristV2RawGuards(manifestObjectSchema, 'suite manifests');
-export type EvaluatorSuiteManifestV2 = z.infer<typeof manifestObjectSchema>;
-export type EvaluatorSuiteManifestV2Member = z.infer<typeof evaluatorSuiteManifestV2MemberSchema>;
+export const evaluatorSuiteManifestSchema = withRubristRawGuards(manifestObjectSchema, 'suite manifests');
+export type EvaluatorSuiteManifest = z.infer<typeof manifestObjectSchema>;
+export type EvaluatorSuiteManifestMember = z.infer<typeof evaluatorSuiteManifestMemberSchema>;
 
-export interface ExpectedEvaluatorSuiteManifestV2 {
+export interface ExpectedEvaluatorSuiteManifest {
   manifestId: string;
   manifestDigest: string;
-  members?: EvaluatorSuiteManifestV2Member[];
+  members?: EvaluatorSuiteManifestMember[];
 }
 
 function digest(value: unknown): string {
   return `sha256:${createHash('sha256').update(canonicalJson(value)).digest('hex')}`;
 }
 
-export function evaluatorSuiteCriterionDigestV2(
+export function evaluatorSuiteCriterionDigest(
   input: Pick<
-    EvaluatorSuiteManifestV2Member,
+    EvaluatorSuiteManifestMember,
     'criterionId' | 'criterionVersionId' | 'criterionName' | 'criterionDefinition'
   >,
 ): string {
@@ -71,10 +70,10 @@ export function evaluatorSuiteCriterionDigestV2(
   });
 }
 
-export function evaluatorSuiteManifestV2Digest(
-  input: Omit<EvaluatorSuiteManifestV2, 'manifestDigest'> | EvaluatorSuiteManifestV2,
+export function evaluatorSuiteManifestDigest(
+  input: Omit<EvaluatorSuiteManifest, 'manifestDigest'> | EvaluatorSuiteManifest,
 ): string {
-  const { manifestDigest: _excluded, ...unsigned } = input as EvaluatorSuiteManifestV2;
+  const { manifestDigest: _excluded, ...unsigned } = input as EvaluatorSuiteManifest;
   return digest(unsigned);
 }
 
@@ -85,8 +84,8 @@ function assertUnique(values: string[], field: string): void {
 }
 
 function verifyExpectedMembers(
-  actual: EvaluatorSuiteManifestV2Member[],
-  expected: EvaluatorSuiteManifestV2Member[],
+  actual: EvaluatorSuiteManifestMember[],
+  expected: EvaluatorSuiteManifestMember[],
 ): void {
   const expectedByCriterion = new Map(expected.map((member) => [member.criterionId, member]));
   for (const member of actual) {
@@ -126,11 +125,11 @@ function verifyExpectedMembers(
   }
 }
 
-export function verifyEvaluatorSuiteManifestV2(
+export function verifyEvaluatorSuiteManifest(
   raw: unknown,
-  expected?: ExpectedEvaluatorSuiteManifestV2,
-): EvaluatorSuiteManifestV2 {
-  const manifest = evaluatorSuiteManifestV2Schema.parse(raw);
+  expected?: ExpectedEvaluatorSuiteManifest,
+): EvaluatorSuiteManifest {
+  const manifest = evaluatorSuiteManifestSchema.parse(raw);
   for (const [index, member] of manifest.members.entries()) {
     if (member.position !== index) {
       throw new Error(`suite manifest members are not ordered by contiguous position at index ${index}`);
@@ -143,11 +142,11 @@ export function verifyEvaluatorSuiteManifestV2(
   assertUnique(manifest.members.map((member) => member.criterionVersionId), 'criterionVersionId');
   assertUnique(manifest.members.map((member) => member.skillVersionId), 'skillVersionId');
   for (const member of manifest.members) {
-    if (member.criterionDigest !== evaluatorSuiteCriterionDigestV2(member)) {
+    if (member.criterionDigest !== evaluatorSuiteCriterionDigest(member)) {
       throw new Error(`suite manifest criterionDigest mismatch for ${member.criterionVersionId}`);
     }
   }
-  if (manifest.manifestDigest !== evaluatorSuiteManifestV2Digest(manifest)) {
+  if (manifest.manifestDigest !== evaluatorSuiteManifestDigest(manifest)) {
     throw new Error('suite manifest manifestDigest mismatch');
   }
   if (expected?.members !== undefined) verifyExpectedMembers(manifest.members, expected.members);
@@ -160,10 +159,10 @@ export function verifyEvaluatorSuiteManifestV2(
   return manifest;
 }
 
-export function parseCanonicalEvaluatorSuiteManifestV2Bytes(
+export function parseCanonicalEvaluatorSuiteManifestBytes(
   bytes: Uint8Array,
-  expected?: ExpectedEvaluatorSuiteManifestV2,
-): EvaluatorSuiteManifestV2 {
+  expected?: ExpectedEvaluatorSuiteManifest,
+): EvaluatorSuiteManifest {
   let text: string;
   try {
     // ignoreBOM keeps a leading byte-order mark, so such a copy fails the parse.
@@ -177,28 +176,28 @@ export function parseCanonicalEvaluatorSuiteManifestV2Bytes(
   } catch {
     throw new Error('Evaluator suite manifest bytes are not valid JSON');
   }
-  const parsed = evaluatorSuiteManifestV2Schema.parse(raw);
+  const parsed = evaluatorSuiteManifestSchema.parse(raw);
   if (canonicalJson(parsed) !== text) {
     throw new Error('Evaluator suite manifest copy is not exact canonical JSON');
   }
-  return verifyEvaluatorSuiteManifestV2(parsed, expected);
+  return verifyEvaluatorSuiteManifest(parsed, expected);
 }
 
-export async function loadEvaluatorSuiteManifestV2(
+export async function loadEvaluatorSuiteManifest(
   path: string,
-  expected: ExpectedEvaluatorSuiteManifestV2,
-): Promise<EvaluatorSuiteManifestV2> {
-  return parseCanonicalEvaluatorSuiteManifestV2Bytes(await readFile(path), expected);
+  expected: ExpectedEvaluatorSuiteManifest,
+): Promise<EvaluatorSuiteManifest> {
+  return parseCanonicalEvaluatorSuiteManifestBytes(await readFile(path), expected);
 }
 
 /**
- * A verified receipt v2 belongs to a manifest member when its project,
+ * A verified receipt belongs to a manifest member when its project,
  * evaluator version, and recomputed skillDigest match the member's.
  */
-export function verifyReceiptV2ManifestBinding(
-  receipt: RubristReceiptV2,
-  manifest: EvaluatorSuiteManifestV2,
-  member: EvaluatorSuiteManifestV2Member,
+export function verifyReceiptManifestBinding(
+  receipt: RubristReceipt,
+  manifest: EvaluatorSuiteManifest,
+  member: EvaluatorSuiteManifestMember,
 ): void {
   if (receipt.projectId !== manifest.projectId) {
     throw new Error(`receipt projectId mismatch for ${member.criterionVersionId}`);

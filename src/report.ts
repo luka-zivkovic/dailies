@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { rubristEvidenceOperationSchema } from './rubrist.js';
-import { rubristReceiptV2Schema, verifyRubristReceiptV2 } from './rubrist-receipt-v2.js';
+import { rubristReceiptSchema, verifyRubristReceipt } from './rubrist-receipt.js';
 import {
   scopeConfigSchema,
   scopeKindSchema,
@@ -216,7 +216,7 @@ const rubristEvidenceSchema = z.object({
   evalRunId: z.string().min(1).optional(),
   status: z.enum(['complete', 'incomplete', 'failed']),
   operations: z.array(rubristEvidenceOperationSchema).min(1).max(10_000),
-  receipt: rubristReceiptV2Schema.optional(),
+  receipt: rubristReceiptSchema.optional(),
 }).strict();
 
 const commonReportFields = {
@@ -437,7 +437,7 @@ function refineSingleCriterionEvidence(report: SingleCriterionReportCore, ctx: z
     return;
   }
   try {
-    const verification = verifyRubristReceiptV2(evidence.receipt, {
+    const verification = verifyRubristReceipt(evidence.receipt, {
       evalRunId: evidence.evalRunId,
       skillVersionId: evidence.skillVersionId,
       candidates,
@@ -543,7 +543,7 @@ export const reportScopeSchema = z.object({
 
 const trustDerivationSchema = z.enum([
   'exact_match_v1',
-  'rubrist_receipt_v2',
+  'rubrist_receipt_v1',
   'http_judge_v1',
 ]);
 
@@ -572,13 +572,13 @@ const reportV4ShapeSchema = z.object({
 
 function expectedTrust(judgeType: 'exact-match' | 'http' | 'rubrist'): {
   class: TrustClass;
-  derivation: 'exact_match_v1' | 'rubrist_receipt_v2' | 'http_judge_v1';
+  derivation: 'exact_match_v1' | 'rubrist_receipt_v1' | 'http_judge_v1';
 } {
   if (judgeType === 'exact-match') {
     return { class: 'deterministic', derivation: 'exact_match_v1' };
   }
   if (judgeType === 'rubrist') {
-    return { class: 'verified', derivation: 'rubrist_receipt_v2' };
+    return { class: 'verified', derivation: 'rubrist_receipt_v1' };
   }
   return { class: 'self_reported', derivation: 'http_judge_v1' };
 }

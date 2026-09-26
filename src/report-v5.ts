@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { rubristEvidenceOperationSchema, sha256Digest } from './rubrist.js';
-import { rubristReceiptV2Schema, verifyRubristReceiptV2 } from './rubrist-receipt-v2.js';
+import { rubristReceiptSchema, verifyRubristReceipt } from './rubrist-receipt.js';
 import {
   scopeConfigSchema,
   scopeKindSchema,
@@ -18,10 +18,10 @@ import {
 } from './policy.js';
 import { attemptLedgerSchema } from './retry.js';
 import {
-  evaluatorSuiteManifestV2Schema,
-  verifyEvaluatorSuiteManifestV2,
-  verifyReceiptV2ManifestBinding,
-} from './suite-manifest-v2.js';
+  evaluatorSuiteManifestSchema,
+  verifyEvaluatorSuiteManifest,
+  verifyReceiptManifestBinding,
+} from './suite-manifest.js';
 
 export const SUITE_REPORT_SCHEMA_VERSION = 5;
 const digestSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
@@ -131,12 +131,12 @@ const criterionTrustSchema = z.discriminatedUnion('status', [
   z.object({
     status: z.literal('complete'),
     class: z.literal('verified'),
-    derivation: z.literal('rubrist_receipt_v2'),
+    derivation: z.literal('rubrist_receipt_v1'),
     admissible: z.boolean(),
   }).strict(),
   z.object({
     status: z.literal('unavailable'),
-    derivation: z.literal('rubrist_receipt_v2'),
+    derivation: z.literal('rubrist_receipt_v1'),
     admissible: z.literal(false),
     reason: z.enum(['incomplete_evidence', 'integrity_failure', 'no_candidate_outputs']),
   }).strict(),
@@ -157,8 +157,8 @@ const criterionEvidenceSchema = z.object({
   state: evidenceStateSchema,
   evalRunId: z.string().min(1).optional(),
   operations: z.array(rubristEvidenceOperationSchema).max(10_000),
-  receipt: rubristReceiptV2Schema.optional(),
-  rejectedReceipt: rubristReceiptV2Schema.optional(),
+  receipt: rubristReceiptSchema.optional(),
+  rejectedReceipt: rubristReceiptSchema.optional(),
   rejection: z.object({
     kind: z.literal('manifest_binding'),
     reason: z.string().min(1),
@@ -252,7 +252,7 @@ const reportV5ShapeSchema = z.object({
   finishedAt: z.string().datetime({ offset: true }),
   scope: suiteScopeSchema,
   trustPolicy: reportTrustPolicySchema,
-  manifest: evaluatorSuiteManifestV2Schema,
+  manifest: evaluatorSuiteManifestSchema,
   policy: releasePolicyV1Schema,
   policyDigest: digestSchema,
   executionPolicy: executionPolicySchema,
@@ -382,7 +382,7 @@ export const reportV5Schema = reportV5ShapeSchema.superRefine((report, ctx) => {
   let manifest;
   let policy;
   try {
-    manifest = verifyEvaluatorSuiteManifestV2(report.manifest, {
+    manifest = verifyEvaluatorSuiteManifest(report.manifest, {
       manifestId: report.manifest.manifestId,
       manifestDigest: report.manifest.manifestDigest,
     });
@@ -622,8 +622,8 @@ export const reportV5Schema = reportV5ShapeSchema.superRefine((report, ctx) => {
         ctx.addIssue({ code: 'custom', path: ['criteria', index, 'evidence'], message: 'receipt requires evalRunId' });
       } else {
         try {
-          verifyReceiptV2ManifestBinding(evidence.receipt, manifest, member);
-          const verification = verifyRubristReceiptV2(evidence.receipt, {
+          verifyReceiptManifestBinding(evidence.receipt, manifest, member);
+          const verification = verifyRubristReceipt(evidence.receipt, {
             evalRunId: evidence.evalRunId,
             skillVersionId: member.skillVersionId,
             candidates: succeeded.map((candidate) => ({
@@ -655,7 +655,7 @@ export const reportV5Schema = reportV5ShapeSchema.superRefine((report, ctx) => {
     }
     if (evidence.rejectedReceipt !== undefined && evidence.evalRunId !== undefined) {
       try {
-        verifyRubristReceiptV2(evidence.rejectedReceipt, {
+        verifyRubristReceipt(evidence.rejectedReceipt, {
           evalRunId: evidence.evalRunId,
           skillVersionId: member.skillVersionId,
           candidates: succeeded.map((candidate) => ({
@@ -666,7 +666,7 @@ export const reportV5Schema = reportV5ShapeSchema.superRefine((report, ctx) => {
         });
         let bindingFailure: string | undefined;
         try {
-          verifyReceiptV2ManifestBinding(evidence.rejectedReceipt, manifest, member);
+          verifyReceiptManifestBinding(evidence.rejectedReceipt, manifest, member);
         } catch (error) {
           bindingFailure = error instanceof Error ? error.message : String(error);
         }

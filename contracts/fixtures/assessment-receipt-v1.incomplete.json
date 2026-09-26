@@ -1,5 +1,5 @@
 {
-  "contract": "rubrist/assessment-receipt/v2",
+  "contract": "rubrist/assessment-receipt/v1",
   "definition": {
     "kind": "typed-question",
     "question": {
@@ -36,10 +36,10 @@
     }
   ],
   "receipt": {
-    "contract": "rubrist/assessment-receipt/v2",
-    "schemaVersion": 2,
-    "receiptId": "receipt-contract-v2-run-2",
-    "evalRunId": "contract-v2-run-2",
+    "contract": "rubrist/assessment-receipt/v1",
+    "schemaVersion": 1,
+    "receiptId": "receipt-contract-run-2",
+    "evalRunId": "contract-run-2",
     "projectId": "project-contract",
     "skillId": "skill-contract",
     "skillVersionId": "skill-version-contract-3",
@@ -55,7 +55,7 @@
       "agreedItems": 1
     },
     "evaluator": {
-      "basis": "rubrist/evaluator-identity/v2",
+      "basis": "rubrist/evaluator-identity/v1",
       "definitionDigest": "sha256:4ce367b4c6511c98e6a0ea6dd5d142dfa379b7523c7fb9b8aba0f76ebae4e3dc",
       "executionBinding": {
         "provider": "typesafe",
@@ -74,7 +74,7 @@
         "routing": null
       }
     },
-    "skillDigest": "sha256:44a3d7d6f4bb07dcb57dafe33c50ce905bde19e4ab583eaf304ea96d9e662497",
+    "skillDigest": "sha256:8c82ee023e0525d8184ba8de8ce430fc4c9d0f6aeef9d3bce5877ee53968b655",
     "datasetDigest": "sha256:151b1f8d779b4259875c39fd797e34a714b06f53222b8cd490194841c69e2c4d",
     "items": [
       {
@@ -132,6 +132,6 @@
         "observed": null
       }
     ],
-    "evidenceDigest": "sha256:56a8513fba3c316d653b0fb4132a36f8dc9ca6cff409c598f926ceb5c879b0c5"
+    "evidenceDigest": "sha256:125d5c996e486da13baf445844ccb3329b45ea1ec798c138c3a496cf01e0e8c4"
   }
 }

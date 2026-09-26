@@ -8,15 +8,15 @@ import {
   buildSuiteDecisionStatement,
   candidateExecutionIdentity,
   compareCriterionOutcome,
-  evaluatorSuiteCriterionDigestV2,
-  evaluatorSuiteManifestV2Digest,
+  evaluatorSuiteCriterionDigest,
+  evaluatorSuiteManifestDigest,
   providerExecutionIdentity,
   releasePolicyDigest,
   reportV5Schema,
   sha256Digest,
   suiteCandidateDatasetDigest,
   suiteExecutionPolicyDigest,
-  verifyEvaluatorSuiteManifestV2,
+  verifyEvaluatorSuiteManifest,
   verifyReleasePolicy,
 } from '../dist/index.js';
 
@@ -29,7 +29,7 @@ const FIXED_TIME = '2026-08-23T00:00:00.000Z';
 /** Each member's synthetic evaluator: a mock binding and a definition digest per member. */
 function syntheticEvaluator(identity) {
   return {
-    basis: 'rubrist/evaluator-identity/v2',
+    basis: 'rubrist/evaluator-identity/v1',
     definitionDigest: sha256Digest({ kind: 'synthetic-definition', identity }),
     executionBinding: {
       provider: 'mock',
@@ -61,7 +61,7 @@ function syntheticManifest(criterionCount) {
     return {
       position,
       ...criterion,
-      criterionDigest: evaluatorSuiteCriterionDigestV2(criterion),
+      criterionDigest: evaluatorSuiteCriterionDigest(criterion),
       skillId: `skill_${identity}`,
       skillVersionId: `skillv_${identity}_1`,
       skillDigest: sha256Digest(syntheticEvaluator(identity)),
@@ -70,8 +70,8 @@ function syntheticManifest(criterionCount) {
     };
   });
   const unsigned = {
-    contract: 'rubrist/evaluator-suite-manifest/v2',
-    schemaVersion: 2,
+    contract: 'rubrist/evaluator-suite-manifest/v1',
+    schemaVersion: 1,
     manifestId: `benchmark_manifest_${criterionCount}`,
     suiteId: `benchmark_suite_${criterionCount}`,
     projectId: 'benchmark_project',
@@ -79,7 +79,7 @@ function syntheticManifest(criterionCount) {
     members,
     trialPlan: null,
   };
-  return { ...unsigned, manifestDigest: evaluatorSuiteManifestV2Digest(unsigned) };
+  return { ...unsigned, manifestDigest: evaluatorSuiteManifestDigest(unsigned) };
 }
 
 function syntheticPolicy(manifest) {
@@ -139,8 +139,8 @@ function syntheticReceipt(manifest, member, candidates, labels) {
   const evaluator = syntheticEvaluator(member.skillId.slice('skill_'.length));
   const outcomes = (outcome) => items.filter((item) => item.result.outcome === outcome).length;
   const receipt = {
-    contract: 'rubrist/assessment-receipt/v2',
-    schemaVersion: 2,
+    contract: 'rubrist/assessment-receipt/v1',
+    schemaVersion: 1,
     receiptId: `receipt-${member.skillVersionId}`,
     evalRunId: `run-${member.skillVersionId}`,
     projectId: manifest.projectId,
@@ -186,7 +186,7 @@ function buildFixture(criterionCount) {
 }
 
 function deriveValidatedReport(fixture) {
-  const manifest = verifyEvaluatorSuiteManifestV2(fixture.rawManifest, {
+  const manifest = verifyEvaluatorSuiteManifest(fixture.rawManifest, {
     manifestId: fixture.rawManifest.manifestId,
     manifestDigest: fixture.rawManifest.manifestDigest,
   });
@@ -229,7 +229,7 @@ function deriveValidatedReport(fixture) {
       trust: {
         status: 'complete',
         class: 'verified',
-        derivation: 'rubrist_receipt_v2',
+        derivation: 'rubrist_receipt_v1',
         admissible: true,
       },
       evidence: {
