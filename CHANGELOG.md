@@ -5,12 +5,24 @@ versioning while the public API remains pre-1.0.
 
 ## Unreleased
 
+- Switch every report format to Rubrist v2 evidence in place (ADR-0008
+  decision 2, with Rubrist Batch 8D). Reports v4 to v6 verify assessment
+  receipt v2, v5 and v6 pin evaluator suite manifest v2, and v6 verifies
+  binary calibration v2. The evidence kinds are now `rubrist_receipt_v2` and
+  `rubrist_binary_calibration_v2`. The v1 verifiers, vendored v1 contracts, and
+  v1 fixtures are deleted; configuration versions are unchanged, and pinned
+  manifest and calibration digests must name v2 artifacts.
+- Count a Rubrist evaluator's abstention as not passing (ADR-0009, founder
+  decision 2026-09-26). An item outcome can be `abstain`; the pass rate stays
+  `passed / total`, reports show `abstained` separately, and an abstention is
+  unpaired against its baseline, never a regression.
+- The mock Rubrist server serves receipt v2 and takes `--abstain-criterion`,
+  and the bundled examples use the v2 manifest and calibration fixtures.
 - Vendor Rubrist's assessment receipt v2, evaluator suite manifest v2, and
   binary calibration v2 contracts byte-identically, with their conformance
   corpora, and verify them independently (ADR-0008 decision 1, Rubrist Batch
   8A). v2 evidence names the evaluator by a definition digest and the exact
-  execution binding. Nothing consumes v2 yet: configuration, policy, and
-  reports stay on v1 until Rubrist emits v2, then switch in place.
+  execution binding.
 - Remove read-only inspection of historical v3 reports and the captured v3
   fixtures (ADR-0008, founder decision 2026-09-25). Nothing reads a v3 report
   any more; report v4 keeps the same integrity and Rubrist-linkage rules it

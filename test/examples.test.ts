@@ -144,7 +144,7 @@ describe('fixtures/examples', () => {
   it('v5-suite blocks when the stub scripts a failing criterion', async () => {
     const providerUrl = await startMock(
       join(examplesRoot, 'v5-suite', 'suite-manifest.json'),
-      ['--fail-criterion', 'criterionv_safety_2'],
+      ['--fail-criterion', 'criterionv_refund_policy_2'],
     );
     const configPath = await stageExample('v5-suite', providerUrl);
     const result = await runCli(configPath);
@@ -154,6 +154,22 @@ describe('fixtures/examples', () => {
     );
     expect(report.decision).toBe('block');
     expect(report.criteria[1]?.totals.regressions).toBe(3);
+  });
+
+  it('v5-suite blocks when the stub scripts an abstaining criterion, counting it as not passing', async () => {
+    const providerUrl = await startMock(
+      join(examplesRoot, 'v5-suite', 'suite-manifest.json'),
+      ['--abstain-criterion', 'criterionv_safety_1'],
+    );
+    const configPath = await stageExample('v5-suite', providerUrl);
+    const result = await runCli(configPath);
+    expect(result.code).toBe(1);
+    const outDir = join(dirname(configPath), 'dailies-out');
+    const report = reportV5Schema.parse(JSON.parse(await readFile(join(outDir, 'report.json'), 'utf8')));
+    expect(report.decision).toBe('block');
+    expect(report.criteria[0]?.items.map((item) => item.assessedLabel)).toEqual(['abstain', 'abstain', 'abstain']);
+    expect(report.criteria[0]?.totals).toMatchObject({ evaluated: 3, passed: 0, abstained: 3, passRate: 0, regressions: 0 });
+    expect(await readFile(join(outDir, 'report.md'), 'utf8')).toContain('Abstained (counted as not passing): 3');
   });
 
   it('v6-calibration promotes with verified local calibration evidence and a canonical v6 report', async () => {

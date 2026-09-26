@@ -1,5 +1,6 @@
 import { z } from 'zod';
-import { canonicalJson, RubristProtocolError, sha256Digest, type RubristCandidateItem } from './rubrist.js';
+import type { RubristCandidateItem } from './rubrist.js';
+import { canonicalJson, RubristProtocolError, sha256Digest } from './rubrist-canonical.js';
 import {
   rubristEvaluatorIdentitySchema,
   rubristSkillDigestV2,
@@ -9,8 +10,8 @@ import {
 } from './rubrist-v2.js';
 
 // Rubrist assessment receipt v2 (contracts/assessment-receipt-v2.md), verified
-// independently of Rubrist's runtime. Dailies ADR-0008: vendored and verified
-// now, consumed by the report formats when Rubrist emits v2.
+// independently of Rubrist's runtime. It replaced receipt v1 in every report
+// format (Dailies ADR-0008).
 
 export const RUBRIST_RECEIPT_V2_CONTRACT = 'rubrist/assessment-receipt/v2';
 
@@ -93,13 +94,16 @@ export interface RubristReceiptV2Expectations {
   candidates?: RubristCandidateItem[] | undefined;
 }
 
+/** An item's outcome: the evaluator passed it, failed it, or abstained. */
+export type RubristOutcome = 'pass' | 'fail' | 'abstain';
+
 export interface RubristReceiptV2Verification {
   status: 'complete' | 'incomplete';
   /**
-   * Pass or fail per clientItemId, for a complete receipt only, as in v1: an
-   * incomplete receipt yields no labels. Abstentions have no label.
+   * Every item's outcome, for a complete receipt only: an incomplete receipt
+   * yields none. Dailies counts an abstention as not passing (ADR-0009).
    */
-  labels: Map<string, 'pass' | 'fail'>;
+  outcomes: Map<string, RubristOutcome>;
 }
 
 const byCodeUnit = (left: string, right: string) => left < right ? -1 : left > right ? 1 : 0;
@@ -149,14 +153,14 @@ export function verifyRubristReceiptV2(
   if (receipt.datasetDigest !== datasetDigest) fail('datasetDigest mismatch');
   for (const item of receipt.items) verifyItem(item, receipt);
 
-  const outcomes = (outcome: 'pass' | 'fail' | 'abstain') =>
+  const outcomeCount = (outcome: RubristOutcome) =>
     receipt.items.filter((item) => item.result.state === 'outcome' && item.result.outcome === outcome).length;
   const run = receipt.run;
   if (
     run.totalItems !== receipt.items.length ||
-    run.passItems !== outcomes('pass') ||
-    run.failItems !== outcomes('fail') ||
-    run.abstainedItems !== outcomes('abstain') ||
+    run.passItems !== outcomeCount('pass') ||
+    run.failItems !== outcomeCount('fail') ||
+    run.abstainedItems !== outcomeCount('abstain') ||
     run.failedItems !== receipt.items.filter((item) => item.result.state === 'failure').length ||
     run.notAttemptedItems !== receipt.items.filter((item) => item.result.state === 'not_attempted').length ||
     run.agreedItems > run.passItems + run.failItems
@@ -191,13 +195,13 @@ export function verifyRubristReceiptV2(
     }
   }
 
-  const labels = new Map<string, 'pass' | 'fail'>();
+  const outcomes = new Map<string, RubristOutcome>();
   if (receipt.status === 'complete') {
     for (const item of receipt.items) {
-      if (item.result.state === 'outcome' && item.result.outcome !== 'abstain') labels.set(item.clientItemId, item.result.outcome);
+      if (item.result.state === 'outcome') outcomes.set(item.clientItemId, item.result.outcome);
     }
   }
-  return { status: receipt.status, labels };
+  return { status: receipt.status, outcomes };
 }
 
 /** Parse an exact canonical receipt v2 copy: valid UTF-8, no byte-order mark, canonical JSON, every rule. */

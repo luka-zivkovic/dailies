@@ -105,7 +105,8 @@ async function runConfiguredRelease(configPath: string): Promise<number> {
     console.log(
       `decision: ${report.decision} | pass rate ${(totals.passRate * 100).toFixed(1)}% ` +
         `(${totals.passed}/${totals.total}), regressions ${totals.regressions}, ` +
-        `evaluated ${totals.evaluated}/${totals.total}, errored ${totals.errored}`,
+        `evaluated ${totals.evaluated}/${totals.total}, errored ${totals.errored}` +
+        (totals.abstained === 0 ? '' : `, abstained ${totals.abstained}`),
     );
   }
   console.log(`report: ${jsonPath}`);

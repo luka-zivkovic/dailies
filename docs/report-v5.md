@@ -10,17 +10,24 @@ is never upgraded into v5.
 ## Evidence boundary
 
 Dailies reads one exact canonical
-`rubrist/evaluator-suite-manifest/v1` artifact. Configuration pins both its
+`rubrist/evaluator-suite-manifest/v2` artifact (ADR-0008). Configuration pins both its
 `manifestId` and `manifestDigest`; there is no `latest` selection. The first
 runtime transport is an exact local file because Rubrist has not yet accepted a
 public manifest-fetch route.
 
-Manifest v1 supplies ordered criterion definitions and exact evaluator
-bindings, never release roles or thresholds. Dailies submits one existing
-`release_evidence` batch for every member and verifies a separate, unchanged
-assessment receipt v1. Each receipt must match manifest `projectId`, `skillId`,
-`skillVersionId`, and `skillDigest` in addition to the existing item, content,
-dataset, ordering, counter, and evidence-digest checks.
+The manifest supplies ordered criterion definitions and exact evaluator
+bindings, never release roles or thresholds. Dailies submits one
+`release_evidence` batch for every member and verifies a separate assessment
+receipt v2. Each receipt must match manifest `projectId`, `skillId`,
+`skillVersionId`, and `skillDigest`, which the receipt recomputes from its
+evaluator identity, in addition to the item, content, dataset, ordering,
+counter, and evidence-digest checks.
+
+Each criterion item's `assessedLabel` is `pass`, `fail`, `abstain`, or `null`
+when the criterion's evidence is not complete. An abstention counts as not
+passing (ADR-0009): the criterion's `passed` excludes it, `failed` includes it,
+`abstained` shows it separately, the pass rate stays `passed / total`, and its
+comparison is `unpaired`, so it is never a regression.
 
 Execution currently requires `trialPlan: null`. The manifest parser preserves
 the closed independent-repetitions shape, but v5 refuses to execute it until a

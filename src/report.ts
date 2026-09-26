@@ -1,9 +1,6 @@
 import { z } from 'zod';
-import {
-  rubristAssessmentReceiptSchema,
-  rubristEvidenceOperationSchema,
-  verifyRubristReceipt,
-} from './rubrist.js';
+import { rubristEvidenceOperationSchema } from './rubrist.js';
+import { rubristReceiptV2Schema, verifyRubristReceiptV2 } from './rubrist-receipt-v2.js';
 import {
   scopeConfigSchema,
   scopeKindSchema,
@@ -29,7 +26,11 @@ import {
 
 export const REPORT_SCHEMA_VERSION = 4;
 
-export const itemOutcomeSchema = z.enum(['pass', 'fail', 'error']);
+/**
+ * An abstention is a Rubrist evaluator's completed outcome that neither passes
+ * nor fails; it counts as not passing (ADR-0009).
+ */
+export const itemOutcomeSchema = z.enum(['pass', 'fail', 'abstain', 'error']);
 export const comparisonSchema = z.enum([
   'regression',
   'improvement',
@@ -40,11 +41,12 @@ export const comparisonSchema = z.enum([
 export const errorStageSchema = z.enum(['candidate', 'judge']);
 export const errorKindSchema = z.enum(ERROR_KINDS);
 
+/** An error or an abstention measured nothing against the baseline, so it is unpaired. */
 export function compareOutcome(
   baselineLabel: 'pass' | 'fail' | undefined,
-  outcome: 'pass' | 'fail' | 'error',
+  outcome: z.infer<typeof itemOutcomeSchema>,
 ): z.infer<typeof comparisonSchema> {
-  if (baselineLabel === undefined || outcome === 'error') return 'unpaired';
+  if (baselineLabel === undefined || outcome === 'error' || outcome === 'abstain') return 'unpaired';
   if (baselineLabel === 'pass') return outcome === 'pass' ? 'stable_pass' : 'regression';
   return outcome === 'pass' ? 'improvement' : 'stable_fail';
 }
@@ -173,7 +175,10 @@ const thresholdsSchema = z.object({
 const totalsSchema = z.object({
   total: z.number().int().nonnegative(),
   passed: z.number().int().nonnegative(),
+  /** Items that did not pass: failures, abstentions, and errors. */
   failed: z.number().int().nonnegative(),
+  /** Subset of `failed` where the Rubrist evaluator abstained, shown separately (ADR-0009). */
+  abstained: z.number().int().nonnegative(),
   /** Subset of `failed` where the candidate or judge errored after retry. */
   errored: z.number().int().nonnegative(),
   /** Required candidate executions that failed before judging. */
@@ -182,7 +187,7 @@ const totalsSchema = z.object({
   judgeErrored: z.number().int().nonnegative(),
   /** Protocol errors at either stage; these indicate a broken evidence contract. */
   protocolErrored: z.number().int().nonnegative(),
-  /** Items that received a completed judge result (pass or fail). */
+  /** Items that received a completed judge result: pass, fail, or abstain. */
   evaluated: z.number().int().nonnegative(),
   /** Fraction of all items that received a completed judge result. */
   evaluationCoverage: z.number().min(0).max(1),
@@ -207,7 +212,7 @@ const rubristEvidenceSchema = z.object({
   evalRunId: z.string().min(1).optional(),
   status: z.enum(['complete', 'incomplete', 'failed']),
   operations: z.array(rubristEvidenceOperationSchema).min(1).max(10_000),
-  receipt: rubristAssessmentReceiptSchema.optional(),
+  receipt: rubristReceiptV2Schema.optional(),
 }).strict();
 
 const commonReportFields = {
@@ -232,6 +237,14 @@ function refineSingleCriterionEvidence(report: SingleCriterionReportCore, ctx: z
       code: 'custom',
       path: ['totals'],
       message: 'totals must exactly equal aggregate(items)',
+    });
+  }
+
+  if (report.judgeType !== 'rubrist' && report.items.some((item) => item.outcome === 'abstain')) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['items'],
+      message: 'only a Rubrist evaluator can abstain',
     });
   }
 
@@ -420,13 +433,11 @@ function refineSingleCriterionEvidence(report: SingleCriterionReportCore, ctx: z
     return;
   }
   try {
-    const verification = verifyRubristReceipt(
-      evidence.receipt,
-      evidence.receipt,
-      evidence.evalRunId,
-      evidence.skillVersionId,
+    const verification = verifyRubristReceiptV2(evidence.receipt, {
+      evalRunId: evidence.evalRunId,
+      skillVersionId: evidence.skillVersionId,
       candidates,
-    );
+    });
     if (verification.status !== evidence.status) {
       ctx.addIssue({
         code: 'custom',
@@ -436,11 +447,11 @@ function refineSingleCriterionEvidence(report: SingleCriterionReportCore, ctx: z
     }
     if (verification.status === 'complete') {
       for (const item of submittedItems) {
-        const label = verification.labels.get(item.id);
+        const outcome = verification.outcomes.get(item.id);
         if (
-          label === undefined ||
-          item.outcome !== label ||
-          item.judge?.pass !== (label === 'pass')
+          outcome === undefined ||
+          item.outcome !== outcome ||
+          item.judge?.pass !== (outcome === 'pass')
         ) {
           ctx.addIssue({
             code: 'custom',
@@ -528,7 +539,7 @@ export const reportScopeSchema = z.object({
 
 const trustDerivationSchema = z.enum([
   'exact_match_v1',
-  'rubrist_receipt_v1',
+  'rubrist_receipt_v2',
   'http_judge_v1',
 ]);
 
@@ -557,13 +568,13 @@ const reportV4ShapeSchema = z.object({
 
 function expectedTrust(judgeType: 'exact-match' | 'http' | 'rubrist'): {
   class: TrustClass;
-  derivation: 'exact_match_v1' | 'rubrist_receipt_v1' | 'http_judge_v1';
+  derivation: 'exact_match_v1' | 'rubrist_receipt_v2' | 'http_judge_v1';
 } {
   if (judgeType === 'exact-match') {
     return { class: 'deterministic', derivation: 'exact_match_v1' };
   }
   if (judgeType === 'rubrist') {
-    return { class: 'verified', derivation: 'rubrist_receipt_v1' };
+    return { class: 'verified', derivation: 'rubrist_receipt_v2' };
   }
   return { class: 'self_reported', derivation: 'http_judge_v1' };
 }
@@ -755,6 +766,7 @@ export interface Totals {
   total: number;
   passed: number;
   failed: number;
+  abstained: number;
   errored: number;
   candidateErrored: number;
   judgeErrored: number;
@@ -771,6 +783,7 @@ export function aggregate(items: ItemResult[]): Totals {
   const total = items.length;
   const passed = items.filter((i) => i.pass).length;
   const failed = total - passed;
+  const abstained = items.filter((i) => i.outcome === 'abstain').length;
   const errored = items.filter((i) => i.outcome === 'error').length;
   const candidateErrored = items.filter(
     (i) => i.outcome === 'error' && i.errorStage === 'candidate',
@@ -798,6 +811,7 @@ export function aggregate(items: ItemResult[]): Totals {
     total,
     passed,
     failed,
+    abstained,
     errored,
     candidateErrored,
     judgeErrored,
@@ -875,6 +889,9 @@ export function renderMarkdown(report: Report): string {
       ? []
       : [`- Self-reported evidence override: ${overrideReason}`]),
     `- Pass rate: **${pct(totals.passRate)}** (${totals.passed}/${totals.total}) — threshold: ≥ ${pct(thresholds.minPassRate)}`,
+    ...(totals.abstained === 0
+      ? []
+      : [`- Abstained (counted as not passing): ${totals.abstained}`]),
     `- Regressions vs baseline: **${totals.regressions}** — threshold: ≤ ${thresholds.maxRegressions}`,
     `- Comparisons: ${totals.comparisonCounts.regression} regressions, ${totals.comparisonCounts.improvement} improvements, ${totals.comparisonCounts.stable_pass} stable passes, ${totals.comparisonCounts.stable_fail} stable fails, ${totals.comparisonCounts.unpaired} unpaired`,
     `- Errored items (not evaluated): ${totals.errored}`,
@@ -911,7 +928,7 @@ export function renderMarkdown(report: Report): string {
   if (failing.length > 0) {
     lines.push(`## Failing items (${failing.length}${failing.length > MAX_FAILING_EXAMPLES ? `, showing first ${MAX_FAILING_EXAMPLES}` : ''})`, '');
     for (const item of failing.slice(0, MAX_FAILING_EXAMPLES)) {
-      lines.push(`### ${item.id}${item.regression ? ' (regression)' : ''}`, '');
+      lines.push(`### ${item.id}${item.regression ? ' (regression)' : item.outcome === 'abstain' ? ' (abstained)' : ''}`, '');
       lines.push(`- input: \`${truncate(item.input)}\``);
       if (item.baseline_output !== undefined) {
         lines.push(`- baseline_output: \`${truncate(item.baseline_output)}\``);

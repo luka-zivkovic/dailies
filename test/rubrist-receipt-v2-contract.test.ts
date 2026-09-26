@@ -116,11 +116,11 @@ describe('vendored Rubrist assessment receipt v2 (Dailies ADR-0008)', () => {
   it('verifies both positive vectors with candidate linkage, recomputing skillDigest from the receipt alone', () => {
     const complete = vector('assessment-receipt-v2.complete.json');
     expect(verifyRubristReceiptV2(complete.receipt, { candidates: complete.candidates }))
-      .toEqual({ status: 'complete', labels: new Map([['a', 'pass'], ['b', 'fail']]) });
-    // As in v1, an incomplete receipt yields no labels, even for items with an outcome.
+      .toEqual({ status: 'complete', outcomes: new Map([['a', 'pass'], ['b', 'fail'], ['c', 'abstain']]) });
+    // An incomplete receipt yields no outcomes, even for items with one.
     const incomplete = vector('assessment-receipt-v2.incomplete.json');
     expect(verifyRubristReceiptV2(incomplete.receipt, { candidates: incomplete.candidates }))
-      .toEqual({ status: 'incomplete', labels: new Map() });
+      .toEqual({ status: 'incomplete', outcomes: new Map() });
   });
 
   it('refuses duplicate candidate ids, which would hide a candidate from linkage', () => {

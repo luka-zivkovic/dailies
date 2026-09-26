@@ -8,15 +8,15 @@ import {
   buildSuiteDecisionStatement,
   candidateExecutionIdentity,
   compareCriterionOutcome,
-  evaluatorSuiteCriterionDigest,
-  evaluatorSuiteManifestDigest,
+  evaluatorSuiteCriterionDigestV2,
+  evaluatorSuiteManifestV2Digest,
   providerExecutionIdentity,
   releasePolicyDigest,
   reportV5Schema,
   sha256Digest,
   suiteCandidateDatasetDigest,
   suiteExecutionPolicyDigest,
-  verifyEvaluatorSuiteManifest,
+  verifyEvaluatorSuiteManifestV2,
   verifyReleasePolicy,
 } from '../dist/index.js';
 
@@ -25,6 +25,25 @@ const CANDIDATE_ITEMS = 100;
 const WARMUP_ITERATIONS = 3;
 const SAMPLE_ITERATIONS = 25;
 const FIXED_TIME = '2026-08-23T00:00:00.000Z';
+
+/** Each member's synthetic evaluator: a mock binding and a definition digest per member. */
+function syntheticEvaluator(identity) {
+  return {
+    basis: 'rubrist/evaluator-identity/v2',
+    definitionDigest: sha256Digest({ kind: 'synthetic-definition', identity }),
+    executionBinding: {
+      provider: 'mock',
+      endpoint: { kind: 'managed' },
+      modelId: 'synthetic-local-v1',
+      modelVersion: 'synthetic-local-v1',
+      sampling: { temperature: null, topP: null },
+      reasoning: null,
+      outputTokenLimit: null,
+      verdictProtocol: 'mock/v1',
+      routing: null,
+    },
+  };
+}
 
 function sha256Bytes(bytes) {
   return `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
@@ -42,17 +61,17 @@ function syntheticManifest(criterionCount) {
     return {
       position,
       ...criterion,
-      criterionDigest: evaluatorSuiteCriterionDigest(criterion),
+      criterionDigest: evaluatorSuiteCriterionDigestV2(criterion),
       skillId: `skill_${identity}`,
       skillVersionId: `skillv_${identity}_1`,
-      skillDigest: sha256Digest({ kind: 'synthetic-skill', identity }),
+      skillDigest: sha256Digest(syntheticEvaluator(identity)),
       outputContractDigest: sha256Digest({ kind: 'synthetic-output', version: 1 }),
       applicability: { kind: 'all_items' },
     };
   });
   const unsigned = {
-    contract: 'rubrist/evaluator-suite-manifest/v1',
-    schemaVersion: 1,
+    contract: 'rubrist/evaluator-suite-manifest/v2',
+    schemaVersion: 2,
     manifestId: `benchmark_manifest_${criterionCount}`,
     suiteId: `benchmark_suite_${criterionCount}`,
     projectId: 'benchmark_project',
@@ -60,7 +79,7 @@ function syntheticManifest(criterionCount) {
     members,
     trialPlan: null,
   };
-  return { ...unsigned, manifestDigest: evaluatorSuiteManifestDigest(unsigned) };
+  return { ...unsigned, manifestDigest: evaluatorSuiteManifestV2Digest(unsigned) };
 }
 
 function syntheticPolicy(manifest) {
@@ -100,23 +119,28 @@ function syntheticReceipt(manifest, member, candidates, labels) {
   const items = candidates.map((candidate) => ({
     clientItemId: candidate.id,
     caseId: `case-${member.position}-${candidate.id}`,
-    status: 'completed',
-    judgedLabel: labels.get(candidate.id),
-    verdictId: `verdict-${member.position}-${candidate.id}`,
-    error: null,
     contentDigest: sha256Digest({
       input: candidate.input,
       output: candidate.candidate_output,
     }),
-    providerMetadata: {
+    result: { state: 'outcome', outcome: labels.get(candidate.id) },
+    verdictId: `verdict-${member.position}-${candidate.id}`,
+    evaluatorScore: { value: labels.get(candidate.id) === 'pass' ? 1 : 0, kind: 'self_reported_score' },
+    observed: {
       model: 'synthetic-local-v1',
       requestId: `request-${member.position}-${candidate.id}`,
       responseId: `response-${member.position}-${candidate.id}`,
       systemFingerprint: null,
+      upstreamProvider: null,
+      thinkingReturned: null,
+      reasoningTokens: null,
     },
   }));
+  const evaluator = syntheticEvaluator(member.skillId.slice('skill_'.length));
+  const outcomes = (outcome) => items.filter((item) => item.result.outcome === outcome).length;
   const receipt = {
-    schemaVersion: 1,
+    contract: 'rubrist/assessment-receipt/v2',
+    schemaVersion: 2,
     receiptId: `receipt-${member.skillVersionId}`,
     evalRunId: `run-${member.skillVersionId}`,
     projectId: manifest.projectId,
@@ -126,17 +150,15 @@ function syntheticReceipt(manifest, member, candidates, labels) {
     run: {
       status: 'completed',
       totalItems: candidates.length,
-      completedItems: candidates.length,
+      passItems: outcomes('pass'),
+      failItems: outcomes('fail'),
+      abstainedItems: 0,
       failedItems: 0,
+      notAttemptedItems: 0,
       agreedItems: 0,
     },
-    requestedModelBinding: {
-      provider: 'synthetic-local',
-      modelId: 'synthetic-local-v1',
-      modelVersion: '1',
-      temperature: 0,
-    },
-    skillDigest: member.skillDigest,
+    evaluator,
+    skillDigest: sha256Digest(evaluator),
     datasetDigest: sha256Digest(
       items.map(({ clientItemId, contentDigest }) => ({ clientItemId, contentDigest })),
     ),
@@ -164,7 +186,7 @@ function buildFixture(criterionCount) {
 }
 
 function deriveValidatedReport(fixture) {
-  const manifest = verifyEvaluatorSuiteManifest(fixture.rawManifest, {
+  const manifest = verifyEvaluatorSuiteManifestV2(fixture.rawManifest, {
     manifestId: fixture.rawManifest.manifestId,
     manifestDigest: fixture.rawManifest.manifestDigest,
   });
@@ -207,7 +229,7 @@ function deriveValidatedReport(fixture) {
       trust: {
         status: 'complete',
         class: 'verified',
-        derivation: 'rubrist_receipt_v1',
+        derivation: 'rubrist_receipt_v2',
         admissible: true,
       },
       evidence: {

@@ -5,7 +5,7 @@ import {
   expectedBinaryCalibrationIdentity,
   parseCanonicalBinaryCalibrationBytes,
   type BinaryCalibrationArtifact,
-} from '../src/binary-calibration.js';
+} from '../src/binary-calibration-v2.js';
 import {
   calibrationEvidenceSetDigest,
   collectCalibrationEvidence,
@@ -23,13 +23,13 @@ import {
   type ReleasePolicyV2,
 } from '../src/policy-v2.js';
 import type {
-  EvaluatorSuiteManifest,
-  EvaluatorSuiteManifestMember,
-} from '../src/suite-manifest.js';
+  EvaluatorSuiteManifestV2,
+  EvaluatorSuiteManifestV2Member,
+} from '../src/suite-manifest-v2.js';
 
 function fixtureBytes(name: 'complete' | 'repeated' | 'incomplete'): Uint8Array {
   return readFileSync(new URL(
-    `../contracts/fixtures/binary-calibration-v1.${name}.json`,
+    `../contracts/fixtures/binary-calibration-v2.${name}.json`,
     import.meta.url,
   ));
 }
@@ -39,10 +39,10 @@ function artifact(name: 'complete' | 'repeated' | 'incomplete'): BinaryCalibrati
 }
 
 function manifestFor(value: BinaryCalibrationArtifact): {
-  manifest: EvaluatorSuiteManifest;
-  member: EvaluatorSuiteManifestMember;
+  manifest: EvaluatorSuiteManifestV2;
+  member: EvaluatorSuiteManifestV2Member;
 } {
-  const member: EvaluatorSuiteManifestMember = {
+  const member: EvaluatorSuiteManifestV2Member = {
     position: 0,
     criterionId: value.criterion.criterionId,
     criterionVersionId: value.criterion.criterionVersionId,
@@ -58,8 +58,8 @@ function manifestFor(value: BinaryCalibrationArtifact): {
   return {
     member,
     manifest: {
-      contract: 'rubrist/evaluator-suite-manifest/v1',
-      schemaVersion: 1,
+      contract: 'rubrist/evaluator-suite-manifest/v2',
+      schemaVersion: 2,
       manifestId: value.suiteBinding?.manifestId ?? 'current-manifest',
       suiteId: 'suite-calibration-test',
       projectId: value.projectId,

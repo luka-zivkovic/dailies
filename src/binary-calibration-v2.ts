@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { canonicalJson, sha256Digest } from './rubrist.js';
+import { canonicalJson, sha256Digest } from './rubrist-canonical.js';
 import { rubristEvaluatorIdentitySchema, rubristSkillDigestV2 } from './rubrist-v2.js';
 
 // Rubrist binary calibration v2 (contracts/binary-calibration-v2.md), verified
@@ -9,8 +9,8 @@ import { rubristEvaluatorIdentitySchema, rubristSkillDigestV2 } from './rubrist-
 // skillDigest and requestedBindingDigest recomputed from it, errors use the
 // shared failure taxonomy, never-attempted items are `notAttempted`, provider
 // groups record the OpenRouter upstream, and a typed-question evaluator never
-// abstains. Dailies ADR-0008: this module replaces binary-calibration.ts,
-// with the same export names, when Rubrist emits v2.
+// abstains. It replaced calibration v1, keeping its export names (Dailies
+// ADR-0008).
 
 const MAX_ARTIFACT_BYTES = 16 * 1024 * 1024;
 const MAX_PUBLIC_STRING_CODE_POINTS = 4_096;

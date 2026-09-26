@@ -19,3 +19,4 @@ Status meanings:
 - [0006 — Third-party eval-platform result intake](0006-third-party-eval-result-intake.md) — Proposed
 - [0007 — Rename consumed Coeval identifiers to Rubrist](0007-rubrist-rename-consumed-identifiers.md) — Accepted; ADR-0008 changes the consumed Rubrist evidence kinds before launch
 - [0008 — Consume Rubrist v2 evidence and restart at a v1 launch baseline](0008-rubrist-v2-evidence-and-launch-baseline.md) — Accepted
+- [0009 — An abstained Rubrist outcome counts as not passing](0009-abstained-rubrist-outcomes.md) — Accepted

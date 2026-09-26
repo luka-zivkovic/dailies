@@ -24,7 +24,8 @@ type MockMode =
   | 'content-mismatch'
   | 'dataset-mismatch'
   | 'skill-mismatch'
-  | 'ambiguous-label'
+  | 'abstain'
+  | 'forged-complete'
   | 'incomplete'
   | 'missing-item'
   | 'duplicate-item'
@@ -102,24 +103,83 @@ function listen(server: Server): Promise<number> {
   });
 }
 
+const MOCK_EVALUATOR = {
+  basis: 'rubrist/evaluator-identity/v2',
+  definitionDigest: `sha256:${'d'.repeat(64)}`,
+  executionBinding: {
+    provider: 'mock',
+    endpoint: { kind: 'managed' },
+    modelId: 'mock-v1',
+    modelVersion: 'mock-v1',
+    sampling: { temperature: null, topP: null },
+    reasoning: null,
+    outputTokenLimit: null,
+    verdictProtocol: 'mock/v1',
+    routing: null,
+  },
+};
+
+const NOTHING_OBSERVED = {
+  model: null,
+  requestId: null,
+  responseId: null,
+  systemFingerprint: null,
+  upstreamProvider: null,
+  thinkingReturned: null,
+  reasoningTokens: null,
+};
+
+type ReceiptItemResult =
+  | { state: 'outcome'; outcome: 'pass' | 'fail' | 'abstain' }
+  | { state: 'failure'; failureKind: string }
+  | { state: 'not_attempted' };
+
+interface ReceiptItem {
+  clientItemId: string;
+  caseId: string;
+  contentDigest: string;
+  result: ReceiptItemResult;
+  verdictId: string | null;
+  evaluatorScore: { value: number; kind: string } | null;
+  observed: Record<string, unknown> | null;
+}
+
+/** Run counters recomputed from the items, as a consistent receipt states them. */
+function receiptRunCounters(items: ReceiptItem[], status: string): Record<string, unknown> {
+  const outcomes = (outcome: string) =>
+    items.filter((item) => item.result.state === 'outcome' && item.result.outcome === outcome).length;
+  return {
+    status,
+    totalItems: items.length,
+    passItems: outcomes('pass'),
+    failItems: outcomes('fail'),
+    abstainedItems: outcomes('abstain'),
+    failedItems: items.filter((item) => item.result.state === 'failure').length,
+    notAttemptedItems: items.filter((item) => item.result.state === 'not_attempted').length,
+    agreedItems: 0,
+  };
+}
+
 function buildReceipt(submitted: SubmittedItem[], mode: MockMode): Record<string, unknown> {
   const codeUnitOrder = (a: SubmittedItem, b: SubmittedItem) =>
     a.clientItemId < b.clientItemId ? -1 : a.clientItemId > b.clientItemId ? 1 : 0;
-  let items = [...submitted].sort(codeUnitOrder).map((item) => ({
-    clientItemId: item.clientItemId,
-    caseId: `case-${item.clientItemId}`,
-    status: 'completed',
-    judgedLabel: item.clientItemId.includes('fail') ? 'fail' : 'pass',
-    verdictId: `verdict-${item.clientItemId}`,
-    error: null,
-    contentDigest: independentDigest({ input: item.input, output: item.output }),
-    providerMetadata: {
-      model: 'mock-v1',
-      requestId: `request-${item.clientItemId}`,
-      responseId: `response-${item.clientItemId}`,
-      systemFingerprint: null,
-    },
-  }));
+  let items: ReceiptItem[] = [...submitted].sort(codeUnitOrder).map((item) => {
+    const outcome = item.clientItemId.includes('fail') ? 'fail' : 'pass';
+    return {
+      clientItemId: item.clientItemId,
+      caseId: `case-${item.clientItemId}`,
+      contentDigest: independentDigest({ input: item.input, output: item.output }),
+      result: { state: 'outcome', outcome },
+      verdictId: `verdict-${item.clientItemId}`,
+      evaluatorScore: { value: outcome === 'pass' ? 0.9 : 0.1, kind: 'self_reported_score' },
+      observed: {
+        ...NOTHING_OBSERVED,
+        model: 'mock-v1',
+        requestId: `request-${item.clientItemId}`,
+        responseId: `response-${item.clientItemId}`,
+      },
+    };
+  });
 
   if (mode === 'missing-item') items = items.slice(0, -1);
   if (mode === 'duplicate-item' && items.length > 1 && items[0]) {
@@ -129,49 +189,40 @@ function buildReceipt(submitted: SubmittedItem[], mode: MockMode): Record<string
   if (mode === 'content-mismatch' && items[0]) {
     items[0] = { ...items[0], contentDigest: `sha256:${'0'.repeat(64)}` };
   }
-  if (mode === 'ambiguous-label' && items[0]) {
-    items[0] = { ...items[0], judgedLabel: 'ambiguous' };
+  if (mode === 'abstain' && items[0]) {
+    items[0] = { ...items[0], result: { state: 'outcome', outcome: 'abstain' }, evaluatorScore: { value: 0.5, kind: 'self_reported_score' } };
   }
-  if (mode === 'incomplete' && items.at(-1)) {
+  if ((mode === 'incomplete' || mode === 'forged-complete') && items.at(-1)) {
     items[items.length - 1] = {
       ...items.at(-1)!,
-      status: 'failed',
-      judgedLabel: null,
+      result: { state: 'failure', failureKind: 'provider_timeout' },
       verdictId: null,
-      error: 'provider failed',
+      evaluatorScore: null,
+      observed: NOTHING_OBSERVED,
     };
   }
 
+  const incomplete = mode === 'incomplete';
   const receipt: Record<string, unknown> = {
-    schemaVersion: 1,
+    contract: 'rubrist/assessment-receipt/v2',
+    schemaVersion: 2,
     receiptId: 'receipt-run-1',
     evalRunId: 'run-1',
     projectId: 'project-1',
     skillId: 'skill-1',
     skillVersionId: mode === 'skill-mismatch' ? 'skill-version-other' : 'skill-version-1',
-    status: mode === 'incomplete' ? 'incomplete' : 'complete',
-    run: {
-      status: mode === 'incomplete' ? 'failed' : 'completed',
-      totalItems: submitted.length,
-      completedItems: mode === 'incomplete' ? Math.max(0, submitted.length - 1) : submitted.length,
-      failedItems: mode === 'incomplete' ? 1 : 0,
-      agreedItems: 0,
-    },
-    requestedModelBinding: {
-      provider: 'mock',
-      modelId: 'mock-v1',
-      modelVersion: '1',
-      temperature: 0,
-    },
-    skillDigest: independentDigest({ immutableSkill: 'skill-version-1' }),
+    status: incomplete ? 'incomplete' : 'complete',
+    run: receiptRunCounters(items, incomplete ? 'failed' : 'completed'),
+    evaluator: MOCK_EVALUATOR,
+    skillDigest: independentDigest(MOCK_EVALUATOR),
     datasetDigest: independentDigest(
       items.map(({ clientItemId, contentDigest }) => ({ clientItemId, contentDigest })),
     ),
     items,
   };
 
-  if (mode === 'extra-field') receipt.calibrationRef = 'not-part-of-v1';
-  if (mode === 'future-schema') receipt.schemaVersion = 2;
+  if (mode === 'extra-field') receipt.calibrationRef = 'not-part-of-v2';
+  if (mode === 'future-schema') receipt.schemaVersion = 3;
   if (mode === 'dataset-mismatch') receipt.datasetDigest = `sha256:${'1'.repeat(64)}`;
   receipt.evidenceDigest = independentDigest(receipt);
   if (mode === 'tampered-evidence') receipt.evidenceDigest = `sha256:${'2'.repeat(64)}`;
@@ -374,6 +425,42 @@ describe('Rubrist canonical receipt primitives', () => {
 });
 
 describe('Rubrist release-evidence boundary', () => {
+  it('counts an abstention as not passing, shown separately, from a complete verified receipt (ADR-0009)', async () => {
+    const mock = await startMockRubrist('abstain');
+    const { path } = await writeInputs([
+      { id: 'pass-a', input: 'alpha', baseline_output: 'alpha', baseline_label: 'pass' },
+      { id: 'pass-b', input: 'beta', baseline_output: 'beta' },
+    ]);
+    try {
+      const report = await runShadow(makeConfig(path, mock.url, { minPassRate: 0.5, maxRegressions: 0 }));
+      expect(report.evidence).toMatchObject({
+        status: 'complete',
+        receipt: { status: 'complete', run: { passItems: 1, abstainedItems: 1 } },
+      });
+      expect(report.items[0]).toMatchObject({
+        id: 'pass-a',
+        outcome: 'abstain',
+        pass: false,
+        judge: { pass: false },
+        comparison: 'unpaired',
+        regression: false,
+        trustClass: 'verified',
+      });
+      expect(report.totals).toMatchObject({
+        total: 2, passed: 1, failed: 1, abstained: 1, evaluated: 2, passRate: 0.5, regressions: 0,
+      });
+      expect(report.decision).toBe('promote');
+      expect(renderMarkdown(report)).toContain('Abstained (counted as not passing): 1');
+      expect(reportSchema.safeParse(JSON.parse(JSON.stringify(report))).success).toBe(true);
+
+      const passedInstead = structuredClone(report);
+      passedInstead.items[0] = { ...passedInstead.items[0]!, outcome: 'pass', pass: true, judge: { ...passedInstead.items[0]!.judge!, pass: true } };
+      expect(reportSchema.safeParse(passedInstead).success).toBe(false);
+    } finally {
+      closeServer(mock.server);
+    }
+  });
+
   it('submits one batch, verifies the receipt, and leaves promotion policy in Dailies', async () => {
     const mock = await startMockRubrist();
     const { path } = await writeInputs([
@@ -410,7 +497,7 @@ describe('Rubrist release-evidence boundary', () => {
       expect(strict.trust).toEqual({
         status: 'complete',
         class: 'verified',
-        derivation: 'rubrist_receipt_v1',
+        derivation: 'rubrist_receipt_v2',
         admissible: true,
       });
       expect(strict.items.every((item) => item.trustClass === 'verified')).toBe(true);
@@ -485,8 +572,11 @@ describe('Rubrist release-evidence boundary', () => {
       const labelUnlinked = structuredClone(valid);
       const labelReceipt = labelUnlinked.evidence?.receipt;
       if (labelReceipt === undefined) throw new Error('expected retained receipt');
-      labelReceipt.items[0]!.judgedLabel =
-        labelReceipt.items[0]!.judgedLabel === 'pass' ? 'fail' : 'pass';
+      const flipped = labelReceipt.items[0]!.result;
+      if (flipped.state !== 'outcome') throw new Error('expected an outcome');
+      labelReceipt.items[0]!.result = { state: 'outcome', outcome: flipped.outcome === 'pass' ? 'fail' : 'pass' };
+      labelReceipt.run.passItems += flipped.outcome === 'pass' ? -1 : 1;
+      labelReceipt.run.failItems += flipped.outcome === 'pass' ? 1 : -1;
       const { evidenceDigest: _oldDigest, ...unsignedReceipt } = labelReceipt;
       labelReceipt.evidenceDigest = independentDigest(unsignedReceipt);
 
@@ -622,7 +712,7 @@ describe('Rubrist release-evidence boundary', () => {
       expect(report.evidence).toBeUndefined();
       expect(report.trust).toEqual({
         status: 'unavailable',
-        derivation: 'rubrist_receipt_v1',
+        derivation: 'rubrist_receipt_v2',
         admissible: false,
         reason: 'no_completed_evidence',
       });
@@ -640,12 +730,12 @@ describe('Rubrist release-evidence boundary', () => {
 
   for (const [mode, message] of [
     ['tampered-evidence', 'evidenceDigest mismatch'],
-    ['extra-field', 'does not match receipt v1 contract'],
-    ['future-schema', 'does not match receipt v1 contract'],
+    ['extra-field', 'does not match the Rubrist contract'],
+    ['future-schema', 'does not match the Rubrist contract'],
     ['content-mismatch', 'contentDigest mismatch'],
     ['dataset-mismatch', 'datasetDigest mismatch'],
     ['skill-mismatch', 'skillVersionId mismatch'],
-    ['ambiguous-label', 'claims complete with incomplete'],
+    ['forged-complete', 'claims complete with incomplete'],
     ['missing-item', 'exact clientItemId coverage'],
     ['duplicate-item', 'clientItemId values must be unique'],
     ['unordered', 'not ordered by clientItemId'],
@@ -721,7 +811,7 @@ describe('Rubrist release-evidence boundary', () => {
       )).toBe(true);
       expect(report.trust).toEqual({
         status: 'unavailable',
-        derivation: 'rubrist_receipt_v1',
+        derivation: 'rubrist_receipt_v2',
         admissible: false,
         reason: 'no_completed_evidence',
       });
@@ -730,7 +820,7 @@ describe('Rubrist release-evidence boundary', () => {
       forgedVerifiedTrust.trust = {
         status: 'complete',
         class: 'verified',
-        derivation: 'rubrist_receipt_v1',
+        derivation: 'rubrist_receipt_v2',
         admissible: true,
       };
       expect(reportSchema.safeParse(forgedVerifiedTrust).success).toBe(false);
@@ -762,7 +852,7 @@ describe('Rubrist release-evidence boundary', () => {
       expect(report.decision).toBe('inconclusive');
       expect(report.trust).toEqual({
         status: 'unavailable',
-        derivation: 'rubrist_receipt_v1',
+        derivation: 'rubrist_receipt_v2',
         admissible: false,
         reason: 'no_completed_evidence',
       });

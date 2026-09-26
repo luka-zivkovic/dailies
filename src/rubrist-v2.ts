@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { sha256Digest } from './rubrist.js';
+import { sha256Digest } from './rubrist-canonical.js';
 
 // Shared building blocks for the Rubrist v2 evidence Dailies verifies
 // (Rubrist ADR-0014; Dailies ADR-0008). This is Dailies' own implementation of

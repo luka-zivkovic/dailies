@@ -1,14 +1,13 @@
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { z } from 'zod';
-import { canonicalJson } from './rubrist.js';
+import { canonicalJson } from './rubrist-canonical.js';
 import type { RubristReceiptV2 } from './rubrist-receipt-v2.js';
 import { withRubristV2RawGuards } from './rubrist-v2.js';
 
 // Rubrist evaluator suite manifest v2 (contracts/evaluator-suite-manifest-v2.md),
 // verified independently of Rubrist's runtime. v1's shape and rules; members
-// carry the v2 skillDigest. Dailies ADR-0008: vendored now, consumed when
-// Rubrist emits v2, when the v1 module is removed.
+// carry the v2 skillDigest. It replaced manifest v1 (Dailies ADR-0008).
 
 const digestSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
 const nonEmptyStringSchema = z.string().min(1);
@@ -27,7 +26,7 @@ export const evaluatorSuiteManifestV2MemberSchema = z.object({
   applicability: z.object({ kind: z.literal('all_items') }).strict(),
 }).strict();
 
-const trialPlanSchema = z.object({
+export const evaluatorSuiteTrialPlanV2Schema = z.object({
   kind: z.literal('independent_repetitions'),
   trialsPerItem: z.number().int().min(2).max(10),
 }).strict();
@@ -40,7 +39,7 @@ const manifestObjectSchema = z.object({
   projectId: nonEmptyStringSchema,
   revision: z.number().int().positive().max(Number.MAX_SAFE_INTEGER),
   members: z.array(evaluatorSuiteManifestV2MemberSchema).min(1),
-  trialPlan: trialPlanSchema.nullable(),
+  trialPlan: evaluatorSuiteTrialPlanV2Schema.nullable(),
   manifestDigest: digestSchema,
 }).strict();
 

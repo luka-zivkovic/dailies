@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { canonicalJson } from './rubrist.js';
-import type { EvaluatorSuiteManifest } from './suite-manifest.js';
+import type { EvaluatorSuiteManifestV2 } from './suite-manifest-v2.js';
 
 const nonBlankStringSchema = z.string().min(1).refine((value) => value.trim().length > 0);
 const digestSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
@@ -85,7 +85,7 @@ export function releasePolicyDigest(policy: ReleasePolicyV1): string {
 
 export function verifyReleasePolicy(
   raw: unknown,
-  manifest: EvaluatorSuiteManifest,
+  manifest: EvaluatorSuiteManifestV2,
 ): ReleasePolicyV1 {
   const policy = releasePolicyV1Schema.parse(raw);
   if (policy.manifestId !== manifest.manifestId) {

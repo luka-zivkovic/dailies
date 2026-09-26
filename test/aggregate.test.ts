@@ -55,6 +55,7 @@ describe('aggregate', () => {
       total: 4,
       passed: 2,
       failed: 2,
+      abstained: 0,
       errored: 1,
       candidateErrored: 1,
       judgeErrored: 0,
@@ -122,6 +123,23 @@ describe('aggregate allErrored', () => {
     expect(totals.allErrored).toBe(false);
   });
 
+  it('counts an abstention as evaluated and not passing, shown separately and unpaired (ADR-0009)', () => {
+    const abstained = item({ id: 'b', pass: false, outcome: 'abstain', baseline_label: 'pass', comparison: 'unpaired', regression: false });
+    const totals = aggregate([item({ id: 'a', pass: true }), abstained]);
+    expect(compareOutcome('pass', 'abstain')).toBe('unpaired');
+    expect(totals).toMatchObject({
+      total: 2,
+      passed: 1,
+      failed: 1,
+      abstained: 1,
+      errored: 0,
+      evaluated: 2,
+      evaluationCoverage: 1,
+      passRate: 0.5,
+      regressions: 0,
+    });
+  });
+
   it('is false for an empty item list', () => {
     expect(aggregate([]).allErrored).toBe(false);
   });
@@ -132,6 +150,7 @@ describe('decideExitCode', () => {
     total: 2,
     passed: 0,
     failed: 2,
+    abstained: 0,
     errored: 2,
     candidateErrored: 0,
     judgeErrored: 2,
@@ -198,6 +217,7 @@ describe('decideDecision thresholds with admissible trust', () => {
     total: 10,
     passed: 9,
     failed: 1,
+    abstained: 0,
     errored: 0,
     candidateErrored: 0,
     judgeErrored: 0,

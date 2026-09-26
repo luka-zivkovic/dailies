@@ -1,4 +1,3 @@
-import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import type { RubristJudgeConfig } from './config.js';
 import {
@@ -15,72 +14,20 @@ import {
   runWithRetry,
   type AttemptRecord,
 } from './retry.js';
+import { RubristProtocolError } from './rubrist-canonical.js';
+import {
+  rubristReceiptV2Schema,
+  verifyRubristReceiptV2,
+  type RubristOutcome,
+  type RubristReceiptV2,
+  type RubristReceiptV2Verification,
+} from './rubrist-receipt-v2.js';
 
-const digestSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
+export { RubristProtocolError, canonicalJson, sha256Digest } from './rubrist-canonical.js';
+
 export const RUBRIST_CLIENT_ITEM_ID_MAX_LENGTH = 240;
 export const MAX_RUBRIST_EVIDENCE_OPERATIONS = 10_000;
 const evalRunStatusSchema = z.enum(['pending', 'running', 'completed', 'failed', 'canceled']);
-const evalRunItemStatusSchema = z.enum(['pending', 'completed', 'failed', 'skipped']);
-
-const requestedModelBindingSchema = z
-  .object({
-    provider: z.string(),
-    modelId: z.string(),
-    modelVersion: z.string(),
-    temperature: z.number(),
-    topP: z.number().optional(),
-    baseUrl: z.string().optional(),
-  })
-  .strict();
-
-const providerMetadataSchema = z
-  .object({
-    model: z.string().nullable(),
-    requestId: z.string().nullable(),
-    responseId: z.string().nullable(),
-    systemFingerprint: z.string().nullable(),
-  })
-  .strict();
-
-export const rubristReceiptItemSchema = z
-  .object({
-    clientItemId: z.string().min(1),
-    caseId: z.string().min(1),
-    status: evalRunItemStatusSchema,
-    judgedLabel: z.enum(['pass', 'fail', 'ambiguous']).nullable(),
-    verdictId: z.string().nullable(),
-    error: z.string().nullable(),
-    contentDigest: digestSchema,
-    providerMetadata: providerMetadataSchema,
-  })
-  .strict();
-
-export const rubristAssessmentReceiptSchema = z
-  .object({
-    schemaVersion: z.literal(1),
-    receiptId: z.string().min(1),
-    evalRunId: z.string().min(1),
-    projectId: z.string().min(1),
-    skillId: z.string().min(1),
-    skillVersionId: z.string().min(1),
-    status: z.enum(['complete', 'incomplete']),
-    run: z
-      .object({
-        status: evalRunStatusSchema,
-        totalItems: z.number().int().nonnegative(),
-        completedItems: z.number().int().nonnegative(),
-        failedItems: z.number().int().nonnegative(),
-        agreedItems: z.number().int().nonnegative(),
-      })
-      .strict(),
-    requestedModelBinding: requestedModelBindingSchema,
-    skillDigest: digestSchema,
-    datasetDigest: digestSchema,
-    items: z.array(rubristReceiptItemSchema),
-    evidenceDigest: digestSchema,
-  })
-  .strict();
-
 const batchResponseSchema = z.object({
   evalRunId: z.string().min(1),
   status: evalRunStatusSchema,
@@ -161,8 +108,6 @@ export const rubristEvidenceOperationSchema = z
     }
   });
 
-export type RubristAssessmentReceipt = z.infer<typeof rubristAssessmentReceiptSchema>;
-export type RubristReceiptItem = z.infer<typeof rubristReceiptItemSchema>;
 export type RubristEvidenceOperation = z.infer<typeof rubristEvidenceOperationSchema>;
 
 export interface RubristCandidateItem {
@@ -174,22 +119,16 @@ export interface RubristCandidateItem {
 export interface RubristAssessment {
   /** Eval-run identity returned by the independently recorded batch submission. */
   evalRunId: string;
-  receipt: RubristAssessmentReceipt;
-  labels: Map<string, 'pass' | 'fail'>;
+  receipt: RubristReceiptV2;
+  /** Every item's verified outcome; collection returns only complete receipts. */
+  outcomes: Map<string, RubristOutcome>;
   operations: RubristEvidenceOperation[];
 }
 
-export class RubristProtocolError extends OperationError {
-  constructor(message: string) {
-    super(message, 'protocol');
-    this.name = 'RubristProtocolError';
-  }
-}
-
 export class RubristIncompleteError extends OperationError {
-  readonly receipt: RubristAssessmentReceipt;
+  readonly receipt: RubristReceiptV2;
 
-  constructor(receipt: RubristAssessmentReceipt) {
+  constructor(receipt: RubristReceiptV2) {
     super('Rubrist assessment receipt is structurally valid but incomplete', 'incomplete');
     this.name = 'RubristIncompleteError';
     this.receipt = receipt;
@@ -198,14 +137,14 @@ export class RubristIncompleteError extends OperationError {
 
 export class RubristCollectionError extends OperationError {
   readonly operations: RubristEvidenceOperation[];
-  readonly receipt?: RubristAssessmentReceipt;
+  readonly receipt?: RubristReceiptV2;
   readonly evalRunId?: string;
   readonly originalError: unknown;
 
   constructor(
     error: unknown,
     operations: RubristEvidenceOperation[],
-    receipt?: RubristAssessmentReceipt,
+    receipt?: RubristReceiptV2,
     evalRunId?: string,
   ) {
     const detail = classifyOperationError(error);
@@ -236,38 +175,6 @@ class RubristOperationFailure extends Error {
     this.operation = operation;
     this.originalError = error;
   }
-}
-
-/** Rubrist's canonical JSON: recursive lexicographic object keys, stable array order. */
-export function canonicalJson(value: unknown): string {
-  if (value === null || typeof value === 'string' || typeof value === 'boolean') {
-    return JSON.stringify(value);
-  }
-  if (typeof value === 'number') {
-    if (!Number.isFinite(value)) {
-      throw new RubristProtocolError('canonical JSON rejects non-finite numbers');
-    }
-    return JSON.stringify(value);
-  }
-  if (Array.isArray(value)) {
-    return `[${value
-      .map((entry) => entry === undefined ? 'null' : canonicalJson(entry))
-      .join(',')}]`;
-  }
-  if (typeof value === 'object') {
-    const record = value as Record<string, unknown>;
-    const keys = Object.keys(record)
-      .filter((key) => record[key] !== undefined)
-      .sort((left, right) => left < right ? -1 : left > right ? 1 : 0);
-    return `{${keys
-      .map((key) => `${JSON.stringify(key)}:${canonicalJson(record[key])}`)
-      .join(',')}}`;
-  }
-  throw new RubristProtocolError(`canonical JSON does not support ${typeof value}`);
-}
-
-export function sha256Digest(value: unknown): string {
-  return `sha256:${createHash('sha256').update(canonicalJson(value)).digest('hex')}`;
 }
 
 function apiUrl(baseUrl: string, path: string): string {
@@ -307,116 +214,10 @@ function protocolParse<T>(schema: z.ZodType<T>, raw: unknown, what: string): T {
   const parsed = schema.safeParse(raw);
   if (!parsed.success) {
     throw new RubristProtocolError(
-      `${what} does not match receipt v1 contract: ${parsed.error.message}`,
+      `${what} does not match the Rubrist contract: ${parsed.error.message}`,
     );
   }
   return parsed.data;
-}
-
-export interface RubristReceiptVerification {
-  status: 'complete' | 'incomplete';
-  labels: Map<string, 'pass' | 'fail'>;
-}
-
-/** Pure receipt integrity/linkage verification shared by collection and report parsing. */
-export function verifyRubristReceipt(
-  raw: unknown,
-  receipt: RubristAssessmentReceipt,
-  evalRunId: string,
-  skillVersionId: string,
-  candidates: RubristCandidateItem[],
-): RubristReceiptVerification {
-  if (receipt.evalRunId !== evalRunId) {
-    throw new RubristProtocolError(`receipt evalRunId mismatch: expected ${evalRunId}`);
-  }
-  if (receipt.skillVersionId !== skillVersionId) {
-    throw new RubristProtocolError(
-      `receipt skillVersionId mismatch: expected pinned ${skillVersionId}`,
-    );
-  }
-
-  const expectedById = new Map(candidates.map((item) => [item.id, item]));
-  if (expectedById.size !== candidates.length) {
-    throw new RubristProtocolError('candidate clientItemId values must be unique');
-  }
-  const receiptIds = receipt.items.map((item) => item.clientItemId);
-  const codeUnitOrder = (a: string, b: string) => a < b ? -1 : a > b ? 1 : 0;
-  const sortedReceiptIds = [...receiptIds].sort(codeUnitOrder);
-  if (new Set(receiptIds).size !== receiptIds.length) {
-    throw new RubristProtocolError('receipt clientItemId values must be unique');
-  }
-  if (receiptIds.some((id, index) => id !== sortedReceiptIds[index])) {
-    throw new RubristProtocolError('receipt items are not ordered by clientItemId');
-  }
-  const expectedIds = [...expectedById.keys()].sort(codeUnitOrder);
-  if (
-    receiptIds.length !== expectedIds.length ||
-    receiptIds.some((id, index) => id !== expectedIds[index])
-  ) {
-    throw new RubristProtocolError('receipt does not have exact clientItemId coverage');
-  }
-
-  for (const item of receipt.items) {
-    const candidate = expectedById.get(item.clientItemId);
-    if (!candidate) throw new RubristProtocolError(`unexpected receipt item ${item.clientItemId}`);
-    const expectedContentDigest = sha256Digest({ input: candidate.input, output: candidate.output });
-    if (item.contentDigest !== expectedContentDigest) {
-      throw new RubristProtocolError(`contentDigest mismatch for ${item.clientItemId}`);
-    }
-  }
-
-  const expectedDatasetDigest = sha256Digest(
-    receipt.items.map(({ clientItemId, contentDigest }) => ({ clientItemId, contentDigest })),
-  );
-  if (receipt.datasetDigest !== expectedDatasetDigest) {
-    throw new RubristProtocolError('datasetDigest mismatch');
-  }
-
-  if (raw === null || typeof raw !== 'object' || Array.isArray(raw)) {
-    throw new RubristProtocolError('receipt is not an object');
-  }
-  const { evidenceDigest: _evidenceDigest, ...unsignedReceipt } = raw as Record<string, unknown>;
-  const expectedEvidenceDigest = sha256Digest(unsignedReceipt);
-  if (receipt.evidenceDigest !== expectedEvidenceDigest) {
-    throw new RubristProtocolError('evidenceDigest mismatch');
-  }
-
-  const completedItems = receipt.items.filter((item) => item.status === 'completed').length;
-  const failedItems = receipt.items.filter((item) => item.status === 'failed').length;
-  if (
-    receipt.run.totalItems !== candidates.length ||
-    receipt.run.completedItems !== completedItems ||
-    receipt.run.failedItems !== failedItems ||
-    receipt.run.agreedItems > receipt.run.completedItems
-  ) {
-    throw new RubristProtocolError('receipt run counters are inconsistent with its items');
-  }
-
-  const labels = new Map<string, 'pass' | 'fail'>();
-  const itemsComplete = receipt.items.every((item) => {
-    const labelComplete = item.judgedLabel === 'pass' || item.judgedLabel === 'fail';
-    if (item.judgedLabel === 'pass' || item.judgedLabel === 'fail') {
-      labels.set(item.clientItemId, item.judgedLabel);
-    }
-    return item.status === 'completed' &&
-      labelComplete &&
-      item.verdictId !== null &&
-      item.error === null;
-  });
-  const computedComplete = receipt.run.status === 'completed' &&
-    receipt.run.completedItems === candidates.length &&
-    receipt.run.failedItems === 0 &&
-    itemsComplete;
-  if (receipt.status === 'complete' && !computedComplete) {
-    throw new RubristProtocolError('receipt claims complete with incomplete run or item evidence');
-  }
-  if (receipt.status === 'incomplete' && computedComplete) {
-    throw new RubristProtocolError('receipt claims incomplete despite complete run and item evidence');
-  }
-  return {
-    status: receipt.status,
-    labels: receipt.status === 'complete' ? labels : new Map(),
-  };
 }
 
 function sleep(ms: number): Promise<void> {
@@ -458,7 +259,7 @@ async function executeEvidenceOperation<T>(
 function collectOperationFailure(
   error: unknown,
   operations: RubristEvidenceOperation[],
-  receipt?: RubristAssessmentReceipt,
+  receipt?: RubristReceiptV2,
   evalRunId?: string,
 ): never {
   if (error instanceof RubristOperationFailure) {
@@ -637,8 +438,8 @@ export async function collectRubristAssessment(
     judge.url,
     `/api/v1/eval-runs/${encodeURIComponent(batch.evalRunId)}/assessment-receipt`,
   );
-  let receipt: RubristAssessmentReceipt;
-  let verification: RubristReceiptVerification;
+  let receipt: RubristReceiptV2;
+  let verification: RubristReceiptV2Verification;
   try {
     const remainingMs = deadline - Date.now();
     if (remainingMs <= 0) {
@@ -665,7 +466,7 @@ export async function collectRubristAssessment(
           'Rubrist assessment receipt',
         );
         const parsedReceipt = protocolParse(
-          rubristAssessmentReceiptSchema,
+          rubristReceiptV2Schema,
           receiptRaw,
           'Rubrist assessment receipt',
         );
@@ -679,13 +480,11 @@ export async function collectRubristAssessment(
         }
         return {
           receipt: parsedReceipt,
-          verification: verifyRubristReceipt(
-            receiptRaw,
-            parsedReceipt,
-            batch.evalRunId,
-            judge.skillVersionId,
+          verification: verifyRubristReceiptV2(receiptRaw, {
+            evalRunId: batch.evalRunId,
+            skillVersionId: judge.skillVersionId,
             candidates,
-          ),
+          }),
         };
       },
       {
@@ -712,5 +511,5 @@ export async function collectRubristAssessment(
       batch.evalRunId,
     );
   }
-  return { evalRunId: batch.evalRunId, receipt, labels: verification.labels, operations };
+  return { evalRunId: batch.evalRunId, receipt, outcomes: verification.outcomes, operations };
 }

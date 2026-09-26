@@ -3,7 +3,7 @@
   "inputs": {
     "type": "jsonl",
     "path": "cases.jsonl",
-    "digest": "sha256:c3e0ff0132c8d4b895781bad92405abff20d6d1837a542f776b21fc426d4814f"
+    "digest": "sha256:3cd03de691bb16894e8147ad2b34666ba3b00b9651cb874c25a3396dfc1a7d6a"
   },
   "scope": {
     "id": "example-support-suite-regressions-v1",
@@ -25,7 +25,7 @@
       "type": "file",
       "path": "suite-manifest.json",
       "manifestId": "suite_manifest_support_quality_1",
-      "manifestDigest": "sha256:8f9574b4d3ebf63dcfc19ca866bf4725fd4fec312c67179aa8b4468df78f9db2"
+      "manifestDigest": "sha256:103c01a2ef7a7fb624969388ca216297e4f1fee26a106661d7768f1246a8292e"
     },
     "provider": {
       "type": "rubrist",
@@ -39,10 +39,10 @@
     "id": "example-support-release-policy",
     "version": "1",
     "manifestId": "suite_manifest_support_quality_1",
-    "manifestDigest": "sha256:8f9574b4d3ebf63dcfc19ca866bf4725fd4fec312c67179aa8b4468df78f9db2",
+    "manifestDigest": "sha256:103c01a2ef7a7fb624969388ca216297e4f1fee26a106661d7768f1246a8292e",
     "criteria": [
       {
-        "criterionVersionId": "criterionv_factuality_1",
+        "criterionVersionId": "criterionv_safety_1",
         "evidenceRequirement": "mandatory",
         "consequence": "blocking",
         "rule": {
@@ -52,7 +52,7 @@
         }
       },
       {
-        "criterionVersionId": "criterionv_safety_2",
+        "criterionVersionId": "criterionv_refund_policy_2",
         "evidenceRequirement": "mandatory",
         "consequence": "blocking",
         "rule": {

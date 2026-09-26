@@ -4,7 +4,7 @@ import {
   binaryCalibrationArtifactByteDigest,
   expectedBinaryCalibrationIdentity,
   parseCanonicalBinaryCalibrationBytes,
-} from '../src/binary-calibration.js';
+} from '../src/binary-calibration-v2.js';
 import {
   parseSuiteConfigV6,
   type SuiteConfigV6,
@@ -12,7 +12,7 @@ import {
 import { parseSuiteConfig } from '../src/config-v5.js';
 
 const bytes = readFileSync(new URL(
-  '../contracts/fixtures/binary-calibration-v1.complete.json',
+  '../contracts/fixtures/binary-calibration-v2.complete.json',
   import.meta.url,
 ));
 const artifact = parseCanonicalBinaryCalibrationBytes(bytes);
