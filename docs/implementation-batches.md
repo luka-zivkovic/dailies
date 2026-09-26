@@ -561,7 +561,7 @@ and binary-calibration v1 bytes are unchanged.
 
 ## Batch 8 — Model-agnostic evaluator execution and evidence v2
 
-Implementation status: **in progress; 8A through 8D complete**. Decision
+Implementation status: **in progress; 8A through 8E complete**. Decision
 gate 12 was accepted on 2026-09-25 and is recorded in Rubrist ADR-0014,
 including the founder's answers to its four open questions and three later
 decisions: receipts carry a definition digest, v2 replaces v1, and a launch
@@ -581,7 +581,13 @@ findings are resolved before merge.
 - Dailies switched every report to v2 in the same window (dailies#18,
   Dailies ADR-0008). Its ADR-0009 records the founder's 2026-09-26 decision
   that an abstained outcome counts as not passing.
-- 8E to 8G remain.
+- 8E is merged (#145–#151): the TypeSafe typed-question adapter, typed
+  definitions with their identity and export, TypeSafe credentials, typed
+  verdicts through the runtime, creation and resolution, sealed calibration
+  and governed candidates, and criterion-author guidance. ADR-0014 records
+  the founder's 2026-09-26 decisions for typed-question evaluators
+  (decisions 8–11).
+- 8F and 8G remain.
 
 This batch changes Rubrist and Dailies. Both switch to the v2 contracts in
 one window and drop v1 support. Casefile changes only in the launch baseline
