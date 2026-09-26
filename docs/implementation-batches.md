@@ -570,7 +570,7 @@ independent review against its exact diff, and each review's correctness
 findings are resolved before merge.
 
 - 8A (#125, #127–#130), 8B (#132, #133), and 8C (#134) are merged; #126
-  amended ADR-0014.
+  and #131 amended ADR-0014.
 - 8D is merged:
   - 8D-1 to 8D-4 (#135–#139): v2 bindings, the executor, resolution records,
     governed gates, and calibration and suite manifest v2, with their v1
