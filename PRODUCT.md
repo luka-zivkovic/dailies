@@ -2,7 +2,7 @@
 
 Status: **active target-state charter**
 
-Last reviewed: 2026-08-22
+Last reviewed: 2026-09-26
 
 This document is the source of truth for what Dailies is becoming. The README,
 PLAN, CLI copy, and code may describe current behavior, but they do not
@@ -109,8 +109,9 @@ customer override. Additive schema v6 consumes exact local
 separate sealed calibration scope, evaluates repeated calibration trials
 without pooling, and emits a canonical calibration-aware report while keeping
 the receipt unchanged. Rubrist evidence is v2 throughout (ADR-0008), and an
-evaluator's abstention counts as not passing (ADR-0009). Repeated candidate-assessment execution, staged rollout,
-and hosted control-plane ideas remain demand-gated.
+evaluator's abstention counts as not passing (ADR-0009). Repeated
+candidate-assessment execution, staged rollout, and hosted control-plane ideas
+remain demand-gated.
 
 ## Product principles
 

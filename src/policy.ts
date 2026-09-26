@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { z } from 'zod';
-import { canonicalJson } from './rubrist.js';
+import { canonicalJson } from './rubrist-canonical.js';
 import type { EvaluatorSuiteManifestV2 } from './suite-manifest-v2.js';
 
 const nonBlankStringSchema = z.string().min(1).refine((value) => value.trim().length > 0);

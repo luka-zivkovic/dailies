@@ -329,12 +329,12 @@ export function suiteCandidateDatasetDigest(
   return sha256Digest(items);
 }
 
-/** An abstention measured nothing against the baseline, so it is unpaired. */
+/** An abstention counts as not passing (ADR-0009), so it compares as a fail. */
 export function compareCriterionOutcome(
   baseline: 'pass' | 'fail' | undefined,
   assessed: 'pass' | 'fail' | 'abstain' | null,
 ): z.infer<typeof comparisonSchema> {
-  if (baseline === undefined || assessed === null || assessed === 'abstain') return 'unpaired';
+  if (baseline === undefined || assessed === null) return 'unpaired';
   if (baseline === 'pass') return assessed === 'pass' ? 'stable_pass' : 'regression';
   return assessed === 'pass' ? 'improvement' : 'stable_fail';
 }

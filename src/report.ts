@@ -41,12 +41,16 @@ export const comparisonSchema = z.enum([
 export const errorStageSchema = z.enum(['candidate', 'judge']);
 export const errorKindSchema = z.enum(ERROR_KINDS);
 
-/** An error or an abstention measured nothing against the baseline, so it is unpaired. */
+/**
+ * An error measured nothing against the baseline, so it is unpaired. An
+ * abstention counts as not passing (ADR-0009), so it compares as a fail: a
+ * regression against a passing baseline.
+ */
 export function compareOutcome(
   baselineLabel: 'pass' | 'fail' | undefined,
   outcome: z.infer<typeof itemOutcomeSchema>,
 ): z.infer<typeof comparisonSchema> {
-  if (baselineLabel === undefined || outcome === 'error' || outcome === 'abstain') return 'unpaired';
+  if (baselineLabel === undefined || outcome === 'error') return 'unpaired';
   if (baselineLabel === 'pass') return outcome === 'pass' ? 'stable_pass' : 'regression';
   return outcome === 'pass' ? 'improvement' : 'stable_fail';
 }

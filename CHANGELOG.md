@@ -14,8 +14,8 @@ versioning while the public API remains pre-1.0.
   manifest and calibration digests must name v2 artifacts.
 - Count a Rubrist evaluator's abstention as not passing (ADR-0009, founder
   decision 2026-09-26). An item outcome can be `abstain`; the pass rate stays
-  `passed / total`, reports show `abstained` separately, and an abstention is
-  unpaired against its baseline, never a regression.
+  `passed / total`, reports (v4 to v6 markdown included) show `abstained`
+  separately, and an abstention compares with its baseline as a fail does.
 - The mock Rubrist server serves receipt v2 and takes `--abstain-criterion`,
   and the bundled examples use the v2 manifest and calibration fixtures.
 - Vendor Rubrist's assessment receipt v2, evaluator suite manifest v2, and

@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { canonicalJson, sha256Digest } from '../src/rubrist.js';
 import { parseSuiteConfig } from '../src/config-v5.js';
 import {
+  aggregateCriterionItems,
   candidateExecutionIdentity,
   providerExecutionIdentity,
   renderSuiteMarkdown,
@@ -24,7 +25,7 @@ import {
 import { evaluatorIdentityFor, otherEvaluatorIdentity, receiptV2, type ReceiptItemInput } from './rubrist-v2-support.js';
 import { sha256Bytes } from './v4-fixture.js';
 
-type MemberMode = 'complete' | 'incomplete' | 'binding-tamper' | 'pending';
+type MemberMode = 'complete' | 'incomplete' | 'binding-tamper' | 'pending' | 'abstain';
 
 interface SubmittedItem {
   clientItemId: string;
@@ -78,7 +79,9 @@ function receipt(
     output: item.output,
     result: {
       state: 'outcome',
-      outcome: member.position === 1 && item.clientItemId.includes('unsafe') ? 'fail' : 'pass',
+      outcome: mode === 'abstain'
+        ? 'abstain'
+        : member.position === 1 && item.clientItemId.includes('unsafe') ? 'fail' : 'pass',
     },
   }));
   if (mode === 'incomplete') {
@@ -332,6 +335,53 @@ describe('criterion suite runner', () => {
       expect(cli.code).toBe(expectedCode);
       expect(report.decision).toBe(expectedDecision);
       expect(cli.stdout).toContain(`decision: ${expectedDecision}`);
+    } finally {
+      close(test.candidateServer);
+      close(test.rubrist.server);
+    }
+  });
+
+  it('counts an abstaining criterion as not passing and binds every abstention to its receipt (ADR-0009)', async () => {
+    const test = await fixture(['blocking', 'advisory'], { skillv_safety_1: 'abstain' });
+    try {
+      const report = await runSuiteRelease(test.config, {
+        now: () => new Date('2026-08-22T12:00:00.000Z'),
+      });
+      const criterion = report.criteria[0]!;
+      expect(criterion.items.map((item) => [item.assessedLabel, item.comparison])).toEqual([
+        ['abstain', 'regression'],
+        ['abstain', 'regression'],
+      ]);
+      expect(criterion.totals).toMatchObject({ evaluated: 2, passed: 0, failed: 2, abstained: 2, passRate: 0, regressions: 2 });
+      expect(report.decision).toBe('block');
+      expect(reportV5Schema.safeParse(report).success).toBe(true);
+      expect(renderSuiteMarkdown(report)).toContain('Abstained (counted as not passing): 2');
+
+      const relabel = (label: 'pass' | 'fail') => (candidate: Record<string, any>) => {
+        const tampered = candidate.criteria[0];
+        tampered.items = tampered.items.map((item: Record<string, any>) => ({
+          ...item,
+          assessedLabel: label,
+          comparison: label === 'pass' ? 'stable_pass' : 'regression',
+          regression: label !== 'pass',
+        }));
+        tampered.totals = aggregateCriterionItems(tampered.items);
+      };
+      const mutations: Array<[string, (candidate: Record<string, any>) => void]> = [
+        ['abstentions relabeled as fails', relabel('fail')],
+        ['abstentions relabeled as passes', relabel('pass')],
+        ['abstained count zeroed', (candidate) => { candidate.criteria[0].totals.abstained = 0; }],
+        ['abstention left unpaired', (candidate) => {
+          candidate.criteria[0].items[0].comparison = 'unpaired';
+          candidate.criteria[0].items[0].regression = false;
+          candidate.criteria[0].totals = aggregateCriterionItems(candidate.criteria[0].items);
+        }],
+      ];
+      for (const [name, mutate] of mutations) {
+        const candidate = structuredClone(report) as Record<string, any>;
+        mutate(candidate);
+        expect(reportV5Schema.safeParse(candidate).success, name).toBe(false);
+      }
     } finally {
       close(test.candidateServer);
       close(test.rubrist.server);

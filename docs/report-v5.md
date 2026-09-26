@@ -26,8 +26,9 @@ counter, and evidence-digest checks.
 Each criterion item's `assessedLabel` is `pass`, `fail`, `abstain`, or `null`
 when the criterion's evidence is not complete. An abstention counts as not
 passing (ADR-0009): the criterion's `passed` excludes it, `failed` includes it,
-`abstained` shows it separately, the pass rate stays `passed / total`, and its
-comparison is `unpaired`, so it is never a regression.
+`abstained` shows it separately, the pass rate stays `passed / total`, and it
+compares with a baseline label as a fail does, so it is a regression against a
+`pass` baseline.
 
 Execution currently requires `trialPlan: null`. The manifest parser preserves
 the closed independent-repetitions shape, but v5 refuses to execute it until a

@@ -6,6 +6,7 @@ import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
 import { parseConfig, type Config } from '../src/config.js';
 import {
+  aggregate,
   buildDecisionStatement,
   parseReportForInspection,
   reportSchema,
@@ -187,7 +188,16 @@ describe('report/config v4 scope and trust contract', () => {
           selfReportedOverride: { reason: 'Customer accepts this migration judge.' },
         },
       );
-      expect((await runShadow(overridden.config)).decision).toBe('block');
+      const blocked = await runShadow(overridden.config);
+      expect(blocked.decision).toBe('block');
+
+      // Only a Rubrist evaluator can abstain; an HTTP report can't relabel its failures.
+      const relabeled = structuredClone(blocked);
+      relabeled.items = relabeled.items.map((item) => ({ ...item, outcome: 'abstain' as const }));
+      relabeled.totals = aggregate(relabeled.items);
+      const result = reportSchema.safeParse(relabeled);
+      expect(result.success).toBe(false);
+      expect(result.error?.issues.map((issue) => issue.message)).toContain('only a Rubrist evaluator can abstain');
     } finally {
       closeServer(judge.server);
     }

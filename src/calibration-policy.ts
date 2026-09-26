@@ -14,7 +14,7 @@ import {
   calibrationEvidenceFileSourceSchema,
   type CalibrationEvidenceFileSource,
 } from './config-v6.js';
-import { canonicalJson, sha256Digest } from './rubrist.js';
+import { canonicalJson, sha256Digest } from './rubrist-canonical.js';
 import {
   binaryCalibrationRequirementV1Schema,
   calibrationMetricNameSchema,

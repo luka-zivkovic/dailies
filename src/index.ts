@@ -112,6 +112,14 @@ export {
   type RubristEvidenceOperation,
 } from './rubrist.js';
 export {
+  RUBRIST_EVALUATOR_IDENTITY_BASIS,
+  rubristEvaluatorIdentitySchema,
+  rubristExecutionBindingSchema,
+  rubristSkillDigestV2,
+  type RubristEvaluatorIdentity,
+  type RubristExecutionBinding,
+} from './rubrist-v2.js';
+export {
   RUBRIST_RECEIPT_V2_CONTRACT,
   parseCanonicalRubristReceiptV2Bytes,
   rubristReceiptV2Schema,

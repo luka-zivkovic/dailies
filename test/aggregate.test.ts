@@ -123,10 +123,13 @@ describe('aggregate allErrored', () => {
     expect(totals.allErrored).toBe(false);
   });
 
-  it('counts an abstention as evaluated and not passing, shown separately and unpaired (ADR-0009)', () => {
-    const abstained = item({ id: 'b', pass: false, outcome: 'abstain', baseline_label: 'pass', comparison: 'unpaired', regression: false });
+  it('counts an abstention as evaluated and not passing, shown separately (ADR-0009)', () => {
+    const abstained = item({ id: 'b', pass: false, outcome: 'abstain', baseline_label: 'pass', comparison: 'regression', regression: true });
     const totals = aggregate([item({ id: 'a', pass: true }), abstained]);
-    expect(compareOutcome('pass', 'abstain')).toBe('unpaired');
+    // Not passing compares as a fail: a regression against a passing baseline.
+    expect(compareOutcome('pass', 'abstain')).toBe('regression');
+    expect(compareOutcome('fail', 'abstain')).toBe('stable_fail');
+    expect(compareOutcome(undefined, 'abstain')).toBe('unpaired');
     expect(totals).toMatchObject({
       total: 2,
       passed: 1,
@@ -136,7 +139,7 @@ describe('aggregate allErrored', () => {
       evaluated: 2,
       evaluationCoverage: 1,
       passRate: 0.5,
-      regressions: 0,
+      regressions: 1,
     });
   });
 

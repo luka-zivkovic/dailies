@@ -4,7 +4,7 @@ import {
   compareExactRationals,
   parseCanonicalDecimalRational,
 } from './binary-calibration-v2.js';
-import { canonicalJson } from './rubrist.js';
+import { canonicalJson } from './rubrist-canonical.js';
 import {
   applyReleasePolicy,
   binaryThresholdRuleSchema,
@@ -72,7 +72,7 @@ const calibrationMetricCheckSchema = z.object({
     ctx.addIssue({
       code: 'custom',
       path: ['minimumWilsonLowerBound'],
-      message: 'positive_class_f1 has no Wilson interval in binary calibration v1',
+      message: 'positive_class_f1 has no Wilson interval in binary calibration',
     });
   }
 });

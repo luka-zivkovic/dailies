@@ -76,8 +76,9 @@ The next planning pass may divide work into batches, but it must cover:
    multi-criterion evidence;
 5. adversarial decision tests for false promotion, false blocking,
    inconclusive handling, determinism, and retry behavior; and
-6. Rubrist calibration consumption through the frozen separate v1 artifact
-   contract (**implemented as the local-file schema-v6 path**).
+6. Rubrist calibration consumption through the separate binary-calibration
+   artifact contract, now v2 (**implemented as the local-file schema-v6
+   path**).
 
 The first, Dailies-only portion of Batch 6 comparative-evidence preparation is
 implemented as the authored invariant gate. Decision gate 5 remains open, so

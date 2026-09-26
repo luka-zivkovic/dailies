@@ -12,7 +12,7 @@ import {
   sha256Digest,
 } from '../src/rubrist.js';
 import { parseConfig, type Config } from '../src/config.js';
-import { decideExitCode, renderMarkdown, reportSchema, type Report } from '../src/report.js';
+import { aggregate, decideExitCode, renderMarkdown, reportSchema, type Report } from '../src/report.js';
 import { runShadow } from '../src/runner.js';
 import { v4ContractForPath } from './v4-fixture.js';
 
@@ -25,6 +25,8 @@ type MockMode =
   | 'dataset-mismatch'
   | 'skill-mismatch'
   | 'abstain'
+  | 'abstain-all'
+  | 'canceled'
   | 'forged-complete'
   | 'incomplete'
   | 'missing-item'
@@ -192,6 +194,13 @@ function buildReceipt(submitted: SubmittedItem[], mode: MockMode): Record<string
   if (mode === 'abstain' && items[0]) {
     items[0] = { ...items[0], result: { state: 'outcome', outcome: 'abstain' }, evaluatorScore: { value: 0.5, kind: 'self_reported_score' } };
   }
+  if (mode === 'abstain-all') {
+    items = items.map((item) => ({ ...item, result: { state: 'outcome', outcome: 'abstain' }, evaluatorScore: { value: 0.5, kind: 'self_reported_score' } }));
+  }
+  if (mode === 'canceled' && items.at(-1)) {
+    // A canceled run never took up its last item.
+    items[items.length - 1] = { ...items.at(-1)!, result: { state: 'not_attempted' }, verdictId: null, evaluatorScore: null, observed: null };
+  }
   if ((mode === 'incomplete' || mode === 'forged-complete') && items.at(-1)) {
     items[items.length - 1] = {
       ...items.at(-1)!,
@@ -202,7 +211,8 @@ function buildReceipt(submitted: SubmittedItem[], mode: MockMode): Record<string
     };
   }
 
-  const incomplete = mode === 'incomplete';
+  const incomplete = mode === 'incomplete' || mode === 'canceled';
+  const runStatus = mode === 'canceled' ? 'canceled' : incomplete ? 'failed' : 'completed';
   const receipt: Record<string, unknown> = {
     contract: 'rubrist/assessment-receipt/v2',
     schemaVersion: 2,
@@ -212,7 +222,7 @@ function buildReceipt(submitted: SubmittedItem[], mode: MockMode): Record<string
     skillId: 'skill-1',
     skillVersionId: mode === 'skill-mismatch' ? 'skill-version-other' : 'skill-version-1',
     status: incomplete ? 'incomplete' : 'complete',
-    run: receiptRunCounters(items, incomplete ? 'failed' : 'completed'),
+    run: receiptRunCounters(items, runStatus),
     evaluator: MOCK_EVALUATOR,
     skillDigest: independentDigest(MOCK_EVALUATOR),
     datasetDigest: independentDigest(
@@ -285,7 +295,9 @@ async function startMockRubrist(
         ? 'running'
         : mode === 'incomplete'
           ? 'failed'
-          : 'completed';
+          : mode === 'canceled'
+            ? 'canceled'
+            : 'completed';
       res.writeHead(200, { 'content-type': 'application/json' }).end(
         JSON.stringify({ id: 'run-1', status }),
       );
@@ -432,30 +444,77 @@ describe('Rubrist release-evidence boundary', () => {
       { id: 'pass-b', input: 'beta', baseline_output: 'beta' },
     ]);
     try {
-      const report = await runShadow(makeConfig(path, mock.url, { minPassRate: 0.5, maxRegressions: 0 }));
+      const report = await runShadow(makeConfig(path, mock.url, { minPassRate: 0.5, maxRegressions: 1 }));
       expect(report.evidence).toMatchObject({
         status: 'complete',
         receipt: { status: 'complete', run: { passItems: 1, abstainedItems: 1 } },
       });
+      // Not passing where it passed before is a regression.
       expect(report.items[0]).toMatchObject({
         id: 'pass-a',
         outcome: 'abstain',
         pass: false,
         judge: { pass: false },
-        comparison: 'unpaired',
-        regression: false,
+        comparison: 'regression',
+        regression: true,
         trustClass: 'verified',
       });
       expect(report.totals).toMatchObject({
-        total: 2, passed: 1, failed: 1, abstained: 1, evaluated: 2, passRate: 0.5, regressions: 0,
+        total: 2, passed: 1, failed: 1, abstained: 1, evaluated: 2, passRate: 0.5, regressions: 1,
       });
       expect(report.decision).toBe('promote');
       expect(renderMarkdown(report)).toContain('Abstained (counted as not passing): 1');
       expect(reportSchema.safeParse(JSON.parse(JSON.stringify(report))).success).toBe(true);
 
-      const passedInstead = structuredClone(report);
-      passedInstead.items[0] = { ...passedInstead.items[0]!, outcome: 'pass', pass: true, judge: { ...passedInstead.items[0]!.judge!, pass: true } };
-      expect(reportSchema.safeParse(passedInstead).success).toBe(false);
+      // The receipt binds the outcome: neither a pass nor a fail can stand in for the abstention.
+      for (const outcome of ['pass', 'fail'] as const) {
+        const relabeled = structuredClone(report);
+        relabeled.items[0] = {
+          ...relabeled.items[0]!,
+          outcome,
+          pass: outcome === 'pass',
+          judge: { ...relabeled.items[0]!.judge!, pass: outcome === 'pass' },
+          comparison: outcome === 'pass' ? 'stable_pass' : 'regression',
+          regression: outcome !== 'pass',
+        };
+        relabeled.totals = aggregate(relabeled.items);
+        expect(reportSchema.safeParse(relabeled).success, outcome).toBe(false);
+      }
+    } finally {
+      closeServer(mock.server);
+    }
+  });
+
+  it('never promotes an evaluator that abstained on everything, even under a regression-only policy', async () => {
+    const mock = await startMockRubrist('abstain-all');
+    const { path } = await writeInputs([
+      { id: 'pass-a', input: 'alpha', baseline_label: 'pass' },
+      { id: 'pass-b', input: 'beta', baseline_label: 'pass' },
+    ]);
+    try {
+      const report = await runShadow(makeConfig(path, mock.url, { minPassRate: 0, maxRegressions: 0 }));
+      expect(report.totals).toMatchObject({ passed: 0, abstained: 2, evaluated: 2, regressions: 2 });
+      expect(report.decision).toBe('block');
+    } finally {
+      closeServer(mock.server);
+    }
+  });
+
+  it('treats a canceled run with an item never attempted as incomplete evidence', async () => {
+    const mock = await startMockRubrist('canceled');
+    const { path } = await writeInputs([
+      { id: 'pass-a', input: 'alpha', baseline_label: 'pass' },
+      { id: 'pass-b', input: 'beta', baseline_label: 'pass' },
+    ]);
+    try {
+      const report = await runShadow(makeConfig(path, mock.url, { minPassRate: 0, maxRegressions: 99 }));
+      expect(report.decision).toBe('inconclusive');
+      expect(report.evidence).toMatchObject({
+        status: 'incomplete',
+        receipt: { status: 'incomplete', run: { status: 'canceled', notAttemptedItems: 1 } },
+      });
+      expect(report.items.every((item) => item.outcome === 'error' && item.errorKind === 'incomplete')).toBe(true);
+      expect(reportSchema.safeParse(JSON.parse(JSON.stringify(report))).success).toBe(true);
     } finally {
       closeServer(mock.server);
     }

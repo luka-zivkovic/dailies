@@ -89,9 +89,10 @@ that neither passes nor fails. Dailies counts it as not passing (ADR-0009):
 - the item has `pass: false` and completed, verified judge evidence;
 - `totals.passed` excludes it, `totals.failed` includes it, and
   `totals.abstained` shows it separately;
-- it counts as evaluated, so it does not lower evaluation coverage; and
-- it measured nothing against a baseline label, so its comparison is
-  `unpaired` and it is never a regression.
+- it counts as evaluated, so it does not lower evaluation coverage (the share
+  of items with a completed result, unlike Rubrist's classified coverage); and
+- it compares with a baseline label as a fail does: a regression against a
+  `pass` baseline, a stable fail against a `fail` baseline.
 
 The pass rate stays `passed / total`. A complete receipt yields an outcome for
 every submitted item, and an incomplete one (a failure or a `not_attempted`

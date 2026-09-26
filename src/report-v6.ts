@@ -30,7 +30,7 @@ import {
   timeWindowSchema,
   type ScopeConfig,
 } from './config.js';
-import { canonicalJson, sha256Digest } from './rubrist.js';
+import { canonicalJson, sha256Digest } from './rubrist-canonical.js';
 import {
   applyReleasePolicyV2,
   releasePolicyV2CandidateProjection,
@@ -756,10 +756,19 @@ export function renderCalibrationReportMarkdown(report: CalibrationSuiteReport):
   ];
   for (const criterion of report.criteria) {
     const calibration = criterion.calibrationPolicy;
+    const candidate = report.candidateAssessment.status === 'completed'
+      ? report.candidateAssessment.report.criteria.find((entry) => entry.criterionVersionId === criterion.criterionVersionId)
+      : undefined;
     lines.push(
       `### ${criterion.criterionId}`,
       '',
       `- Criterion version: ${criterion.criterionVersionId}`,
+      ...(candidate === undefined ? [] : [
+        `- Candidate pass rate: ${(candidate.totals.passRate * 100).toFixed(1)}% (${candidate.totals.passed}/${candidate.totals.total}); regressions: ${candidate.totals.regressions}`,
+        ...(candidate.totals.abstained === 0 ? [] : [
+          `- Abstained (counted as not passing): ${candidate.totals.abstained}`,
+        ]),
+      ]),
       `- Calibration evidence: ${criterion.evidenceState} (${criterion.artifactEvidence.disposition})`,
       `- Expected artifact digest: ${criterion.artifactEvidence.expectedArtifactDigest ?? 'unavailable'}`,
       `- Observed artifact digest: ${criterion.artifactEvidence.observedArtifactDigest ?? 'unavailable'}`,
