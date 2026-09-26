@@ -1,8 +1,8 @@
 # Portfolio implementation batches
 
-Status: **Batch 6 product foundations complete: Rubrist Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5; Batch 7 Rubrist production outcome monitoring is complete under Rubrist ADR-0013; Batch 8 model-agnostic evaluator execution is planned under Rubrist ADR-0014**
+Status: **Batch 6 product foundations complete: Rubrist Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5; Batch 7 Rubrist production outcome monitoring is complete under Rubrist ADR-0013; Batch 8 model-agnostic evaluator execution is in progress under Rubrist ADR-0014, with 8A through 8D complete**
 
-Last reviewed: 2026-09-25
+Last reviewed: 2026-09-26
 
 This file is intentionally vendored in Rubrist, Dailies, and Casefile. Update
 all three copies together.
@@ -561,15 +561,27 @@ and binary-calibration v1 bytes are unchanged.
 
 ## Batch 8 — Model-agnostic evaluator execution and evidence v2
 
-Implementation status: **planned**. Decision gate 12 was accepted on
-2026-09-25 and is recorded in Rubrist ADR-0014, including the founder's
-answers to its four open questions and three later decisions: receipts
-carry a definition digest, v2 replaces v1, and a launch baseline restarts
-every versioned identifier at v1. The first 8A slice (#125, shared
-identity contracts) is merged; its `skillDigestV2` moves to the
-definition-digest construction (#127) before first use. Every slice gets an independent review
-against its exact diff, and each review's correctness findings are resolved
-before merge.
+Implementation status: **in progress; 8A through 8D complete**. Decision
+gate 12 was accepted on 2026-09-25 and is recorded in Rubrist ADR-0014,
+including the founder's answers to its four open questions and three later
+decisions: receipts carry a definition digest, v2 replaces v1, and a launch
+baseline restarts every versioned identifier at v1. Every slice gets an
+independent review against its exact diff, and each review's correctness
+findings are resolved before merge.
+
+- 8A (#125, #127–#130), 8B (#132, #133), and 8C (#134) are merged; #126
+  and #131 amended ADR-0014.
+- 8D is merged:
+  - 8D-1 to 8D-4 (#135–#139): v2 bindings, the executor, resolution records,
+    governed gates, and calibration and suite manifest v2, with their v1
+    contracts removed;
+  - 8D-5 (#141–#144): per-item provenance, `skill-format/v2`, assessment
+    receipt v2 with receipt v1 removed, and removal of the legacy v1 binding
+    view.
+- Dailies switched every report to v2 in the same window (dailies#18,
+  Dailies ADR-0008). Its ADR-0009 records the founder's 2026-09-26 decision
+  that an abstained outcome counts as not passing.
+- 8E to 8G remain.
 
 This batch changes Rubrist and Dailies. Both switch to the v2 contracts in
 one window and drop v1 support. Casefile changes only in the launch baseline

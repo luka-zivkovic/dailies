@@ -2,7 +2,7 @@
 
 Status: **active shared vocabulary**
 
-Last reviewed: 2026-09-25
+Last reviewed: 2026-09-26
 
 This file is intentionally vendored in Rubrist, Dailies, and Casefile. Update
 all three copies together. Product-specific scope is defined by each repo's
@@ -18,8 +18,7 @@ all three copies together. Product-specific scope is defined by each repo's
   judged criteria and their pinned evaluators. A suite does not decide whether
   a release should ship.
 - **Judging skill:** Rubrist's versioned evaluator: its definition (rubric,
-  prompt, and output contract) and the model binding it runs with. From
-  evidence v2, that binding is an execution binding.
+  prompt, and output contract) and the execution binding it runs with.
 - **Execution binding:** The part of an evaluator version's identity that
   states exactly what is sent to the model: provider, endpoint, model,
   sampling and reasoning settings (unset means not sent), output token
