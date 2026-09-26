@@ -4,8 +4,9 @@ Status: **CURRENT additive contract**
 
 Report v6 records one Dailies release decision that combines the unchanged
 suite assessment flow from report v5 with separately scoped, policy-free Rubrist
-binary-calibration evidence. It does not change assessment receipt v1,
-evaluator-suite manifest v1, or reports v4 and v5.
+binary-calibration v2 evidence (`rubrist_binary_calibration_v2`, ADR-0008). It
+does not change the assessment receipt, the evaluator-suite manifest, or reports
+v4 and v5.
 
 ## Inputs and execution boundary
 
@@ -15,7 +16,7 @@ A schema-v6 run binds:
 - one exact evaluator-suite manifest;
 - customer release policy v2;
 - one ordered calibration binding per manifest criterion; and
-- the existing command/HTTP candidate and Rubrist receipt-v1 provider settings.
+- the existing command/HTTP candidate and Rubrist receipt provider settings.
 
 Each calibration binding is explicit absence or a local file with an expected
 byte digest and full expected producer identity. Paths resolve relative to the
@@ -37,7 +38,7 @@ an unrelated complete admissible blocking result.
 `releaseScope` is the candidate input scope from report v5. Every criterion has
 a separate `calibrationTruthScope` derived from the accepted sealed-validation
 artifact. Calibration identity never fills the release scope's
-`producerProvenance`; receipt v1 still reports those fields as `not_provided`.
+`producerProvenance`; the receipt still reports those fields as `not_provided`.
 
 Collection states are closed:
 

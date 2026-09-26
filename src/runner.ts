@@ -5,9 +5,9 @@ import {
   RubristCollectionError,
   RubristProtocolError,
   collectRubristAssessment,
-  type RubristAssessmentReceipt,
   type RubristEvidenceOperation,
 } from './rubrist.js';
+import type { RubristOutcome, RubristReceiptV2 } from './rubrist-receipt-v2.js';
 import { classifyOperationError } from './errors.js';
 import { judgeItem } from './judge.js';
 import { loadInputArtifact } from './inputs.js';
@@ -153,12 +153,12 @@ function rubristJudgeFailure(execution: CandidateSuccess, err: unknown): ItemRes
   };
 }
 
+/** An abstention counts as not passing (ADR-0009). */
 function rubristJudgedResult(
   execution: CandidateSuccess,
-  label: 'pass' | 'fail',
+  outcome: RubristOutcome,
 ): ItemResult {
-  const pass = label === 'pass';
-  const outcome = pass ? 'pass' : 'fail';
+  const pass = outcome === 'pass';
   const comparison = compareOutcome(execution.item.baseline_label, outcome);
   return {
     ...execution.base,
@@ -166,7 +166,9 @@ function rubristJudgedResult(
     judge: {
       score: pass ? 1 : 0,
       pass,
-      reason: `Rubrist assessment receipt judged ${label}`,
+      reason: outcome === 'abstain'
+        ? 'Rubrist assessment receipt: the evaluator abstained'
+        : `Rubrist assessment receipt judged ${outcome}`,
     },
     outcome,
     pass,
@@ -231,7 +233,7 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
     evalRunId?: string;
     status: 'complete' | 'incomplete' | 'failed';
     operations: RubristEvidenceOperation[];
-    receipt?: RubristAssessmentReceipt;
+    receipt?: RubristReceiptV2;
   } | undefined;
   let items: ItemResult[];
   if (config.judge.type === 'rubrist') {
@@ -260,11 +262,11 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
         };
         judged = new Map(
           successful.map((execution) => {
-            const label = assessment.labels.get(execution.item.id);
-            if (label === undefined) {
-              throw new RubristProtocolError(`missing verified label for ${execution.item.id}`);
+            const outcome = assessment.outcomes.get(execution.item.id);
+            if (outcome === undefined) {
+              throw new RubristProtocolError(`missing verified outcome for ${execution.item.id}`);
             }
-            return [execution.item.id, rubristJudgedResult(execution, label)];
+            return [execution.item.id, rubristJudgedResult(execution, outcome)];
           }),
         );
       } catch (err) {
@@ -306,7 +308,7 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
   const trustPath = config.judge.type === 'exact-match'
     ? { class: 'deterministic' as const, derivation: 'exact_match_v1' as const }
     : config.judge.type === 'rubrist'
-      ? { class: 'verified' as const, derivation: 'rubrist_receipt_v1' as const }
+      ? { class: 'verified' as const, derivation: 'rubrist_receipt_v2' as const }
       : { class: 'self_reported' as const, derivation: 'http_judge_v1' as const };
   const policyAdmissible = config.trustPolicy.admissibleClasses.includes(trustPath.class);
   const trust = totals.evaluated > 0

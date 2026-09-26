@@ -3,8 +3,8 @@ import { z } from 'zod';
 import {
   compareExactRationals,
   parseCanonicalDecimalRational,
-} from './binary-calibration.js';
-import { canonicalJson } from './rubrist.js';
+} from './binary-calibration-v2.js';
+import { canonicalJson } from './rubrist-canonical.js';
 import {
   applyReleasePolicy,
   binaryThresholdRuleSchema,
@@ -20,7 +20,7 @@ import {
 import type {
   CalibrationPolicyResult,
 } from './calibration-policy.js';
-import type { EvaluatorSuiteManifest } from './suite-manifest.js';
+import type { EvaluatorSuiteManifestV2 } from './suite-manifest-v2.js';
 
 const nonBlankStringSchema = z.string().min(1).refine((value) => value.trim().length > 0);
 const digestSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
@@ -72,7 +72,7 @@ const calibrationMetricCheckSchema = z.object({
     ctx.addIssue({
       code: 'custom',
       path: ['minimumWilsonLowerBound'],
-      message: 'positive_class_f1 has no Wilson interval in binary calibration v1',
+      message: 'positive_class_f1 has no Wilson interval in binary calibration',
     });
   }
 });
@@ -172,7 +172,7 @@ export function releasePolicyV2CandidateProjection(policy: ReleasePolicyV2): Rel
 
 export function verifyReleasePolicyV2(
   raw: unknown,
-  manifest: EvaluatorSuiteManifest,
+  manifest: EvaluatorSuiteManifestV2,
 ): ReleasePolicyV2 {
   const policy = releasePolicyV2Schema.parse(raw);
   verifyReleasePolicy(releasePolicyV2CandidateProjection(policy), manifest);

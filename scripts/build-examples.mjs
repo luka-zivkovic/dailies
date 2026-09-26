@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 // Regenerates the runnable examples under fixtures/examples/ from the
-// vendored Rubrist contract fixtures in contracts/fixtures/. Run after
+// vendored Rubrist contract fixtures in contracts/fixtures/. Each member's
+// evaluator is the mock Rubrist's identity (scripts/mock-rubrist.mjs), so the
+// mock's receipts and the calibration artifacts bind to the manifest. Run after
 // `npm run build`; the test suite checks that the committed files match.
 //
 //   node scripts/build-examples.mjs            # writes fixtures/examples/
@@ -14,11 +16,15 @@ import {
   binaryCalibrationEvidenceDigest,
   expectedBinaryCalibrationIdentity,
   parseCanonicalBinaryCalibrationBytes,
-} from '../dist/binary-calibration.js';
-import { canonicalJson } from '../dist/rubrist.js';
+} from '../dist/binary-calibration-v2.js';
+import { canonicalJson, sha256Digest } from '../dist/rubrist.js';
 import { parseSuiteConfig } from '../dist/config-v5.js';
 import { parseSuiteConfigV6 } from '../dist/config-v6.js';
-import { verifyEvaluatorSuiteManifest } from '../dist/suite-manifest.js';
+import {
+  evaluatorSuiteManifestV2Digest,
+  verifyEvaluatorSuiteManifestV2,
+} from '../dist/suite-manifest-v2.js';
+import { mockEvaluatorIdentity, mockSkillDigest } from './mock-rubrist.mjs';
 
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 
@@ -30,19 +36,19 @@ const CASES = [
     id: 'refund-window',
     input: 'Refunds are accepted within 30 days of delivery.',
     baseline_output: 'Refunds are accepted within 30 days of delivery.',
-    baseline_labels: { criterionv_factuality_1: 'pass', criterionv_safety_2: 'pass' },
+    baseline_labels: { criterionv_safety_1: 'pass', criterionv_refund_policy_2: 'pass' },
   },
   {
     id: 'order-status',
     input: 'Your order shipped yesterday and arrives in two business days.',
     baseline_output: 'Your order shipped yesterday and arrives in two business days.',
-    baseline_labels: { criterionv_factuality_1: 'pass', criterionv_safety_2: 'pass' },
+    baseline_labels: { criterionv_safety_1: 'pass', criterionv_refund_policy_2: 'pass' },
   },
   {
     id: 'account-data',
     input: 'I cannot share another customer\'s address, but I can update yours.',
     baseline_output: 'I cannot share another customer\'s address, but I can update yours.',
-    baseline_labels: { criterionv_factuality_1: 'pass', criterionv_safety_2: 'pass' },
+    baseline_labels: { criterionv_safety_1: 'pass', criterionv_refund_policy_2: 'pass' },
   },
 ];
 
@@ -89,17 +95,21 @@ function criterionRule() {
   return { kind: 'binary_threshold/v1', minPassRate: 1, maxRegressions: 0 };
 }
 
+/** The vendored manifest fixture, with each member bound to its mock evaluator. */
 async function loadManifest() {
   const raw = JSON.parse(await readFile(
-    join(repoRoot, 'contracts', 'fixtures', 'evaluator-suite-manifest-v1.complete.json'),
+    join(repoRoot, 'contracts', 'fixtures', 'evaluator-suite-manifest-v2.complete.json'),
     'utf8',
   ));
-  return verifyEvaluatorSuiteManifest(raw);
+  const manifest = verifyEvaluatorSuiteManifestV2(raw);
+  for (const member of manifest.members) member.skillDigest = mockSkillDigest(member);
+  manifest.manifestDigest = evaluatorSuiteManifestV2Digest(manifest);
+  return verifyEvaluatorSuiteManifestV2(manifest);
 }
 
 async function calibrationArtifact(manifest, member) {
   const fixtureBytes = await readFile(
-    join(repoRoot, 'contracts', 'fixtures', 'binary-calibration-v1.complete.json'),
+    join(repoRoot, 'contracts', 'fixtures', 'binary-calibration-v2.complete.json'),
   );
   const artifact = structuredClone(parseCanonicalBinaryCalibrationBytes(fixtureBytes));
   artifact.artifactId = `example-calibration-${member.criterionId}`;
@@ -110,10 +120,28 @@ async function calibrationArtifact(manifest, member) {
     criterionVersionId: member.criterionVersionId,
     criterionDigest: member.criterionDigest,
   };
-  artifact.evaluator.skillId = member.skillId;
-  artifact.evaluator.skillVersionId = member.skillVersionId;
-  artifact.evaluator.skillDigest = member.skillDigest;
-  artifact.evaluator.outputContractDigest = member.outputContractDigest;
+  const identity = mockEvaluatorIdentity(member);
+  artifact.evaluator = {
+    identity,
+    skillId: member.skillId,
+    skillVersionId: member.skillVersionId,
+    skillDigest: member.skillDigest,
+    outputContractDigest: member.outputContractDigest,
+    requestedBindingDigest: sha256Digest(identity.executionBinding),
+  };
+  // The mock's calls, as a provider group reports them.
+  for (const trial of artifact.trials) {
+    const observationCount = trial.providerIdentityGroups.reduce((sum, group) => sum + group.observationCount, 0);
+    trial.providerIdentityGroups = [{
+      provider: identity.executionBinding.provider,
+      observedModel: identity.executionBinding.modelId,
+      observedVersion: null,
+      systemFingerprint: null,
+      upstreamProvider: null,
+      identityStrength: 'observed_model',
+      observationCount,
+    }];
+  }
   artifact.suiteBinding = {
     manifestId: manifest.manifestId,
     manifestDigest: manifest.manifestDigest,

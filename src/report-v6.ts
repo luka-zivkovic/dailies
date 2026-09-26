@@ -4,7 +4,7 @@ import {
   binaryCalibrationArtifactSchema,
   parseCanonicalBinaryCalibrationBytes,
   type BinaryCalibrationArtifact,
-} from './binary-calibration.js';
+} from './binary-calibration-v2.js';
 import {
   calibrationCollectionIncompleteReasonSchema,
   calibrationCollectionIntegrityReasonSchema,
@@ -30,7 +30,7 @@ import {
   timeWindowSchema,
   type ScopeConfig,
 } from './config.js';
-import { canonicalJson, sha256Digest } from './rubrist.js';
+import { canonicalJson, sha256Digest } from './rubrist-canonical.js';
 import {
   applyReleasePolicyV2,
   releasePolicyV2CandidateProjection,
@@ -42,10 +42,10 @@ import {
 import type { CriterionPolicyInput } from './policy.js';
 import { reportV5Schema, type SuiteReport } from './report-v5.js';
 import {
-  evaluatorSuiteManifestSchema,
-  verifyEvaluatorSuiteManifest,
-  type EvaluatorSuiteManifest,
-} from './suite-manifest.js';
+  evaluatorSuiteManifestV2Schema,
+  verifyEvaluatorSuiteManifestV2,
+  type EvaluatorSuiteManifestV2,
+} from './suite-manifest-v2.js';
 
 export const CALIBRATION_REPORT_SCHEMA_VERSION = 6;
 
@@ -117,11 +117,11 @@ const artifactEvidenceSchema = z.discriminatedUnion('disposition', [
 const calibrationTrustSchema = z.discriminatedUnion('status', [
   z.object({
     status: z.literal('verified'),
-    derivation: z.literal('rubrist_binary_calibration_v1'),
+    derivation: z.literal('rubrist_binary_calibration_v2'),
   }).strict(),
   z.object({
     status: z.literal('unavailable'),
-    derivation: z.literal('rubrist_binary_calibration_v1'),
+    derivation: z.literal('rubrist_binary_calibration_v2'),
     reason: z.union([
       calibrationCollectionIncompleteReasonSchema,
       calibrationCollectionIntegrityReasonSchema,
@@ -176,7 +176,7 @@ const reportV6ShapeSchema = z.object({
   finishedAt: exactUtcMillisecondsSchema,
   evaluatedAt: exactUtcMillisecondsSchema,
   releaseScope: releaseScopeSchema,
-  manifest: evaluatorSuiteManifestSchema,
+  manifest: evaluatorSuiteManifestV2Schema,
   policy: releasePolicyV2Schema,
   policyDigest: digestSchema,
   candidateAssessment: candidateAssessmentSchema,
@@ -205,7 +205,7 @@ export interface BuildCalibrationReportV6Input {
   finishedAt: string;
   evaluatedAt: string;
   releaseScope: CalibrationSuiteReport['releaseScope'];
-  manifest: EvaluatorSuiteManifest;
+  manifest: EvaluatorSuiteManifestV2;
   policy: ReleasePolicyV2;
   candidateAssessment:
     | { status: 'completed'; report: SuiteReport }
@@ -274,7 +274,7 @@ function projectArtifactEvidence(
 
 function reconstructCollection(
   criterion: CalibrationReportCriterion,
-  manifest: EvaluatorSuiteManifest,
+  manifest: EvaluatorSuiteManifestV2,
 ): CalibrationCollectionResult {
   const member = manifest.members[criterion.position];
   if (member === undefined) throw new Error('calibration criterion has no manifest member');
@@ -354,7 +354,7 @@ function reconstructCollection(
 
 function candidatePolicyInputs(
   candidateAssessment: CalibrationCandidateAssessment,
-  manifest: EvaluatorSuiteManifest,
+  manifest: EvaluatorSuiteManifestV2,
 ): {
   evidence: CriterionPolicyInput[];
   executionFailed: boolean;
@@ -414,11 +414,11 @@ function calibrationTrust(
   collection: CalibrationCollectionResult,
 ): CalibrationReportCriterion['trust'] {
   if (collection.state === 'verified') {
-    return { status: 'verified', derivation: 'rubrist_binary_calibration_v1' };
+    return { status: 'verified', derivation: 'rubrist_binary_calibration_v2' };
   }
   return {
     status: 'unavailable',
-    derivation: 'rubrist_binary_calibration_v1',
+    derivation: 'rubrist_binary_calibration_v2',
     reason: collection.reason,
   };
 }
@@ -470,7 +470,7 @@ function verifyReportV6(report: CalibrationSuiteReport): void {
   }
   verifyReleaseScope(report.releaseScope);
 
-  const manifest = verifyEvaluatorSuiteManifest(report.manifest, {
+  const manifest = verifyEvaluatorSuiteManifestV2(report.manifest, {
     manifestId: report.manifest.manifestId,
     manifestDigest: report.manifest.manifestDigest,
   });
@@ -628,7 +628,7 @@ export const reportV6Schema = z.unknown().transform((raw, ctx): CalibrationSuite
 export function buildCalibrationReportV6(
   input: BuildCalibrationReportV6Input,
 ): CalibrationSuiteReport {
-  const manifest = verifyEvaluatorSuiteManifest(input.manifest, {
+  const manifest = verifyEvaluatorSuiteManifestV2(input.manifest, {
     manifestId: input.manifest.manifestId,
     manifestDigest: input.manifest.manifestDigest,
   });
@@ -756,15 +756,24 @@ export function renderCalibrationReportMarkdown(report: CalibrationSuiteReport):
   ];
   for (const criterion of report.criteria) {
     const calibration = criterion.calibrationPolicy;
+    const candidate = report.candidateAssessment.status === 'completed'
+      ? report.candidateAssessment.report.criteria.find((entry) => entry.criterionVersionId === criterion.criterionVersionId)
+      : undefined;
     lines.push(
       `### ${criterion.criterionId}`,
       '',
       `- Criterion version: ${criterion.criterionVersionId}`,
+      ...(candidate === undefined ? [] : [
+        `- Candidate pass rate: ${(candidate.totals.passRate * 100).toFixed(1)}% (${candidate.totals.passed}/${candidate.totals.total}); regressions: ${candidate.totals.regressions}`,
+        ...(candidate.totals.abstained === 0 ? [] : [
+          `- Abstained (counted as not passing): ${candidate.totals.abstained}`,
+        ]),
+      ]),
       `- Calibration evidence: ${criterion.evidenceState} (${criterion.artifactEvidence.disposition})`,
       `- Expected artifact digest: ${criterion.artifactEvidence.expectedArtifactDigest ?? 'unavailable'}`,
       `- Observed artifact digest: ${criterion.artifactEvidence.observedArtifactDigest ?? 'unavailable'}`,
       `- Calibration trust: ${criterion.trust.status === 'verified'
-        ? 'verified/rubrist_binary_calibration_v1'
+        ? 'verified/rubrist_binary_calibration_v2'
         : `unavailable/${criterion.trust.reason}`}`,
       `- Separate calibration truth scope: ${criterion.calibrationTruthScope === null
         ? 'unavailable'

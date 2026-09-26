@@ -70,7 +70,7 @@ export function classifyOperationError(error: unknown): {
   if (/timed out/i.test(message)) return { kind: 'timeout' };
   const status = /HTTP (\d+)/i.exec(message)?.[1];
   if (status !== undefined) return { kind: 'http', httpStatus: Number(status) };
-  if (/gate contract|receipt v1 contract|"output" field/i.test(message)) {
+  if (/gate contract|Rubrist contract|"output" field/i.test(message)) {
     return { kind: 'protocol' };
   }
   if (/fetch failed|ECONN|ENOTFOUND|EAI_AGAIN|socket|network/i.test(message)) {

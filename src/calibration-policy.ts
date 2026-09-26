@@ -9,12 +9,12 @@ import {
   BinaryCalibrationIntegrityError,
   type BinaryCalibrationArtifact,
   type BinaryCalibrationTrial,
-} from './binary-calibration.js';
+} from './binary-calibration-v2.js';
 import {
   calibrationEvidenceFileSourceSchema,
   type CalibrationEvidenceFileSource,
 } from './config-v6.js';
-import { canonicalJson, sha256Digest } from './rubrist.js';
+import { canonicalJson, sha256Digest } from './rubrist-canonical.js';
 import {
   binaryCalibrationRequirementV1Schema,
   calibrationMetricNameSchema,
@@ -24,9 +24,9 @@ import {
   type ProviderIdentityStrength,
 } from './policy-v2.js';
 import type {
-  EvaluatorSuiteManifest,
-  EvaluatorSuiteManifestMember,
-} from './suite-manifest.js';
+  EvaluatorSuiteManifestV2,
+  EvaluatorSuiteManifestV2Member,
+} from './suite-manifest-v2.js';
 
 const digestSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
 const exactUtcMillisecondsSchema = z.string().regex(
@@ -131,8 +131,8 @@ export type CalibrationCollectionResult = z.infer<typeof calibrationCollectionRe
 export interface CollectCalibrationEvidenceInput {
   criterionVersionId: string;
   source: CalibrationEvidenceFileSource | null;
-  manifest: EvaluatorSuiteManifest;
-  member: EvaluatorSuiteManifestMember;
+  manifest: EvaluatorSuiteManifestV2;
+  member: EvaluatorSuiteManifestV2Member;
   /** Exact bytes from the configured file; filesystem I/O remains in the runner. */
   bytes?: Uint8Array;
   /** A closed local read failure. Never combine this with bytes. */
@@ -172,8 +172,8 @@ export function deriveCalibrationEvidenceScope(
 function manifestBindingFailure(
   criterionVersionId: string,
   source: CalibrationEvidenceFileSource,
-  manifest: EvaluatorSuiteManifest,
-  member: EvaluatorSuiteManifestMember,
+  manifest: EvaluatorSuiteManifestV2,
+  member: EvaluatorSuiteManifestV2Member,
 ): string | null {
   if (criterionVersionId !== member.criterionVersionId) return 'criterion binding does not match member';
   const manifestMember = manifest.members[member.position];

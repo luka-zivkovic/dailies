@@ -6,7 +6,7 @@ import {
   expectedBinaryCalibrationIdentity,
   verifyBinaryCalibrationArtifact,
   type BinaryCalibrationArtifact,
-} from '../src/binary-calibration.js';
+} from '../src/binary-calibration-v2.js';
 import {
   collectCalibrationEvidence,
   type CalibrationCollectionResult,
@@ -38,28 +38,28 @@ import {
 } from '../src/report-v5.js';
 import { parseReportForInspection } from '../src/report.js';
 import {
-  evaluatorSuiteCriterionDigest,
-  evaluatorSuiteManifestDigest,
-  verifyEvaluatorSuiteManifest,
-  type EvaluatorSuiteManifest,
-} from '../src/suite-manifest.js';
+  evaluatorSuiteCriterionDigestV2,
+  evaluatorSuiteManifestV2Digest,
+  verifyEvaluatorSuiteManifestV2,
+  type EvaluatorSuiteManifestV2,
+} from '../src/suite-manifest-v2.js';
 
 const ZERO_DIGEST = `sha256:${'0'.repeat(64)}`;
 const STARTED_AT = '2026-08-23T13:00:00.000Z';
 const FINISHED_AT = '2026-08-23T13:00:01.000Z';
 const EVALUATED_AT = '2026-08-23T13:00:00.000Z';
 
-function fixtureArtifact(name = 'binary-calibration-v1.complete.json'): BinaryCalibrationArtifact {
+function fixtureArtifact(name = 'binary-calibration-v2.complete.json'): BinaryCalibrationArtifact {
   return JSON.parse(readFileSync(
     new URL(`../contracts/fixtures/${name}`, import.meta.url),
     'utf8',
   )) as BinaryCalibrationArtifact;
 }
 
-function governedFixture(name = 'binary-calibration-v1.complete.json'): {
+function governedFixture(name = 'binary-calibration-v2.complete.json'): {
   artifact: BinaryCalibrationArtifact;
   bytes: Uint8Array;
-  manifest: EvaluatorSuiteManifest;
+  manifest: EvaluatorSuiteManifestV2;
 } {
   const artifact = structuredClone(fixtureArtifact(name));
   const member = {
@@ -75,10 +75,10 @@ function governedFixture(name = 'binary-calibration-v1.complete.json'): {
     outputContractDigest: artifact.evaluator.outputContractDigest,
     applicability: { kind: 'all_items' as const },
   };
-  member.criterionDigest = evaluatorSuiteCriterionDigest(member);
-  const manifest: EvaluatorSuiteManifest = {
-    contract: 'rubrist/evaluator-suite-manifest/v1',
-    schemaVersion: 1,
+  member.criterionDigest = evaluatorSuiteCriterionDigestV2(member);
+  const manifest: EvaluatorSuiteManifestV2 = {
+    contract: 'rubrist/evaluator-suite-manifest/v2',
+    schemaVersion: 2,
     manifestId: 'manifest-calibration-report-v6',
     suiteId: 'suite-calibration-report-v6',
     projectId: artifact.projectId,
@@ -87,8 +87,8 @@ function governedFixture(name = 'binary-calibration-v1.complete.json'): {
     trialPlan: null,
     manifestDigest: ZERO_DIGEST,
   };
-  manifest.manifestDigest = evaluatorSuiteManifestDigest(manifest);
-  verifyEvaluatorSuiteManifest(manifest);
+  manifest.manifestDigest = evaluatorSuiteManifestV2Digest(manifest);
+  verifyEvaluatorSuiteManifestV2(manifest);
 
   artifact.criterion.criterionDigest = member.criterionDigest;
   artifact.suiteBinding = {
@@ -123,7 +123,7 @@ function requirement(artifact: BinaryCalibrationArtifact) {
   };
 }
 
-function policy(manifest: EvaluatorSuiteManifest, artifact: BinaryCalibrationArtifact): ReleasePolicyV2 {
+function policy(manifest: EvaluatorSuiteManifestV2, artifact: BinaryCalibrationArtifact): ReleasePolicyV2 {
   return verifyReleasePolicyV2({
     schemaVersion: 2,
     id: 'release-policy-v6',
@@ -168,7 +168,7 @@ function releaseScope() {
 }
 
 function candidateReport(
-  manifest: EvaluatorSuiteManifest,
+  manifest: EvaluatorSuiteManifestV2,
   policyV2: ReleasePolicyV2,
 ): SuiteReport {
   const scope = releaseScope();
@@ -237,7 +237,7 @@ function candidateReport(
       scope: { id: scope.id, kind: scope.kind, inputDigest: scope.inputArtifact.digest },
       trust: {
         status: 'unavailable',
-        derivation: 'rubrist_receipt_v1',
+        derivation: 'rubrist_receipt_v2',
         admissible: false,
         reason: 'no_candidate_outputs',
       },
@@ -349,7 +349,7 @@ describe('calibration-aware report v6', () => {
     expect(report.criteria[0]!.evidenceState).toBe('verified');
     expect(report.criteria[0]!.trust).toEqual({
       status: 'verified',
-      derivation: 'rubrist_binary_calibration_v1',
+      derivation: 'rubrist_binary_calibration_v2',
     });
     expect(report.criteria[0]!.calibrationPolicy.status).toBe('satisfied');
     expect(report.criteria[0]!.ageMilliseconds).toBe('3598000');
@@ -392,7 +392,7 @@ describe('calibration-aware report v6', () => {
     });
     const markdown = renderCalibrationReportMarkdown(report);
     expect(markdown).toContain('# Calibration-aware criterion release report: BLOCK');
-    expect(markdown).toContain('verified/rubrist_binary_calibration_v1');
+    expect(markdown).toContain('verified/rubrist_binary_calibration_v2');
     expect(markdown).toContain('Separate calibration truth scope: sealed_validation_calibration/');
     expect(markdown).toContain('Artifact age: 3598000 ms');
     expect(markdown).toContain('Requirement checks:');
@@ -402,7 +402,7 @@ describe('calibration-aware report v6', () => {
   });
 
   it('retains an incomplete but canonical public artifact as accepted and unavailable trust', () => {
-    const fixture = governedFixture('binary-calibration-v1.incomplete.json');
+    const fixture = governedFixture('binary-calibration-v2.incomplete.json');
     const collection = collectionFor(fixture);
     expect(collection.state).toBe('incomplete');
     const acceptedPolicy = policy(fixture.manifest, fixture.artifact);
@@ -460,7 +460,7 @@ describe('calibration-aware report v6', () => {
     ['artifact metrics', (r: any) => { r.criteria[0].artifactEvidence.artifact.trials[0].confusionMatrix.truthPassEvaluatorPass = 0; }],
     ['calibration truth scope', (r: any) => { r.criteria[0].calibrationTruthScope.revisionDigest = ZERO_DIGEST; }],
     ['evidence state', (r: any) => { r.criteria[0].evidenceState = 'incomplete'; }],
-    ['trust', (r: any) => { r.criteria[0].trust = { status: 'unavailable', derivation: 'rubrist_binary_calibration_v1', reason: 'artifact_incomplete' }; }],
+    ['trust', (r: any) => { r.criteria[0].trust = { status: 'unavailable', derivation: 'rubrist_binary_calibration_v2', reason: 'artifact_incomplete' }; }],
     ['age', (r: any) => { r.criteria[0].ageMilliseconds = '0'; }],
     ['requirement checks', (r: any) => { r.criteria[0].calibrationPolicy.checks[0].passed = false; }],
     ['per trial result', (r: any) => { r.criteria[0].calibrationPolicy.trials[0].passed = false; }],

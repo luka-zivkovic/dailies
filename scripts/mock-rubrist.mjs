@@ -2,12 +2,15 @@
 // Minimal local stand-in for the Rubrist release-evidence API used by the
 // runnable v5/v6 examples under fixtures/examples/. It implements only the
 // three endpoints Dailies calls (batch submit, eval-run poll, assessment
-// receipt) and produces structurally valid receipt-v1 artifacts whose
+// receipt) and produces structurally valid receipt-v2 artifacts whose
 // digests bind to the manifest and the submitted candidate outputs.
 //
 // It is a fixture server for local runs and tests. It is not Rubrist, it has
-// no evaluator, and every judged label is scripted: `pass` by default, or
-// `fail` for any criterion named with --fail-criterion.
+// no evaluator, and every outcome is scripted: `pass` by default, `fail` for
+// any criterion named with --fail-criterion, and `abstain` for any named with
+// --abstain-criterion. Each member's evaluator is the mock identity below, so
+// a manifest's skillDigest must be mockSkillDigest(member), as the bundled
+// examples' manifests are (scripts/build-examples.mjs).
 //
 //   node scripts/mock-rubrist.mjs --manifest fixtures/examples/v5-suite/suite-manifest.json
 //   node scripts/mock-rubrist.mjs --manifest <path> --port 0 --fail-criterion criterionv_safety_2
@@ -21,13 +24,20 @@ function usage(message) {
   if (message) console.error(`mock-rubrist: ${message}`);
   console.error(
     'usage: node scripts/mock-rubrist.mjs --manifest <suite-manifest.json> ' +
-      '[--port 4820] [--host 127.0.0.1] [--fail-criterion <criterionVersionId>]...',
+      '[--port 4820] [--host 127.0.0.1] [--fail-criterion <criterionVersionId>]... ' +
+      '[--abstain-criterion <criterionVersionId>]...',
   );
   process.exit(2);
 }
 
 function parseArgs(argv) {
-  const options = { manifest: undefined, port: 4820, host: '127.0.0.1', failCriteria: new Set() };
+  const options = {
+    manifest: undefined,
+    port: 4820,
+    host: '127.0.0.1',
+    failCriteria: new Set(),
+    abstainCriteria: new Set(),
+  };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     const next = () => {
@@ -40,6 +50,7 @@ function parseArgs(argv) {
     else if (arg === '--port') options.port = Number(next());
     else if (arg === '--host') options.host = next();
     else if (arg === '--fail-criterion') options.failCriteria.add(next());
+    else if (arg === '--abstain-criterion') options.abstainCriteria.add(next());
     else if (arg === '--help' || arg === '-h') usage();
     else usage(`unknown argument ${arg}`);
   }
@@ -62,26 +73,58 @@ function sha256Digest(value) {
   return `sha256:${createHash('sha256').update(canonicalJson(value)).digest('hex')}`;
 }
 
-function buildReceipt(manifest, member, evalRunId, items, label) {
+/** The local mock's execution binding: no sampling, no token limit, mock/v1. */
+export const MOCK_EXECUTION_BINDING = Object.freeze({
+  provider: 'mock',
+  endpoint: { kind: 'managed' },
+  modelId: 'mock-rubrist',
+  modelVersion: 'mock-rubrist',
+  sampling: { temperature: null, topP: null },
+  reasoning: null,
+  outputTokenLimit: null,
+  verdictProtocol: 'mock/v1',
+  routing: null,
+});
+
+/** The mock evaluator identity of one manifest member: a definition digest per evaluator version. */
+export function mockEvaluatorIdentity(member) {
+  return {
+    basis: 'rubrist/evaluator-identity/v2',
+    definitionDigest: sha256Digest({ mockDefinition: member.skillVersionId }),
+    executionBinding: structuredClone(MOCK_EXECUTION_BINDING),
+  };
+}
+
+/** skillDigest v2 of the member's mock evaluator. */
+export function mockSkillDigest(member) {
+  return sha256Digest(mockEvaluatorIdentity(member));
+}
+
+function buildReceipt(manifest, member, evalRunId, items, outcome) {
   const sorted = [...items].sort((left, right) =>
     left.clientItemId < right.clientItemId ? -1 : left.clientItemId > right.clientItemId ? 1 : 0);
   const receiptItems = sorted.map((item) => ({
     clientItemId: item.clientItemId,
     caseId: `case-${member.position}-${item.clientItemId}`,
-    status: 'completed',
-    judgedLabel: label,
-    verdictId: `verdict-${member.position}-${item.clientItemId}`,
-    error: null,
     contentDigest: sha256Digest({ input: item.input, output: item.output }),
-    providerMetadata: {
+    result: { state: 'outcome', outcome },
+    verdictId: `verdict-${member.position}-${item.clientItemId}`,
+    evaluatorScore: { value: outcome === 'pass' ? 1 : outcome === 'fail' ? 0 : 0.5, kind: 'self_reported_score' },
+    observed: {
       model: 'mock-rubrist',
       requestId: `request-${member.position}-${item.clientItemId}`,
       responseId: `response-${member.position}-${item.clientItemId}`,
       systemFingerprint: null,
+      upstreamProvider: null,
+      thinkingReturned: null,
+      reasoningTokens: null,
     },
   }));
+  const count = (wanted) => receiptItems.filter((item) => item.result.outcome === wanted).length;
+  const evaluator = mockEvaluatorIdentity(member);
   const receipt = {
-    schemaVersion: 1,
+    contract: 'rubrist/assessment-receipt/v2',
+    schemaVersion: 2,
     receiptId: `receipt-${evalRunId}`,
     evalRunId,
     projectId: manifest.projectId,
@@ -91,17 +134,15 @@ function buildReceipt(manifest, member, evalRunId, items, label) {
     run: {
       status: 'completed',
       totalItems: receiptItems.length,
-      completedItems: receiptItems.length,
+      passItems: count('pass'),
+      failItems: count('fail'),
+      abstainedItems: count('abstain'),
       failedItems: 0,
+      notAttemptedItems: 0,
       agreedItems: 0,
     },
-    requestedModelBinding: {
-      provider: 'mock',
-      modelId: 'mock-rubrist',
-      modelVersion: '1',
-      temperature: 0,
-    },
-    skillDigest: member.skillDigest,
+    evaluator,
+    skillDigest: sha256Digest(evaluator),
     datasetDigest: sha256Digest(
       receiptItems.map(({ clientItemId, contentDigest }) => ({ clientItemId, contentDigest })),
     ),
@@ -124,7 +165,10 @@ function json(res, status, payload) {
   res.writeHead(status, { 'content-type': 'application/json' }).end(JSON.stringify(payload));
 }
 
-export function createMockRubristServer(manifest, { failCriteria = new Set() } = {}) {
+export function createMockRubristServer(
+  manifest,
+  { failCriteria = new Set(), abstainCriteria = new Set() } = {},
+) {
   const membersBySkillVersion = new Map(
     manifest.members.map((member) => [member.skillVersionId, member]),
   );
@@ -171,8 +215,9 @@ export function createMockRubristServer(manifest, { failCriteria = new Set() } =
           json(res, 404, { error: 'unknown eval run' });
           return;
         }
-        const label = failCriteria.has(run.member.criterionVersionId) ? 'fail' : 'pass';
-        json(res, 200, buildReceipt(manifest, run.member, evalRunId, run.items, label));
+        const criterion = run.member.criterionVersionId;
+        const outcome = failCriteria.has(criterion) ? 'fail' : abstainCriteria.has(criterion) ? 'abstain' : 'pass';
+        json(res, 200, buildReceipt(manifest, run.member, evalRunId, run.items, outcome));
         return;
       }
       json(res, 404, { error: `no route for ${req.method} ${url.pathname}` });
@@ -193,14 +238,22 @@ function main() {
   if (!Array.isArray(manifest?.members) || typeof manifest.projectId !== 'string') {
     usage(`${options.manifest} is not an evaluator suite manifest`);
   }
-  const server = createMockRubristServer(manifest, { failCriteria: options.failCriteria });
+  const server = createMockRubristServer(manifest, {
+    failCriteria: options.failCriteria,
+    abstainCriteria: options.abstainCriteria,
+  });
   server.listen(options.port, options.host, () => {
     const address = server.address();
     const port = typeof address === 'object' && address !== null ? address.port : options.port;
     console.log(`mock-rubrist: listening on http://${options.host}:${port}`);
     console.log(
       `mock-rubrist: serving ${manifest.members.length} criteria from ${options.manifest}; ` +
-        `labels ${options.failCriteria.size === 0 ? 'all pass' : `fail for ${[...options.failCriteria].join(', ')}`}`,
+        `outcomes ${options.failCriteria.size === 0 && options.abstainCriteria.size === 0
+          ? 'all pass'
+          : [
+              ...(options.failCriteria.size === 0 ? [] : [`fail for ${[...options.failCriteria].join(', ')}`]),
+              ...(options.abstainCriteria.size === 0 ? [] : [`abstain for ${[...options.abstainCriteria].join(', ')}`]),
+            ].join('; ')}`,
     );
   });
   const shutdown = () => {

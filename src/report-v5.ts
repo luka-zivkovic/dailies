@@ -1,10 +1,6 @@
 import { z } from 'zod';
-import {
-  rubristAssessmentReceiptSchema,
-  rubristEvidenceOperationSchema,
-  sha256Digest,
-  verifyRubristReceipt,
-} from './rubrist.js';
+import { rubristEvidenceOperationSchema, sha256Digest } from './rubrist.js';
+import { rubristReceiptV2Schema, verifyRubristReceiptV2 } from './rubrist-receipt-v2.js';
 import {
   scopeConfigSchema,
   scopeKindSchema,
@@ -22,10 +18,10 @@ import {
 } from './policy.js';
 import { attemptLedgerSchema } from './retry.js';
 import {
-  evaluatorSuiteManifestSchema,
-  verifyEvaluatorSuiteManifest,
-  verifyReceiptManifestBinding,
-} from './suite-manifest.js';
+  evaluatorSuiteManifestV2Schema,
+  verifyEvaluatorSuiteManifestV2,
+  verifyReceiptV2ManifestBinding,
+} from './suite-manifest-v2.js';
 
 export const SUITE_REPORT_SCHEMA_VERSION = 5;
 const digestSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
@@ -106,7 +102,8 @@ const candidateExecutionSchema = z.object({
 const criterionItemSchema = z.object({
   id: z.string().min(1),
   baselineLabel: z.enum(['pass', 'fail']).optional(),
-  assessedLabel: z.enum(['pass', 'fail']).nullable(),
+  /** The evaluator's outcome; null when the criterion's evidence is not complete. An abstention counts as not passing (ADR-0009). */
+  assessedLabel: z.enum(['pass', 'fail', 'abstain']).nullable(),
   comparison: comparisonSchema,
   regression: z.boolean(),
 }).strict();
@@ -115,7 +112,10 @@ const criterionTotalsSchema = z.object({
   total: z.number().int().positive(),
   evaluated: z.number().int().nonnegative(),
   passed: z.number().int().nonnegative(),
+  /** Evaluated items that did not pass, abstentions included. */
   failed: z.number().int().nonnegative(),
+  /** Subset of `failed` where the evaluator abstained, shown separately. */
+  abstained: z.number().int().nonnegative(),
   passRate: z.number().min(0).max(1),
   regressions: z.number().int().nonnegative(),
   comparisonCounts: z.object({
@@ -131,12 +131,12 @@ const criterionTrustSchema = z.discriminatedUnion('status', [
   z.object({
     status: z.literal('complete'),
     class: z.literal('verified'),
-    derivation: z.literal('rubrist_receipt_v1'),
+    derivation: z.literal('rubrist_receipt_v2'),
     admissible: z.boolean(),
   }).strict(),
   z.object({
     status: z.literal('unavailable'),
-    derivation: z.literal('rubrist_receipt_v1'),
+    derivation: z.literal('rubrist_receipt_v2'),
     admissible: z.literal(false),
     reason: z.enum(['incomplete_evidence', 'integrity_failure', 'no_candidate_outputs']),
   }).strict(),
@@ -157,8 +157,8 @@ const criterionEvidenceSchema = z.object({
   state: evidenceStateSchema,
   evalRunId: z.string().min(1).optional(),
   operations: z.array(rubristEvidenceOperationSchema).max(10_000),
-  receipt: rubristAssessmentReceiptSchema.optional(),
-  rejectedReceipt: rubristAssessmentReceiptSchema.optional(),
+  receipt: rubristReceiptV2Schema.optional(),
+  rejectedReceipt: rubristReceiptV2Schema.optional(),
   rejection: z.object({
     kind: z.literal('manifest_binding'),
     reason: z.string().min(1),
@@ -252,7 +252,7 @@ const reportV5ShapeSchema = z.object({
   finishedAt: z.string().datetime({ offset: true }),
   scope: suiteScopeSchema,
   trustPolicy: reportTrustPolicySchema,
-  manifest: evaluatorSuiteManifestSchema,
+  manifest: evaluatorSuiteManifestV2Schema,
   policy: releasePolicyV1Schema,
   policyDigest: digestSchema,
   executionPolicy: executionPolicySchema,
@@ -329,9 +329,10 @@ export function suiteCandidateDatasetDigest(
   return sha256Digest(items);
 }
 
+/** An abstention counts as not passing (ADR-0009), so it compares as a fail. */
 export function compareCriterionOutcome(
   baseline: 'pass' | 'fail' | undefined,
-  assessed: 'pass' | 'fail' | null,
+  assessed: 'pass' | 'fail' | 'abstain' | null,
 ): z.infer<typeof comparisonSchema> {
   if (baseline === undefined || assessed === null) return 'unpaired';
   if (baseline === 'pass') return assessed === 'pass' ? 'stable_pass' : 'regression';
@@ -354,6 +355,7 @@ export function aggregateCriterionItems(items: CriterionItem[]): CriterionTotals
     evaluated: evaluated.length,
     passed,
     failed: evaluated.length - passed,
+    abstained: evaluated.filter((item) => item.assessedLabel === 'abstain').length,
     passRate: items.length === 0 ? 0 : passed / items.length,
     regressions: comparisonCounts.regression,
     comparisonCounts,
@@ -380,7 +382,7 @@ export const reportV5Schema = reportV5ShapeSchema.superRefine((report, ctx) => {
   let manifest;
   let policy;
   try {
-    manifest = verifyEvaluatorSuiteManifest(report.manifest, {
+    manifest = verifyEvaluatorSuiteManifestV2(report.manifest, {
       manifestId: report.manifest.manifestId,
       manifestDigest: report.manifest.manifestDigest,
     });
@@ -620,24 +622,22 @@ export const reportV5Schema = reportV5ShapeSchema.superRefine((report, ctx) => {
         ctx.addIssue({ code: 'custom', path: ['criteria', index, 'evidence'], message: 'receipt requires evalRunId' });
       } else {
         try {
-          verifyReceiptManifestBinding(evidence.receipt, manifest, member);
-          const verification = verifyRubristReceipt(
-            evidence.receipt,
-            evidence.receipt,
-            evidence.evalRunId,
-            member.skillVersionId,
-            succeeded.map((candidate) => ({
+          verifyReceiptV2ManifestBinding(evidence.receipt, manifest, member);
+          const verification = verifyRubristReceiptV2(evidence.receipt, {
+            evalRunId: evidence.evalRunId,
+            skillVersionId: member.skillVersionId,
+            candidates: succeeded.map((candidate) => ({
               id: candidate.id,
               input: candidate.input,
               output: candidate.candidate_output!,
             })),
-          );
+          });
           verifiedComplete = verification.status === 'complete';
           if (verifiedComplete) {
             for (const item of result.items) {
-              const label = verification.labels.get(item.id) ?? null;
+              const outcome = verification.outcomes.get(item.id) ?? null;
               const candidate = candidates.find((entry) => entry.id === item.id)!;
-              if (item.assessedLabel !== (candidate.status === 'success' ? label : null)) {
+              if (item.assessedLabel !== (candidate.status === 'success' ? outcome : null)) {
                 throw new Error(`criterion label mismatch for ${item.id}`);
               }
             }
@@ -655,20 +655,18 @@ export const reportV5Schema = reportV5ShapeSchema.superRefine((report, ctx) => {
     }
     if (evidence.rejectedReceipt !== undefined && evidence.evalRunId !== undefined) {
       try {
-        verifyRubristReceipt(
-          evidence.rejectedReceipt,
-          evidence.rejectedReceipt,
-          evidence.evalRunId,
-          member.skillVersionId,
-          succeeded.map((candidate) => ({
+        verifyRubristReceiptV2(evidence.rejectedReceipt, {
+          evalRunId: evidence.evalRunId,
+          skillVersionId: member.skillVersionId,
+          candidates: succeeded.map((candidate) => ({
             id: candidate.id,
             input: candidate.input,
             output: candidate.candidate_output!,
           })),
-        );
+        });
         let bindingFailure: string | undefined;
         try {
-          verifyReceiptManifestBinding(evidence.rejectedReceipt, manifest, member);
+          verifyReceiptV2ManifestBinding(evidence.rejectedReceipt, manifest, member);
         } catch (error) {
           bindingFailure = error instanceof Error ? error.message : String(error);
         }
@@ -822,6 +820,9 @@ export function renderSuiteMarkdown(report: SuiteReport): string {
       ]),
       `- Trust: ${criterion.trust.status === 'complete' ? `verified (${criterion.trust.admissible ? 'admissible' : 'not admissible'})` : `unavailable (${criterion.trust.reason})`}`,
       `- Pass rate: ${(criterion.totals.passRate * 100).toFixed(1)}% (${criterion.totals.passed}/${criterion.totals.total})`,
+      ...(criterion.totals.abstained === 0 ? [] : [
+        `- Abstained (counted as not passing): ${criterion.totals.abstained}`,
+      ]),
       `- Regressions: ${criterion.totals.regressions}`,
       `- Rule passed: ${criterion.policyResult.rulePassed === null ? 'not evaluated' : String(criterion.policyResult.rulePassed)}`,
       '',

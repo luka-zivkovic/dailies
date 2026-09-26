@@ -11,8 +11,8 @@ import {
   expectedBinaryCalibrationIdentity,
   parseCanonicalBinaryCalibrationBytes,
   type BinaryCalibrationArtifact,
-} from '../src/binary-calibration.js';
-import { canonicalJson } from '../src/rubrist.js';
+} from '../src/binary-calibration-v2.js';
+import { canonicalJson, sha256Digest } from '../src/rubrist.js';
 import { MAX_CALIBRATION_FILE_BYTES } from '../src/calibration-file.js';
 import { parseSuiteConfigV6, type SuiteConfigV6 } from '../src/config-v6.js';
 import type { BinaryCalibrationRequirementV1 } from '../src/policy-v2.js';
@@ -20,11 +20,12 @@ import { parseCanonicalCalibrationReportV6Bytes } from '../src/report-v6.js';
 import { preflightCalibrationSuiteRelease } from '../src/suite-runner-v6.js';
 import { runCalibrationSuiteRelease } from '../src/suite-runner-v6.js';
 import {
-  evaluatorSuiteManifestDigest,
-  verifyEvaluatorSuiteManifest,
-  type EvaluatorSuiteManifest,
-  type EvaluatorSuiteManifestMember,
-} from '../src/suite-manifest.js';
+  evaluatorSuiteManifestV2Digest,
+  verifyEvaluatorSuiteManifestV2,
+  type EvaluatorSuiteManifestV2,
+  type EvaluatorSuiteManifestV2Member,
+} from '../src/suite-manifest-v2.js';
+import { evaluatorIdentityFor, knownEvaluatorIdentity, receiptV2 } from './rubrist-v2-support.js';
 
 const tempDirs: string[] = [];
 
@@ -55,23 +56,25 @@ const calibrationRequirement: BinaryCalibrationRequirementV1 = {
   }],
 };
 
-async function manifestFixture(): Promise<EvaluatorSuiteManifest> {
+async function manifestFixture(): Promise<EvaluatorSuiteManifestV2> {
   const raw = JSON.parse(await readFile(
-    new URL('../contracts/fixtures/evaluator-suite-manifest-v1.complete.json', import.meta.url),
+    new URL('../contracts/fixtures/evaluator-suite-manifest-v2.complete.json', import.meta.url),
     'utf8',
-  )) as EvaluatorSuiteManifest;
+  )) as EvaluatorSuiteManifestV2;
   raw.trialPlan = null;
-  raw.manifestDigest = evaluatorSuiteManifestDigest(raw);
-  return verifyEvaluatorSuiteManifest(raw);
+  // The second member's fixture evaluator is typed-question; these tests bind a prompted one.
+  raw.members[1]!.skillDigest = sha256Digest(knownEvaluatorIdentity('repeated'));
+  raw.manifestDigest = evaluatorSuiteManifestV2Digest(raw);
+  return verifyEvaluatorSuiteManifestV2(raw);
 }
 
 async function calibrationForMember(
-  manifest: EvaluatorSuiteManifest,
-  member: EvaluatorSuiteManifestMember,
+  manifest: EvaluatorSuiteManifestV2,
+  member: EvaluatorSuiteManifestV2Member,
   fixtureName: 'complete' | 'repeated' | 'incomplete' = 'complete',
 ): Promise<{ bytes: Uint8Array; artifact: BinaryCalibrationArtifact }> {
   const fixtureBytes = await readFile(
-    new URL(`../contracts/fixtures/binary-calibration-v1.${fixtureName}.json`, import.meta.url),
+    new URL(`../contracts/fixtures/binary-calibration-v2.${fixtureName}.json`, import.meta.url),
   );
   const artifact = structuredClone(
     parseCanonicalBinaryCalibrationBytes(fixtureBytes),
@@ -89,10 +92,22 @@ async function calibrationForMember(
     criterionVersionId: member.criterionVersionId,
     criterionDigest: member.criterionDigest,
   };
-  artifact.evaluator.skillId = member.skillId;
-  artifact.evaluator.skillVersionId = member.skillVersionId;
-  artifact.evaluator.skillDigest = member.skillDigest;
-  artifact.evaluator.outputContractDigest = member.outputContractDigest;
+  const identity = evaluatorIdentityFor(member);
+  artifact.evaluator = {
+    identity,
+    skillId: member.skillId,
+    skillVersionId: member.skillVersionId,
+    skillDigest: member.skillDigest,
+    outputContractDigest: member.outputContractDigest,
+    requestedBindingDigest: sha256Digest(identity.executionBinding),
+  };
+  // A reused fixture's provider groups name the member's provider.
+  for (const trial of artifact.trials) {
+    for (const group of trial.providerIdentityGroups) {
+      group.provider = identity.executionBinding.provider;
+      group.upstreamProvider = null;
+    }
+  }
   artifact.suiteBinding = {
     manifestId: manifest.manifestId,
     manifestDigest: manifest.manifestDigest,
@@ -106,7 +121,7 @@ async function calibrationForMember(
 async function preflightFixture(): Promise<{
   dir: string;
   config: SuiteConfigV6;
-  manifest: EvaluatorSuiteManifest;
+  manifest: EvaluatorSuiteManifestV2;
   calibrationBytes: Map<string, Uint8Array>;
 }> {
   const dir = await mkdtemp(join(tmpdir(), 'dailies-v6-preflight-'));
@@ -213,57 +228,27 @@ interface SubmittedItem {
 }
 
 function assessmentReceipt(
-  manifest: EvaluatorSuiteManifest,
+  manifest: EvaluatorSuiteManifestV2,
   skillVersionId: string,
   items: SubmittedItem[],
   failingPositions: Set<number>,
 ): Record<string, unknown> {
   const member = manifest.members.find((entry) => entry.skillVersionId === skillVersionId)!;
-  const sorted = [...items].sort((left, right) => left.clientItemId < right.clientItemId ? -1 : 1);
-  const receiptItems = sorted.map((item) => ({
-    clientItemId: item.clientItemId,
-    caseId: `case-${member.position}-${item.clientItemId}`,
-    status: 'completed',
-    judgedLabel: failingPositions.has(member.position) ? 'fail' : 'pass',
-    verdictId: `verdict-${member.position}-${item.clientItemId}`,
-    error: null,
-    contentDigest: bytesDigest(Buffer.from(canonicalJson({ input: item.input, output: item.output }))),
-    providerMetadata: {
-      model: 'mock-v1',
-      requestId: `request-${member.position}-${item.clientItemId}`,
-      responseId: `response-${member.position}-${item.clientItemId}`,
-      systemFingerprint: null,
-    },
-  }));
-  const receipt: Record<string, unknown> = {
-    schemaVersion: 1,
-    receiptId: `receipt-${skillVersionId}`,
+  return receiptV2({
     evalRunId: `run-${skillVersionId}`,
     projectId: manifest.projectId,
     skillId: member.skillId,
     skillVersionId,
-    status: 'complete',
-    run: {
-      status: 'completed',
-      totalItems: receiptItems.length,
-      completedItems: receiptItems.length,
-      failedItems: 0,
-      agreedItems: 0,
-    },
-    requestedModelBinding: {
-      provider: 'mock',
-      modelId: 'mock-v1',
-      modelVersion: '1',
-      temperature: 0,
-    },
-    skillDigest: member.skillDigest,
-    datasetDigest: bytesDigest(Buffer.from(canonicalJson(
-      receiptItems.map(({ clientItemId, contentDigest }) => ({ clientItemId, contentDigest })),
-    ))),
-    items: receiptItems,
-  };
-  receipt.evidenceDigest = bytesDigest(Buffer.from(canonicalJson(receipt)));
-  return receipt;
+    evaluator: evaluatorIdentityFor(member),
+    items: items.map((item) => ({
+      clientItemId: item.clientItemId,
+      caseId: `case-${member.position}-${item.clientItemId}`,
+      input: item.input,
+      output: item.output,
+      result: { state: 'outcome', outcome: failingPositions.has(member.position) ? 'fail' : 'pass' },
+    })),
+    runStatus: 'completed',
+  });
 }
 
 async function executionServers(

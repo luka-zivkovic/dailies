@@ -3,7 +3,7 @@
   "inputs": {
     "type": "jsonl",
     "path": "cases.jsonl",
-    "digest": "sha256:c3e0ff0132c8d4b895781bad92405abff20d6d1837a542f776b21fc426d4814f"
+    "digest": "sha256:3cd03de691bb16894e8147ad2b34666ba3b00b9651cb874c25a3396dfc1a7d6a"
   },
   "scope": {
     "id": "example-support-suite-regressions-v1",
@@ -25,7 +25,7 @@
       "type": "file",
       "path": "suite-manifest.json",
       "manifestId": "suite_manifest_support_quality_1",
-      "manifestDigest": "sha256:8f9574b4d3ebf63dcfc19ca866bf4725fd4fec312c67179aa8b4468df78f9db2"
+      "manifestDigest": "sha256:103c01a2ef7a7fb624969388ca216297e4f1fee26a106661d7768f1246a8292e"
     },
     "provider": {
       "type": "rubrist",
@@ -39,10 +39,10 @@
     "id": "example-support-calibrated-release-policy",
     "version": "1",
     "manifestId": "suite_manifest_support_quality_1",
-    "manifestDigest": "sha256:8f9574b4d3ebf63dcfc19ca866bf4725fd4fec312c67179aa8b4468df78f9db2",
+    "manifestDigest": "sha256:103c01a2ef7a7fb624969388ca216297e4f1fee26a106661d7768f1246a8292e",
     "criteria": [
       {
-        "criterionVersionId": "criterionv_factuality_1",
+        "criterionVersionId": "criterionv_safety_1",
         "evidenceRequirement": "mandatory",
         "consequence": "blocking",
         "rule": {
@@ -83,7 +83,7 @@
         }
       },
       {
-        "criterionVersionId": "criterionv_safety_2",
+        "criterionVersionId": "criterionv_refund_policy_2",
         "evidenceRequirement": "mandatory",
         "consequence": "blocking",
         "rule": {
@@ -128,23 +128,23 @@
   },
   "calibrationEvidence": [
     {
-      "criterionVersionId": "criterionv_factuality_1",
+      "criterionVersionId": "criterionv_safety_1",
       "source": {
         "type": "file",
-        "path": "calibration-factuality.json",
-        "artifactDigest": "sha256:b82018b32225ab1f64ebd4ad6e082a1a7043f4049246c0f913412ac1198ba705",
+        "path": "calibration-safety.json",
+        "artifactDigest": "sha256:d1b013ed3e368e42866c296009e5719da12afa732cca4115cebc08607978f33a",
         "expectedIdentity": {
-          "artifactId": "example-calibration-criterion_factuality",
+          "artifactId": "example-calibration-criterion_safety",
           "calibrationRunId": "example-calibration-run-0",
           "projectId": "proj_support",
-          "criterionId": "criterion_factuality",
-          "criterionVersionId": "criterionv_factuality_1",
-          "criterionDigest": "sha256:01c89bc03598fe344dab47582296d6d7a9488187e1a1fc89c0edaf4936b0051c",
-          "skillId": "skill_factuality",
-          "skillVersionId": "skillv_factuality_1",
-          "skillDigest": "sha256:69fb334cdff8404671eca3ea2148cc6ddb10a60b8d6d0ebaf16bd5631dc67c3c",
-          "outputContractDigest": "sha256:f31522d7a0aa4a12fc81e0e1d76d1d6276999182ac71adc105102a87f4cff6a6",
-          "requestedBindingDigest": "sha256:76555ab18b9000590c3d969580d2ef96846e9efbd26759982e87f128894cc312",
+          "criterionId": "criterion_safety",
+          "criterionVersionId": "criterionv_safety_1",
+          "criterionDigest": "sha256:58fedda31950ab1626e25749f0d08b2153d73117a991be5fe5d4463f0f7f1942",
+          "skillId": "skill_safety",
+          "skillVersionId": "skillv_safety_1",
+          "skillDigest": "sha256:50044ce56b8d6c120cb7a43ca9f21643a2660e4a413556be4d8ebbe0245a2791",
+          "outputContractDigest": "sha256:6bff022dd4e6487d8ca246fd74ebdb4f96c18e23f53d6ea2ccd36ad0871e47dc",
+          "requestedBindingDigest": "sha256:60e396244ab361ad4bde2390bc049d80a31a3d0c9e4b48c9fb985afd9aead999",
           "datasetRevisionId": "dataset-revision-sealed-4",
           "revisionDigest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
           "contentDigest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
@@ -171,29 +171,29 @@
           "trialPlanKind": "single",
           "trialsPerItem": 1,
           "suiteManifestId": "suite_manifest_support_quality_1",
-          "suiteManifestDigest": "sha256:8f9574b4d3ebf63dcfc19ca866bf4725fd4fec312c67179aa8b4468df78f9db2",
+          "suiteManifestDigest": "sha256:103c01a2ef7a7fb624969388ca216297e4f1fee26a106661d7768f1246a8292e",
           "suiteMemberPosition": 0
         }
       }
     },
     {
-      "criterionVersionId": "criterionv_safety_2",
+      "criterionVersionId": "criterionv_refund_policy_2",
       "source": {
         "type": "file",
-        "path": "calibration-safety.json",
-        "artifactDigest": "sha256:01e55e13ab849c23240410bc457fecf9510e49fe044167d685def9919a467a39",
+        "path": "calibration-refund_policy.json",
+        "artifactDigest": "sha256:b73ec1c02c4e5d7420bf1730f06f1122ed4fb592eed1a02680175a843cad2199",
         "expectedIdentity": {
-          "artifactId": "example-calibration-criterion_safety",
+          "artifactId": "example-calibration-criterion_refund_policy",
           "calibrationRunId": "example-calibration-run-1",
           "projectId": "proj_support",
-          "criterionId": "criterion_safety",
-          "criterionVersionId": "criterionv_safety_2",
-          "criterionDigest": "sha256:06ff15a9f9915bb286e71974e605d51f7ba2dc825c49f0d270bc1e41af82340e",
-          "skillId": "skill_safety",
-          "skillVersionId": "skillv_safety_3",
-          "skillDigest": "sha256:e7438c26ce55a96e265b8eb31d7e2e1a3b585c0b82581b610bcdc30ad8400b8e",
-          "outputContractDigest": "sha256:f31522d7a0aa4a12fc81e0e1d76d1d6276999182ac71adc105102a87f4cff6a6",
-          "requestedBindingDigest": "sha256:76555ab18b9000590c3d969580d2ef96846e9efbd26759982e87f128894cc312",
+          "criterionId": "criterion_refund_policy",
+          "criterionVersionId": "criterionv_refund_policy_2",
+          "criterionDigest": "sha256:bf256075a06d7c8fd315c61313f2d641b34d25a4a10c09eef3773eee1f7cceb6",
+          "skillId": "skill_refund_policy",
+          "skillVersionId": "skillv_refund_policy_3",
+          "skillDigest": "sha256:2f719481c39acaaee1ddad9b4867d5163dc51de4eba8a826629bd5a9333d8c92",
+          "outputContractDigest": "sha256:04cfa73215b5173e0975d67d7fc5327cdcfd66587d828dae85036e4430101e06",
+          "requestedBindingDigest": "sha256:60e396244ab361ad4bde2390bc049d80a31a3d0c9e4b48c9fb985afd9aead999",
           "datasetRevisionId": "dataset-revision-sealed-4",
           "revisionDigest": "sha256:4444444444444444444444444444444444444444444444444444444444444444",
           "contentDigest": "sha256:5555555555555555555555555555555555555555555555555555555555555555",
@@ -220,7 +220,7 @@
           "trialPlanKind": "single",
           "trialsPerItem": 1,
           "suiteManifestId": "suite_manifest_support_quality_1",
-          "suiteManifestDigest": "sha256:8f9574b4d3ebf63dcfc19ca866bf4725fd4fec312c67179aa8b4468df78f9db2",
+          "suiteManifestDigest": "sha256:103c01a2ef7a7fb624969388ca216297e4f1fee26a106661d7768f1246a8292e",
           "suiteMemberPosition": 1
         }
       }

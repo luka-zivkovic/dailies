@@ -9,6 +9,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import { canonicalJson, sha256Digest } from '../src/rubrist.js';
 import { parseSuiteConfig } from '../src/config-v5.js';
 import {
+  aggregateCriterionItems,
   candidateExecutionIdentity,
   providerExecutionIdentity,
   renderSuiteMarkdown,
@@ -17,13 +18,14 @@ import {
 import { parseReportForInspection } from '../src/report.js';
 import { runSuiteRelease } from '../src/suite-runner.js';
 import {
-  evaluatorSuiteManifestDigest,
-  verifyEvaluatorSuiteManifest,
-  type EvaluatorSuiteManifest,
-} from '../src/suite-manifest.js';
+  evaluatorSuiteManifestV2Digest,
+  verifyEvaluatorSuiteManifestV2,
+  type EvaluatorSuiteManifestV2,
+} from '../src/suite-manifest-v2.js';
+import { evaluatorIdentityFor, otherEvaluatorIdentity, receiptV2, type ReceiptItemInput } from './rubrist-v2-support.js';
 import { sha256Bytes } from './v4-fixture.js';
 
-type MemberMode = 'complete' | 'incomplete' | 'binding-tamper' | 'pending';
+type MemberMode = 'complete' | 'incomplete' | 'binding-tamper' | 'pending' | 'abstain';
 
 interface SubmittedItem {
   clientItemId: string;
@@ -63,84 +65,43 @@ function listen(server: Server): Promise<number> {
 }
 
 function receipt(
-  manifest: EvaluatorSuiteManifest,
+  manifest: EvaluatorSuiteManifestV2,
   submission: Submission,
   mode: MemberMode,
 ): Record<string, unknown> {
   const member = manifest.members.find((entry) => entry.skillVersionId === submission.skillVersionId)!;
   const sorted = [...submission.items].sort((a, b) =>
     a.clientItemId < b.clientItemId ? -1 : a.clientItemId > b.clientItemId ? 1 : 0);
-  const items: Array<{
-    clientItemId: string;
-    caseId: string;
-    status: 'completed' | 'failed';
-    judgedLabel: 'pass' | 'fail' | null;
-    verdictId: string | null;
-    error: string | null;
-    contentDigest: string;
-    providerMetadata: {
-      model: string;
-      requestId: string;
-      responseId: string;
-      systemFingerprint: null;
-    };
-  }> = sorted.map((item) => ({
+  const items: ReceiptItemInput[] = sorted.map((item) => ({
     clientItemId: item.clientItemId,
     caseId: `case-${member.position}-${item.clientItemId}`,
-    status: 'completed',
-    judgedLabel: member.position === 1 && item.clientItemId.includes('unsafe') ? 'fail' : 'pass',
-    verdictId: `verdict-${member.position}-${item.clientItemId}`,
-    error: null,
-    contentDigest: sha256Digest({ input: item.input, output: item.output }),
-    providerMetadata: {
-      model: 'mock-v1',
-      requestId: `request-${member.position}-${item.clientItemId}`,
-      responseId: `response-${member.position}-${item.clientItemId}`,
-      systemFingerprint: null,
+    input: item.input,
+    output: item.output,
+    result: {
+      state: 'outcome',
+      outcome: mode === 'abstain'
+        ? 'abstain'
+        : member.position === 1 && item.clientItemId.includes('unsafe') ? 'fail' : 'pass',
     },
   }));
   if (mode === 'incomplete') {
-    items[items.length - 1] = {
-      ...items.at(-1)!,
-      status: 'failed',
-      judgedLabel: null,
-      verdictId: null,
-      error: 'provider failed',
-    };
+    items[items.length - 1] = { ...items.at(-1)!, result: { state: 'failure', failureKind: 'provider_timeout' } };
   }
-  const result: Record<string, unknown> = {
-    schemaVersion: 1,
-    receiptId: `receipt-${submission.skillVersionId}`,
+  const evaluator = evaluatorIdentityFor(member);
+  return receiptV2({
     evalRunId: `run-${submission.skillVersionId}`,
     projectId: manifest.projectId,
     skillId: member.skillId,
     skillVersionId: member.skillVersionId,
-    status: mode === 'incomplete' ? 'incomplete' : 'complete',
-    run: {
-      status: mode === 'incomplete' ? 'failed' : 'completed',
-      totalItems: items.length,
-      completedItems: mode === 'incomplete' ? items.length - 1 : items.length,
-      failedItems: mode === 'incomplete' ? 1 : 0,
-      agreedItems: 0,
-    },
-    requestedModelBinding: {
-      provider: 'mock',
-      modelId: 'mock-v1',
-      modelVersion: '1',
-      temperature: 0,
-    },
-    skillDigest: mode === 'binding-tamper' ? `sha256:${'9'.repeat(64)}` : member.skillDigest,
-    datasetDigest: sha256Digest(
-      items.map(({ clientItemId, contentDigest }) => ({ clientItemId, contentDigest })),
-    ),
+    // A digest-valid receipt from another evaluator fails only the manifest binding.
+    evaluator: mode === 'binding-tamper' ? otherEvaluatorIdentity(evaluator) : evaluator,
     items,
-  };
-  result.evidenceDigest = sha256Digest(result);
-  return result;
+    runStatus: mode === 'incomplete' ? 'failed' : 'completed',
+  });
 }
 
 async function mockRubrist(
-  manifest: EvaluatorSuiteManifest,
+  manifest: EvaluatorSuiteManifestV2,
   modes: Record<string, MemberMode> = {},
 ): Promise<{ server: Server; url: string; submissions: Submission[]; readonly maxSubmitInFlight: number }> {
   const submissions: Submission[] = [];
@@ -206,10 +167,10 @@ async function fixture(
 ) {
   const dir = await mkdtemp(join(tmpdir(), 'dailies-suite-'));
   tempDirs.push(dir);
-  const manifest = verifyEvaluatorSuiteManifest(JSON.parse(await readFile(
-    new URL('../contracts/fixtures/evaluator-suite-manifest-v1.complete.json', import.meta.url),
+  const manifest = verifyEvaluatorSuiteManifestV2(JSON.parse(await readFile(
+    new URL('../contracts/fixtures/evaluator-suite-manifest-v2.complete.json', import.meta.url),
     'utf8',
-  )) as EvaluatorSuiteManifest);
+  )) as EvaluatorSuiteManifestV2);
   const manifestPath = join(dir, 'manifest.json');
   await writeFile(manifestPath, canonicalJson(manifest), 'utf8');
   const inputBytes = [
@@ -313,7 +274,7 @@ describe('criterion suite runner', () => {
     const test = await fixture();
     const repeated = structuredClone(test.manifest);
     repeated.trialPlan = { kind: 'independent_repetitions', trialsPerItem: 3 };
-    repeated.manifestDigest = evaluatorSuiteManifestDigest(repeated);
+    repeated.manifestDigest = evaluatorSuiteManifestV2Digest(repeated);
     await writeFile(test.config.suite.manifest.path, canonicalJson(repeated), 'utf8');
     test.config.suite.manifest.manifestDigest = repeated.manifestDigest;
     test.config.policy.manifestDigest = repeated.manifestDigest;
@@ -354,7 +315,7 @@ describe('criterion suite runner', () => {
       'inconclusive',
       2,
       ['advisory', 'blocking'] as const,
-      { skillv_factuality_1: 'binding-tamper' as const },
+      { skillv_safety_1: 'binding-tamper' as const },
     ],
   ] as const)('keeps CLI %s report and exit code aligned', async (
     expectedDecision,
@@ -374,6 +335,53 @@ describe('criterion suite runner', () => {
       expect(cli.code).toBe(expectedCode);
       expect(report.decision).toBe(expectedDecision);
       expect(cli.stdout).toContain(`decision: ${expectedDecision}`);
+    } finally {
+      close(test.candidateServer);
+      close(test.rubrist.server);
+    }
+  });
+
+  it('counts an abstaining criterion as not passing and binds every abstention to its receipt (ADR-0009)', async () => {
+    const test = await fixture(['blocking', 'advisory'], { skillv_safety_1: 'abstain' });
+    try {
+      const report = await runSuiteRelease(test.config, {
+        now: () => new Date('2026-08-22T12:00:00.000Z'),
+      });
+      const criterion = report.criteria[0]!;
+      expect(criterion.items.map((item) => [item.assessedLabel, item.comparison])).toEqual([
+        ['abstain', 'regression'],
+        ['abstain', 'regression'],
+      ]);
+      expect(criterion.totals).toMatchObject({ evaluated: 2, passed: 0, failed: 2, abstained: 2, passRate: 0, regressions: 2 });
+      expect(report.decision).toBe('block');
+      expect(reportV5Schema.safeParse(report).success).toBe(true);
+      expect(renderSuiteMarkdown(report)).toContain('Abstained (counted as not passing): 2');
+
+      const relabel = (label: 'pass' | 'fail') => (candidate: Record<string, any>) => {
+        const tampered = candidate.criteria[0];
+        tampered.items = tampered.items.map((item: Record<string, any>) => ({
+          ...item,
+          assessedLabel: label,
+          comparison: label === 'pass' ? 'stable_pass' : 'regression',
+          regression: label !== 'pass',
+        }));
+        tampered.totals = aggregateCriterionItems(tampered.items);
+      };
+      const mutations: Array<[string, (candidate: Record<string, any>) => void]> = [
+        ['abstentions relabeled as fails', relabel('fail')],
+        ['abstentions relabeled as passes', relabel('pass')],
+        ['abstained count zeroed', (candidate) => { candidate.criteria[0].totals.abstained = 0; }],
+        ['abstention left unpaired', (candidate) => {
+          candidate.criteria[0].items[0].comparison = 'unpaired';
+          candidate.criteria[0].items[0].regression = false;
+          candidate.criteria[0].totals = aggregateCriterionItems(candidate.criteria[0].items);
+        }],
+      ];
+      for (const [name, mutate] of mutations) {
+        const candidate = structuredClone(report) as Record<string, any>;
+        mutate(candidate);
+        expect(reportV5Schema.safeParse(candidate).success, name).toBe(false);
+      }
     } finally {
       close(test.candidateServer);
       close(test.rubrist.server);

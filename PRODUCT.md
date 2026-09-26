@@ -2,7 +2,7 @@
 
 Status: **active target-state charter**
 
-Last reviewed: 2026-08-22
+Last reviewed: 2026-09-26
 
 This document is the source of truth for what Dailies is becoming. The README,
 PLAN, CLI copy, and code may describe current behavior, but they do not
@@ -100,16 +100,18 @@ single-criterion exact-match/HTTP/Rubrist paths, retries, and tri-state reports.
 Schema v4 requires exact-byte input identity and one declared evidence scope,
 derives and enforces evidence trust, and retains explicitly unavailable
 producer provenance. Additive schema v5 consumes an exact pinned Rubrist
-policy-free suite manifest and separate receipt-v1 evidence, preserves
+policy-free suite manifest and separate receipt-v2 evidence, preserves
 criterion/suite/scope/trust identity, and applies explicit mandatory,
 blocking, advisory, or same-unit compensatory customer policy. Generic HTTP
 evidence remains visibly self-reported and inadmissible without a reasoned
 customer override. Additive schema v6 consumes exact local
-`rubrist/binary-calibration/v1` artifacts under customer policy v2, preserves a
+`rubrist/binary-calibration/v2` artifacts under customer policy v2, preserves a
 separate sealed calibration scope, evaluates repeated calibration trials
 without pooling, and emits a canonical calibration-aware report while keeping
-receipt v1 unchanged. Repeated candidate-assessment execution, staged rollout,
-and hosted control-plane ideas remain demand-gated.
+the receipt unchanged. Rubrist evidence is v2 throughout (ADR-0008), and an
+evaluator's abstention counts as not passing (ADR-0009). Repeated
+candidate-assessment execution, staged rollout, and hosted control-plane ideas
+remain demand-gated.
 
 ## Product principles
 

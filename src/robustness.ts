@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { arch, cpus, platform } from 'node:os';
 import { z } from 'zod';
-import { canonicalJson } from './rubrist.js';
+import { canonicalJson } from './rubrist-canonical.js';
 import type { PolicyDecision } from './policy.js';
 import type { PolicyDecisionV2 } from './policy-v2.js';
 import type { Report } from './report.js';
