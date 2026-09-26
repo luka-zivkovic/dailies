@@ -589,18 +589,19 @@ findings are resolved before merge.
   resolution, sealed calibration and governed candidates, and
   criterion-author guidance. #148 amended ADR-0014 with the founder's
   2026-09-26 decisions for typed-question evaluators (decisions 8–11).
-- 8F is merged (#153–#156): the capability check before save and
-  resolution after save, the model picker the check drives, resolution
-  status and probe outcomes shown to the author, and typed-question
-  authoring in the editor. Two deviations are recorded in Rubrist's
-  architecture notes as follow-ups: a check's outcomes don't yet become the
-  resolution record, and custom endpoints may name any host.
+- 8F is merged (#153–#156): the capability-check route and resolution
+  after save wired into the gate worker, the model picker the check drives,
+  resolution status and probe outcomes shown to the author, and
+  typed-question authoring in the editor. Two gaps remain, recorded in
+  Rubrist's architecture notes: a check's outcomes don't yet become the
+  resolution record (ADR-0014 section 4), and custom endpoints may name any
+  host.
 - The founder decided on 2026-09-27 how Dailies' formats restart at v1 in
   8G: two formats, single-criterion and suite (today's calibration-aware
   format, with calibration optional), each with a named identifier. Dailies
-  ADR-0010 records it.
-- 8G is in progress. Casefile's report version and content-hash basis
-  restart at v1 (casefile#19); Rubrist and Dailies follow.
+  ADR-0010 records it (dailies#21).
+- 8G is in progress. Casefile's report version and content-hash basis have
+  restarted at v1 (casefile#19); Rubrist and Dailies follow.
 
 This batch changes Rubrist and Dailies. Both switch to the v2 contracts in
 one window and drop v1 support. Casefile changes only in the launch baseline
@@ -742,7 +743,8 @@ such as TypeSafe Jev can be an optional evaluator provider.
     (Casefile ADR-0003).
 - Dailies' single-criterion, suite, and calibration-aware formats can't all
   share one version number while they stay separate, so a recorded Dailies
-  decision on keeping or consolidating them comes first.
+  decision on keeping or consolidating them comes first: Dailies ADR-0010
+  keeps two, single and suite, each with a named identifier.
 - Superseded contract documents, fixtures, and code are deleted in all three
   repositories, and the vendored copies follow.
 
