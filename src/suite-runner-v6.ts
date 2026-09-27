@@ -11,6 +11,7 @@ import {
 import {
   suiteConfigV6Schema,
   type SuiteConfigV6,
+  type SuiteConfigV6Input,
 } from './config-v6.js';
 import type { SuiteConfig } from './config-v5.js';
 import {
@@ -50,7 +51,6 @@ export interface PreflightedCalibrationSuiteRelease {
 
 function candidateConfigProjection(config: SuiteConfigV6): SuiteConfig {
   return {
-    schemaVersion: 5,
     inputs: config.inputs,
     scope: config.scope,
     candidate: config.candidate,
@@ -66,7 +66,7 @@ function candidateConfigProjection(config: SuiteConfigV6): SuiteConfig {
 function exactNow(now: () => Date): string {
   const value = now().toISOString();
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(value)) {
-    throw new Error('v6 runner clock must produce exact UTC milliseconds');
+    throw new Error('suite runner clock must produce exact UTC milliseconds');
   }
   return value;
 }
@@ -77,7 +77,7 @@ function exactNow(now: () => Date): string {
  * retry or a network/status fallback.
  */
 export async function preflightCalibrationSuiteRelease(
-  inputConfig: SuiteConfigV6,
+  inputConfig: SuiteConfigV6Input,
   options: PreflightCalibrationSuiteOptions = {},
 ): Promise<PreflightedCalibrationSuiteRelease> {
   const now = options.now ?? (() => new Date());
@@ -155,7 +155,7 @@ export async function preflightCalibrationSuiteRelease(
  * failure. Calibration truth scope is never copied into the candidate scope.
  */
 export async function runCalibrationSuiteRelease(
-  config: SuiteConfigV6,
+  config: SuiteConfigV6Input,
   options: RunCalibrationSuiteOptions = {},
 ): Promise<CalibrationSuiteReport> {
   const now = options.now ?? (() => new Date());

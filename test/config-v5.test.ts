@@ -3,7 +3,6 @@ import { parseSuiteConfig } from '../src/config-v5.js';
 
 const digest = `sha256:${'1'.repeat(64)}`;
 const base = {
-  schemaVersion: 5,
   inputs: { type: 'jsonl', path: 'inputs.jsonl', digest },
   scope: {
     id: 'scope',
@@ -19,7 +18,6 @@ const base = {
     provider: { type: 'rubrist', url: 'https://rubrist.example' },
   },
   policy: {
-    schemaVersion: 1,
     id: 'policy',
     version: '1',
     manifestId: 'manifest',
@@ -38,7 +36,6 @@ const base = {
 describe('suite config v5', () => {
   it('is additive and applies bounded provider defaults', () => {
     expect(parseSuiteConfig(base)).toMatchObject({
-      schemaVersion: 5,
       suite: { provider: { pollIntervalMs: 1_000, evidenceDeadlineMs: 300_000 } },
       concurrency: 4,
       timeoutMs: 60_000,
@@ -46,7 +43,7 @@ describe('suite config v5', () => {
   });
 
   it('rejects v4, unknown fields, ambiguous consequence rules, and implicit compensation', () => {
-    expect(() => parseSuiteConfig({ ...base, schemaVersion: 4 })).toThrow(/requires schemaVersion 5/);
+    expect(() => parseSuiteConfig({ ...base, schemaVersion: 4 })).toThrow();
     expect(() => parseSuiteConfig({ ...base, thresholds: { minPassRate: 1, maxRegressions: 0 } }))
       .toThrow();
     expect(() => parseSuiteConfig({

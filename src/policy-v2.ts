@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { RELEASE_POLICY_CONTRACT } from './contracts.js';
 import { z } from 'zod';
 import {
   compareExactRationals,
@@ -140,7 +141,8 @@ export const criterionPolicyV2Schema = z.discriminatedUnion('consequence', [
 ]);
 
 export const releasePolicyV2Schema = z.object({
-  schemaVersion: z.literal(2),
+  contract: z.literal(RELEASE_POLICY_CONTRACT),
+  schemaVersion: z.literal(1),
   id: nonBlankStringSchema,
   version: nonBlankStringSchema,
   manifestId: nonBlankStringSchema,
@@ -160,7 +162,6 @@ export type ReleasePolicyV2 = z.infer<typeof releasePolicyV2Schema>;
 
 export function releasePolicyV2CandidateProjection(policy: ReleasePolicyV2): ReleasePolicyV1 {
   return {
-    schemaVersion: 1,
     id: policy.id,
     version: policy.version,
     manifestId: policy.manifestId,
@@ -221,11 +222,11 @@ export function applyReleasePolicyV2(
 ): PolicyDecisionV2 {
   const calibrationById = new Map(calibration.map((entry) => [entry.criterionVersionId, entry]));
   if (calibrationById.size !== calibration.length || calibration.length !== policy.criteria.length) {
-    throw new Error('policy v2 evaluation requires exact unique calibration-result coverage');
+    throw new Error('release policy evaluation requires exact unique calibration-result coverage');
   }
   const evidenceById = new Map(evidence.map((entry) => [entry.criterionVersionId, entry]));
   if (evidenceById.size !== evidence.length || evidence.length !== policy.criteria.length) {
-    throw new Error('policy v2 evaluation requires exact unique criterion-evidence coverage');
+    throw new Error('release policy evaluation requires exact unique criterion-evidence coverage');
   }
 
   const effectiveEvidence = policy.criteria.map((entry): CriterionPolicyInput => {

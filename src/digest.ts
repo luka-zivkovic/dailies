@@ -1,16 +1,10 @@
 import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, resolve } from 'node:path';
-import { CONFIG_SCHEMA_VERSION } from './config.js';
-import { SUITE_CONFIG_SCHEMA_VERSION } from './config-v5.js';
-import { SUITE_CONFIG_V6_SCHEMA_VERSION } from './config-v6.js';
+import { CONFIG_CONTRACTS } from './contracts.js';
 
-/** Config generations whose `inputs.digest` and `scope.expectedItems` this command maintains. */
-export const DIGEST_SUPPORTED_SCHEMA_VERSIONS: readonly number[] = [
-  CONFIG_SCHEMA_VERSION,
-  SUITE_CONFIG_SCHEMA_VERSION,
-  SUITE_CONFIG_V6_SCHEMA_VERSION,
-];
+/** The configuration formats whose `inputs.digest` and `scope.expectedItems` this command maintains. */
+export const DIGEST_SUPPORTED_CONTRACTS: readonly string[] = CONFIG_CONTRACTS;
 
 export interface DigestSyncOptions {
   /** Report only; never write the config file. */
@@ -19,7 +13,7 @@ export interface DigestSyncOptions {
 
 export interface DigestSyncResult {
   configPath: string;
-  schemaVersion: number;
+  contract: string;
   inputsPath: string;
   digest: { declared: string | undefined; observed: string };
   expectedItems: { declared: number | undefined; observed: number };
@@ -102,11 +96,11 @@ export async function syncInputDigest(
   if (!isRecord(raw)) {
     throw new Error(`config ${absConfigPath} must be a JSON object`);
   }
-  const schemaVersion = raw.schemaVersion;
-  if (typeof schemaVersion !== 'number' || !DIGEST_SUPPORTED_SCHEMA_VERSIONS.includes(schemaVersion)) {
+  const contract = raw.contract;
+  if (typeof contract !== 'string' || !DIGEST_SUPPORTED_CONTRACTS.includes(contract)) {
     throw new Error(
-      `unsupported config schema version: ${schemaVersion === undefined ? 'missing' : String(schemaVersion)}; ` +
-        `dailies digest supports schemaVersion ${DIGEST_SUPPORTED_SCHEMA_VERSIONS.join(', ')}`,
+      `unsupported config contract: ${contract === undefined ? 'missing' : String(contract)}; ` +
+        `dailies digest supports ${DIGEST_SUPPORTED_CONTRACTS.join(', ')}`,
     );
   }
   const inputs = raw.inputs;
@@ -139,7 +133,7 @@ export async function syncInputDigest(
 
   const result: DigestSyncResult = {
     configPath: absConfigPath,
-    schemaVersion,
+    contract,
     inputsPath,
     digest: { declared: declaredDigest, observed: observedDigest },
     expectedItems: { declared: declaredItems, observed: observedItems },
@@ -183,7 +177,7 @@ export async function syncInputDigest(
 export function formatDigestSyncResult(result: DigestSyncResult, check: boolean): string[] {
   const state = (same: boolean) => same ? 'match' : check ? 'MISMATCH' : 'updated';
   return [
-    `config: ${result.configPath} (schemaVersion ${result.schemaVersion})`,
+    `config: ${result.configPath} (${result.contract})`,
     `inputs: ${result.inputsPath}`,
     `digest: ${result.digest.declared ?? '(missing)'} -> ${result.digest.observed} ` +
       `[${state(result.digest.declared === result.digest.observed)}]`,

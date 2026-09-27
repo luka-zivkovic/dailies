@@ -335,7 +335,8 @@ function policyFor(
 ): ReleasePolicyV2 {
   const { manifest } = manifestFor(value);
   return {
-    schemaVersion: 2,
+    contract: 'dailies/release-policy/v1',
+    schemaVersion: 1,
     id: 'release-policy-v2-test',
     version: '1',
     manifestId: manifest.manifestId,
@@ -407,7 +408,7 @@ describe('combined release policy v2 precedence', () => {
   it('projects v2 to unchanged v1 candidate policy without calibration fields', () => {
     const value = artifact('complete');
     const projected = releasePolicyV2CandidateProjection(policyFor(value, requirement(value)));
-    expect(projected.schemaVersion).toBe(1);
+    expect('schemaVersion' in projected).toBe(false);
     expect(projected.criteria[0]).not.toHaveProperty('calibrationRequirement');
   });
 
@@ -494,7 +495,8 @@ describe('combined release policy v2 precedence', () => {
   it('implements the multi-criterion ADR-0005 calibration truth table', () => {
     const calibrationRequirement = requirement(artifact('complete'));
     const twoCriteria: ReleasePolicyV2 = {
-      schemaVersion: 2,
+      contract: 'dailies/release-policy/v1',
+      schemaVersion: 1,
       id: 'two-criterion-policy',
       version: '1',
       manifestId: 'manifest',

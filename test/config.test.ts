@@ -12,11 +12,12 @@ const validConfig = {
 
 describe('config validation', () => {
   it('rejects missing and legacy config versions with a migration diagnostic', () => {
-    const { schemaVersion: _schemaVersion, ...unversioned } = validConfig;
-    expect(() => parseConfig(unversioned)).toThrow(/unsupported config schema version: missing/);
-    expect(() => parseConfig({ ...validConfig, schemaVersion: 3 })).toThrow(
-      /release execution requires schemaVersion 4/,
+    const { contract: _contract, ...unnamed } = validConfig;
+    expect(() => parseConfig(unnamed)).toThrow(/unsupported config contract: missing/);
+    expect(() => parseConfig({ ...validConfig, contract: 'dailies/suite-config/v1' })).toThrow(
+      /single-criterion release execution requires dailies\/single-config\/v1/,
     );
+    expect(() => parseConfig({ ...validConfig, schemaVersion: 4 })).toThrow();
   });
 
   it('accepts a valid command + exact-match config and defaults concurrency to 4', () => {

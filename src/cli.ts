@@ -3,24 +3,17 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { Command } from 'commander';
 import {
-  parseSuiteConfig,
-  SUITE_CONFIG_SCHEMA_VERSION,
-  type SuiteConfig,
-} from './config-v5.js';
-import {
   parseSuiteConfigV6,
-  SUITE_CONFIG_V6_SCHEMA_VERSION,
   type SuiteConfigV6,
 } from './config-v6.js';
 import { parseConfig, type Config } from './config.js';
+import { CONFIG_CONTRACTS, declaredContract, SUITE_CONFIG_CONTRACT, SUITE_REPORT_CONTRACT } from './contracts.js';
 import { decideExitCode, EXIT_RUN_ERROR, renderMarkdown } from './report.js';
-import { renderSuiteMarkdown } from './report-v5.js';
 import {
   renderCalibrationReportMarkdown,
   serializeCalibrationReportV6,
 } from './report-v6.js';
 import { runShadow } from './runner.js';
-import { runSuiteRelease } from './suite-runner.js';
 import { runCalibrationSuiteRelease } from './suite-runner-v6.js';
 import { initializeDailiesProject } from './init.js';
 import { formatDigestSyncResult, syncInputDigest } from './digest.js';
@@ -32,26 +25,24 @@ function resolveFrom(baseDir: string, p: string): string {
   return isAbsolute(p) ? p : resolve(baseDir, p);
 }
 
-async function loadConfig(configPath: string): Promise<Config | SuiteConfig | SuiteConfigV6> {
+/** Load a single or suite configuration by its contract (ADR-0010). */
+async function loadConfig(configPath: string): Promise<Config | SuiteConfigV6> {
   const absPath = resolve(configPath);
   const raw: unknown = JSON.parse(await readFile(absPath, 'utf8'));
-  const version = typeof raw === 'object' && raw !== null && 'schemaVersion' in raw
-    ? (raw as { schemaVersion?: unknown }).schemaVersion
-    : undefined;
-  const config = version === SUITE_CONFIG_V6_SCHEMA_VERSION
-    ? parseSuiteConfigV6(raw)
-    : version === SUITE_CONFIG_SCHEMA_VERSION
-      ? parseSuiteConfig(raw)
-      : parseConfig(raw);
+  const contract = declaredContract(raw);
+  if (typeof contract !== 'string' || !CONFIG_CONTRACTS.includes(contract)) {
+    throw new Error(
+      `unsupported config contract: ${contract === undefined ? 'missing' : String(contract)}; ` +
+        `dailies runs ${CONFIG_CONTRACTS.join(' or ')}`,
+    );
+  }
+  const config = contract === SUITE_CONFIG_CONTRACT ? parseSuiteConfigV6(raw) : parseConfig(raw);
   // Paths in the config are relative to the config file's directory.
   const baseDir = dirname(absPath);
   config.inputs.path = resolveFrom(baseDir, config.inputs.path);
   config.output.dir = resolveFrom(baseDir, config.output.dir);
-  if (config.schemaVersion === SUITE_CONFIG_SCHEMA_VERSION ||
-    config.schemaVersion === SUITE_CONFIG_V6_SCHEMA_VERSION) {
+  if (config.contract === SUITE_CONFIG_CONTRACT) {
     config.suite.manifest.path = resolveFrom(baseDir, config.suite.manifest.path);
-  }
-  if (config.schemaVersion === SUITE_CONFIG_V6_SCHEMA_VERSION) {
     for (const binding of config.calibrationEvidence) {
       if (binding.source !== null) {
         binding.source.path = resolveFrom(baseDir, binding.source.path);
@@ -63,44 +54,24 @@ async function loadConfig(configPath: string): Promise<Config | SuiteConfig | Su
 
 async function runConfiguredRelease(configPath: string): Promise<number> {
   const config = await loadConfig(configPath);
-  const report = config.schemaVersion === SUITE_CONFIG_V6_SCHEMA_VERSION
+  const report = config.contract === SUITE_CONFIG_CONTRACT
     ? await runCalibrationSuiteRelease(config)
-    : config.schemaVersion === SUITE_CONFIG_SCHEMA_VERSION
-      ? await runSuiteRelease(config)
-      : await runShadow(config);
+    : await runShadow(config);
 
   await mkdir(config.output.dir, { recursive: true });
   const jsonPath = join(config.output.dir, 'report.json');
   const mdPath = join(config.output.dir, 'report.md');
-  await writeFile(
-    jsonPath,
-    report.schemaVersion === SUITE_CONFIG_V6_SCHEMA_VERSION
-      ? serializeCalibrationReportV6(report)
-      : JSON.stringify(report, null, 2) + '\n',
-  );
-  await writeFile(
-    mdPath,
-    report.schemaVersion === SUITE_CONFIG_V6_SCHEMA_VERSION
-      ? renderCalibrationReportMarkdown(report)
-      : report.schemaVersion === SUITE_CONFIG_SCHEMA_VERSION
-        ? renderSuiteMarkdown(report)
-        : renderMarkdown(report),
-    'utf8',
-  );
-
-  if (report.schemaVersion === SUITE_CONFIG_V6_SCHEMA_VERSION) {
+  if (report.contract === SUITE_REPORT_CONTRACT) {
+    await writeFile(jsonPath, serializeCalibrationReportV6(report));
+    await writeFile(mdPath, renderCalibrationReportMarkdown(report), 'utf8');
     console.log(
       `decision: ${report.decision} | criteria ${report.criteria.length}, ` +
       `candidate assessment ${report.candidateAssessment.status}, ` +
       `precedence ${report.decisionPrecedence}`,
     );
-  } else if (report.schemaVersion === SUITE_CONFIG_SCHEMA_VERSION) {
-    console.log(
-      `decision: ${report.decision} | criteria ${report.criteria.length}, ` +
-      `candidate executions ${report.candidateExecution.succeeded}/${report.candidateExecution.total}, ` +
-      `precedence ${report.decisionPrecedence}`,
-    );
   } else {
+    await writeFile(jsonPath, JSON.stringify(report, null, 2) + '\n');
+    await writeFile(mdPath, renderMarkdown(report), 'utf8');
     const { totals } = report;
     console.log(
       `decision: ${report.decision} | pass rate ${(totals.passRate * 100).toFixed(1)}% ` +
@@ -113,17 +84,11 @@ async function runConfiguredRelease(configPath: string): Promise<number> {
   console.log(`report: ${mdPath}`);
 
   if (report.decision === 'inconclusive') {
-    if (report.schemaVersion === SUITE_CONFIG_V6_SCHEMA_VERSION) {
+    if (report.contract === SUITE_REPORT_CONTRACT) {
       console.error(
-        `dailies inconclusive: calibration-aware release policy stopped at ` +
+        `dailies inconclusive: release policy stopped at ` +
           `${report.decisionPrecedence}. Incomplete or unverifiable required evidence is not a ` +
           `decision on the candidate. Exiting ${EXIT_RUN_ERROR} (run error).`,
-      );
-    } else if (report.schemaVersion === SUITE_CONFIG_SCHEMA_VERSION) {
-      console.error(
-        `dailies inconclusive: criterion release policy stopped at ` +
-          `${report.decisionPrecedence}. Incomplete evidence is not a decision on the ` +
-          `candidate. Exiting ${EXIT_RUN_ERROR} (run error).`,
       );
     } else {
       const { totals } = report;

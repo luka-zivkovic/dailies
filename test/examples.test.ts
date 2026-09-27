@@ -4,7 +4,6 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
-import { reportV5Schema } from '../src/report-v5.js';
 import { parseCanonicalCalibrationReportV6Bytes } from '../src/report-v6.js';
 import { reportSchema } from '../src/report.js';
 
@@ -107,8 +106,8 @@ describe('fixtures/examples', () => {
     }
   });
 
-  it('bundled v4 example promotes offline', async () => {
-    const dir = await mkdtemp(join(tmpdir(), 'dailies-example-v4-'));
+  it('bundled single example promotes offline', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'dailies-example-single-'));
     tempDirs.push(dir);
     const config = JSON.parse(await readFile(join(projectRoot, 'fixtures', 'dailies.config.json'), 'utf8')) as {
       output: { dir: string };
@@ -122,62 +121,69 @@ describe('fixtures/examples', () => {
     expect(report.decision).toBe('promote');
   });
 
-  it('v5-suite promotes against the mock Rubrist stub and writes a verified v5 report', async () => {
-    const providerUrl = await startMock(join(examplesRoot, 'v5-suite', 'suite-manifest.json'));
-    const configPath = await stageExample('v5-suite', providerUrl);
+  it('suite promotes against the mock Rubrist stub without calibration evidence', async () => {
+    const providerUrl = await startMock(join(examplesRoot, 'suite', 'suite-manifest.json'));
+    const configPath = await stageExample('suite', providerUrl);
     const result = await runCli(configPath);
     expect(result.code, result.stderr).toBe(0);
     expect(result.stdout).toContain('decision: promote');
     const outDir = join(dirname(configPath), 'dailies-out');
-    const report = reportV5Schema.parse(JSON.parse(await readFile(join(outDir, 'report.json'), 'utf8')));
+    const report = parseCanonicalCalibrationReportV6Bytes(await readFile(join(outDir, 'report.json')));
     expect(report.decision).toBe('promote');
     expect(report.decisionPrecedence).toBe('policy_satisfied');
     expect(report.criteria).toHaveLength(2);
     for (const criterion of report.criteria) {
-      expect(criterion.trust).toMatchObject({ status: 'complete', class: 'verified', admissible: true });
-      expect(criterion.evidence.state).toBe('complete');
-      expect(criterion.totals).toMatchObject({ passed: 3, total: 3, regressions: 0 });
+      expect(criterion.calibrationPolicy).toMatchObject({ status: 'not_required', admissible: true });
+    }
+    expect(report.candidateAssessment.status).toBe('completed');
+    if (report.candidateAssessment.status === 'completed') {
+      for (const criterion of report.candidateAssessment.report.criteria) {
+        expect(criterion.trust).toMatchObject({ status: 'complete', class: 'verified', admissible: true });
+        expect(criterion.totals).toMatchObject({ passed: 3, total: 3, regressions: 0 });
+      }
     }
     expect(await readFile(join(outDir, 'report.md'), 'utf8')).toContain('PROMOTE');
   });
 
-  it('v5-suite blocks when the stub scripts a failing criterion', async () => {
+  it('suite blocks when the stub scripts a failing criterion', async () => {
     const providerUrl = await startMock(
-      join(examplesRoot, 'v5-suite', 'suite-manifest.json'),
+      join(examplesRoot, 'suite', 'suite-manifest.json'),
       ['--fail-criterion', 'criterionv_refund_policy_2'],
     );
-    const configPath = await stageExample('v5-suite', providerUrl);
+    const configPath = await stageExample('suite', providerUrl);
     const result = await runCli(configPath);
     expect(result.code).toBe(1);
-    const report = reportV5Schema.parse(
-      JSON.parse(await readFile(join(dirname(configPath), 'dailies-out', 'report.json'), 'utf8')),
+    const report = parseCanonicalCalibrationReportV6Bytes(
+      await readFile(join(dirname(configPath), 'dailies-out', 'report.json')),
     );
     expect(report.decision).toBe('block');
-    expect(report.criteria[1]?.totals.regressions).toBe(3);
+    expect(report.candidateAssessment.status === 'completed' &&
+      report.candidateAssessment.report.criteria[1]?.totals.regressions).toBe(3);
   });
 
-  it('v5-suite blocks when the stub scripts an abstaining criterion, counting it as not passing', async () => {
+  it('suite blocks when the stub scripts an abstaining criterion, counting it as not passing', async () => {
     const providerUrl = await startMock(
-      join(examplesRoot, 'v5-suite', 'suite-manifest.json'),
+      join(examplesRoot, 'suite', 'suite-manifest.json'),
       ['--abstain-criterion', 'criterionv_safety_1'],
     );
-    const configPath = await stageExample('v5-suite', providerUrl);
+    const configPath = await stageExample('suite', providerUrl);
     const result = await runCli(configPath);
     expect(result.code).toBe(1);
     const outDir = join(dirname(configPath), 'dailies-out');
-    const report = reportV5Schema.parse(JSON.parse(await readFile(join(outDir, 'report.json'), 'utf8')));
+    const report = parseCanonicalCalibrationReportV6Bytes(await readFile(join(outDir, 'report.json')));
     expect(report.decision).toBe('block');
-    expect(report.criteria[0]?.items.map((item) => item.assessedLabel)).toEqual(['abstain', 'abstain', 'abstain']);
-    expect(report.criteria[0]?.totals).toMatchObject({ evaluated: 3, passed: 0, abstained: 3, passRate: 0, regressions: 3 });
+    const candidate = report.candidateAssessment.status === 'completed' ? report.candidateAssessment.report.criteria[0] : undefined;
+    expect(candidate?.items.map((item) => item.assessedLabel)).toEqual(['abstain', 'abstain', 'abstain']);
+    expect(candidate?.totals).toMatchObject({ evaluated: 3, passed: 0, abstained: 3, passRate: 0, regressions: 3 });
     expect(await readFile(join(outDir, 'report.md'), 'utf8')).toContain('Abstained (counted as not passing): 3');
   });
 
-  it('v6-calibration shows an abstaining criterion\'s candidate pass rate and abstentions next to its block', async () => {
+  it('suite-calibrated shows an abstaining criterion\'s candidate pass rate and abstentions next to its block', async () => {
     const providerUrl = await startMock(
-      join(examplesRoot, 'v6-calibration', 'suite-manifest.json'),
+      join(examplesRoot, 'suite-calibrated', 'suite-manifest.json'),
       ['--abstain-criterion', 'criterionv_safety_1'],
     );
-    const configPath = await stageExample('v6-calibration', providerUrl);
+    const configPath = await stageExample('suite-calibrated', providerUrl);
     const result = await runCli(configPath);
     expect(result.code).toBe(1);
     const markdown = await readFile(join(dirname(configPath), 'dailies-out', 'report.md'), 'utf8');
@@ -185,9 +191,9 @@ describe('fixtures/examples', () => {
     expect(markdown).toContain('Abstained (counted as not passing): 3');
   });
 
-  it('v6-calibration promotes with verified local calibration evidence and a canonical v6 report', async () => {
-    const providerUrl = await startMock(join(examplesRoot, 'v6-calibration', 'suite-manifest.json'));
-    const configPath = await stageExample('v6-calibration', providerUrl);
+  it('suite-calibrated promotes with verified local calibration evidence and a canonical suite report', async () => {
+    const providerUrl = await startMock(join(examplesRoot, 'suite-calibrated', 'suite-manifest.json'));
+    const configPath = await stageExample('suite-calibrated', providerUrl);
     const result = await runCli(configPath);
     expect(result.code, result.stderr).toBe(0);
     expect(result.stdout).toContain('decision: promote');
@@ -204,8 +210,31 @@ describe('fixtures/examples', () => {
     expect(await readFile(join(outDir, 'report.md'), 'utf8')).toContain('Calibration evidence: 2/2 verified');
   });
 
-  it('v6-calibration stays inconclusive without the stub instead of inventing evidence', async () => {
-    const configPath = await stageExample('v6-calibration', 'http://127.0.0.1:1');
+  it('suite-calibrated without calibrationEvidence runs, and each required calibration is not configured', async () => {
+    const providerUrl = await startMock(join(examplesRoot, 'suite-calibrated', 'suite-manifest.json'));
+    const configPath = await stageExample('suite-calibrated', providerUrl);
+    const config = JSON.parse(await readFile(configPath, 'utf8')) as Record<string, unknown>;
+    delete config.calibrationEvidence;
+    await writeFile(configPath, JSON.stringify(config, null, 2) + '\n', 'utf8');
+
+    const result = await runCli(configPath);
+    expect(result.code, result.stderr).toBe(2);
+    expect(result.stderr).toContain('dailies inconclusive: release policy stopped at mandatory_evidence_incomplete');
+    const report = parseCanonicalCalibrationReportV6Bytes(
+      await readFile(join(dirname(configPath), 'dailies-out', 'report.json')),
+    );
+    expect(report.decision).toBe('inconclusive');
+    expect(report.decisionPrecedence).toBe('mandatory_evidence_incomplete');
+    expect(report.candidateAssessment.status).toBe('completed');
+    expect(report.criteria).toHaveLength(2);
+    for (const criterion of report.criteria) {
+      expect(criterion.artifactEvidence).toMatchObject({ disposition: 'unavailable', reason: 'source_not_configured' });
+      expect(criterion.calibrationPolicy.admissible).toBe(false);
+    }
+  });
+
+  it('suite-calibrated stays inconclusive without the stub instead of inventing evidence', async () => {
+    const configPath = await stageExample('suite-calibrated', 'http://127.0.0.1:1');
     const result = await runCli(configPath);
     expect(result.code).toBe(2);
     expect(result.stderr).toContain('dailies inconclusive');

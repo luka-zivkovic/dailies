@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { declaredContract, SUITE_CONFIG_CONTRACT } from './contracts.js';
 import {
   candidateConfigSchema,
   DEFAULT_TIMEOUT_MS,
@@ -8,8 +9,6 @@ import {
 } from './config.js';
 import { suiteProviderConfigSchema } from './config-v5.js';
 import { releasePolicyV2Schema } from './policy-v2.js';
-
-export const SUITE_CONFIG_V6_SCHEMA_VERSION = 6;
 
 const nonBlankStringSchema = z.string().min(1).refine((value) => value.trim().length > 0, {
   message: 'must contain a non-whitespace character',
@@ -113,9 +112,10 @@ export const calibrationEvidenceBindingSchema = z.object({
   source: calibrationEvidenceFileSourceSchema.nullable(),
 }).strict();
 
-/** Additive suite configuration; schema v5 remains unchanged and supported. */
+/** The suite configuration (`dailies/suite-config/v1`, ADR-0010). */
 export const suiteConfigV6Schema = z.object({
-  schemaVersion: z.literal(SUITE_CONFIG_V6_SCHEMA_VERSION),
+  contract: z.literal(SUITE_CONFIG_CONTRACT),
+  schemaVersion: z.literal(1),
   inputs: inputsConfigSchema,
   scope: scopeConfigSchema,
   candidate: candidateConfigSchema,
@@ -129,7 +129,8 @@ export const suiteConfigV6Schema = z.object({
     provider: suiteProviderConfigSchema,
   }).strict(),
   policy: releasePolicyV2Schema,
-  calibrationEvidence: z.array(calibrationEvidenceBindingSchema).min(1),
+  /** Left out, it equals a null source for every criterion (ADR-0010). */
+  calibrationEvidence: z.array(calibrationEvidenceBindingSchema).min(1).optional(),
   trustPolicy: trustPolicySchema.default({
     admissibleClasses: ['verified', 'deterministic'],
   }),
@@ -137,6 +138,7 @@ export const suiteConfigV6Schema = z.object({
   timeoutMs: z.number().int().min(1).default(DEFAULT_TIMEOUT_MS),
   output: z.object({ dir: z.string().min(1) }).strict(),
 }).strict().superRefine((config, ctx) => {
+  if (config.calibrationEvidence === undefined) return;
   const criterionIds = config.policy.criteria.map((entry) => entry.criterionVersionId);
   if (config.calibrationEvidence.length !== criterionIds.length) {
     ctx.addIssue({
@@ -167,23 +169,29 @@ export const suiteConfigV6Schema = z.object({
     // calibration. Runtime retains that explicit absence as typed incomplete
     // evidence rather than turning it into a configuration integrity error.
   }
-});
+}).transform((config) => ({
+  ...config,
+  // Left out, the evidence is a null source for every criterion, in policy order.
+  calibrationEvidence: config.calibrationEvidence ??
+    config.policy.criteria.map((criterion) => ({ criterionVersionId: criterion.criterionVersionId, source: null })),
+}));
 
 export type ExpectedBinaryCalibrationIdentityConfig = z.infer<
   typeof expectedBinaryCalibrationIdentitySchema
 >;
 export type CalibrationEvidenceFileSource = z.infer<typeof calibrationEvidenceFileSourceSchema>;
 export type CalibrationEvidenceBinding = z.infer<typeof calibrationEvidenceBindingSchema>;
+/** A parsed suite configuration, with calibration evidence bound for every criterion. */
 export type SuiteConfigV6 = z.infer<typeof suiteConfigV6Schema>;
+/** A suite configuration before parsing: `calibrationEvidence` may be left out. */
+export type SuiteConfigV6Input = z.input<typeof suiteConfigV6Schema>;
 
 export function parseSuiteConfigV6(raw: unknown): SuiteConfigV6 {
-  const version = typeof raw === 'object' && raw !== null && 'schemaVersion' in raw
-    ? (raw as { schemaVersion?: unknown }).schemaVersion
-    : undefined;
-  if (version !== SUITE_CONFIG_V6_SCHEMA_VERSION) {
+  const contract = declaredContract(raw);
+  if (contract !== SUITE_CONFIG_CONTRACT) {
     throw new Error(
-      `unsupported suite config schema version: ${version === undefined ? 'missing' : String(version)}; ` +
-      `calibration-aware criterion release execution requires schemaVersion ${SUITE_CONFIG_V6_SCHEMA_VERSION}`,
+      `unsupported suite config contract: ${contract === undefined ? 'missing' : String(contract)}; ` +
+      `suite release execution requires ${SUITE_CONFIG_CONTRACT}`,
     );
   }
   return suiteConfigV6Schema.parse(raw);

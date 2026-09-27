@@ -62,8 +62,12 @@ export const compensationFormulaSchema = z.object({
   }
 });
 
+/**
+ * The suite policy with calibration requirements left out, as the candidate
+ * assessment applies it. It is not a format of its own (ADR-0010), so it
+ * carries no contract.
+ */
 export const releasePolicyV1Schema = z.object({
-  schemaVersion: z.literal(1),
   id: nonBlankStringSchema,
   version: nonBlankStringSchema,
   manifestId: nonBlankStringSchema,

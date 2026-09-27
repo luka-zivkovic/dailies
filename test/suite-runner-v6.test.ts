@@ -149,7 +149,8 @@ async function preflightFixture(): Promise<{
     });
   }
   const config = parseSuiteConfigV6({
-    schemaVersion: 6,
+    contract: 'dailies/suite-config/v1',
+    schemaVersion: 1,
     inputs: { type: 'jsonl', path: inputPath, digest: bytesDigest(inputBytes) },
     scope: {
       id: 'candidate-regression-scope',
@@ -175,7 +176,8 @@ async function preflightFixture(): Promise<{
       },
     },
     policy: {
-      schemaVersion: 2,
+      contract: 'dailies/release-policy/v1',
+      schemaVersion: 1,
       id: 'calibration-policy',
       version: '1',
       manifestId: manifest.manifestId,
@@ -453,7 +455,8 @@ describe('calibration-aware suite preflight', () => {
         readCalibrationBytes: async (path) => permissive.calibrationBytes.get(path)!,
       });
       expect(report).toMatchObject({
-        schemaVersion: 6,
+        contract: 'dailies/suite-report/v1',
+        schemaVersion: 1,
         decision: 'promote',
         decisionPrecedence: 'policy_satisfied',
         candidateAssessment: { status: 'completed' },
@@ -810,7 +813,7 @@ describe('calibration-aware suite preflight', () => {
         expect(cli.stderr).not.toContain('dailies inconclusive:');
       }
       expect(await readFile(join(fixture.config.output.dir, 'report.md'), 'utf8'))
-        .toContain(`# Calibration-aware criterion release report: ${decision.toUpperCase()}`);
+        .toContain(`# Suite release report: ${decision.toUpperCase()}`);
     } finally {
       close(servers.candidateServer);
       close(servers.rubristServer);

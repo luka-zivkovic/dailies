@@ -10,9 +10,10 @@ export function v4ContractForBytes(
   path: string,
   bytes: string | Buffer,
   expectedItems: number,
-): Pick<Config, 'schemaVersion' | 'inputs' | 'scope' | 'trustPolicy'> {
+): Pick<Config, 'contract' | 'schemaVersion' | 'inputs' | 'scope' | 'trustPolicy'> {
   return {
-    schemaVersion: 4,
+    contract: 'dailies/single-config/v1',
+    schemaVersion: 1,
     inputs: { type: 'jsonl', path, digest: sha256Bytes(bytes) },
     scope: {
       id: 'test-scope',

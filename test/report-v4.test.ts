@@ -40,7 +40,8 @@ async function fixture(
     path,
     bytes,
     config: parseConfig({
-      schemaVersion: 4,
+      contract: 'dailies/single-config/v1',
+      schemaVersion: 1,
       inputs: { type: 'jsonl', path, digest: digest(bytes) },
       scope: {
         id: 'support-regression',
@@ -83,6 +84,7 @@ async function httpJudge(body: object): Promise<{ server: Server; url: string }>
 
 function asLegacyV3(report: Report): Record<string, unknown> {
   const {
+    contract: _contract,
     schemaVersion: _version,
     decision,
     decisionStatement: _statement,
@@ -106,7 +108,8 @@ describe('report/config v4 scope and trust contract', () => {
     const report = await runShadow(config, { now: () => new Date('2026-08-22T12:00:00.000Z') });
 
     expect(report).toMatchObject({
-      schemaVersion: 4,
+      contract: 'dailies/single-report/v1',
+      schemaVersion: 1,
       decision: 'promote',
       trustPolicy: { admissibleClasses: ['verified', 'deterministic'] },
       trust: {
@@ -339,19 +342,18 @@ describe('report/config v4 scope and trust contract', () => {
     }
   });
 
-  it('inspects only current reports and refuses v3 and other unsupported versions', async () => {
+  it('inspects only current reports and refuses v3 and every other contract', async () => {
     const { config } = await fixture();
     const current = await runShadow(config);
-    expect(parseReportForInspection(current)).toMatchObject({ schemaVersion: 4 });
+    expect(parseReportForInspection(current)).toMatchObject({ contract: 'dailies/single-report/v1' });
     expect(reportSchema.safeParse({ ...current, verdict: 'promote' }).success).toBe(false);
 
     // ADR-0008 removed historical v3 inspection before launch.
     const legacy = asLegacyV3(current);
     expect(reportSchema.safeParse(legacy).success).toBe(false);
-    for (const version of [undefined, 1, 2, 3, 6]) {
-      const candidate: Record<string, unknown> = { ...legacy, ...(version === undefined ? {} : { schemaVersion: version }) };
-      if (version === undefined) delete candidate.schemaVersion;
-      expect(() => parseReportForInspection(candidate)).toThrow(/report schema version/i);
+    for (const contract of [undefined, 'dailies/single-report/v0', 'dailies/suite-config/v1', 'dailies/suite-report/v1']) {
+      const candidate: Record<string, unknown> = { ...legacy, ...(contract === undefined ? {} : { contract }) };
+      expect(() => parseReportForInspection(candidate)).toThrow(/unsupported report contract|invalid dailies\/suite-report\/v1 report/);
     }
   });
 });

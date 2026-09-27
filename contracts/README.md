@@ -7,7 +7,7 @@ consumes them (Dailies ADR-0008 and ADR-0010).
 
 - `rubrist/assessment-receipt/v1`: schema, specification, complete and
   incomplete fixtures, and conformance corpus, verified by
-  `src/rubrist-receipt.ts`. Reports v4 to v6 consume it through the
+  `src/rubrist-receipt.ts`. Both report formats consume it through the
   `rubrist_receipt_v1` evidence kind. Each item has exactly one outcome
   (`pass`, `fail`, or `abstain`), failure, or `not_attempted` result; an
   abstention leaves a receipt complete, and Dailies counts it as not passing
@@ -21,7 +21,7 @@ consumes them (Dailies ADR-0008 and ADR-0010).
 - `rubrist/binary-calibration/v1`: schema, specification, complete, repeated,
   incomplete, and typed-question fixtures, the 114-case corpus, and the
   independent Wilson-score reference, verified by
-  `src/binary-calibration.ts`. Report v6 consumes it through the
+  `src/binary-calibration.ts`. The suite report consumes it through the
   `rubrist_binary_calibration_v1` evidence kind. The verifier checks exact
   canonical bytes, artifact and requested-binding digests, aggregate
   conservation, metric and binary64 interval recomputation, provider grouping,
@@ -64,7 +64,8 @@ The contracts are vendored rather than imported as a runtime dependency so
 Rubrist and Dailies retain independent release cadences. Producer and consumer
 tests pin identical schema and fixture file digests.
 
-The config-v6, policy-v2, report-v6, runner, and CLI path consumes explicitly
-configured local calibration artifact bytes, verifies freshness and runtime
-admissibility, and applies customer release policy. It performs no network
-latest-artifact or current-revocation lookup and has no private-ledger access.
+The suite configuration, release policy, suite report, runner, and CLI path
+consumes explicitly configured local calibration artifact bytes, verifies
+freshness and runtime admissibility, and applies customer release policy. It
+performs no network latest-artifact or current-revocation lookup and has no
+private-ledger access.

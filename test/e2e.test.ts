@@ -126,7 +126,7 @@ describe('end-to-end with mock HTTP candidate and judge', () => {
     ]);
     const report = await runShadow(makeConfig(inputsPath));
 
-    expect(report.schemaVersion).toBe(4);
+    expect(report).toMatchObject({ contract: 'dailies/single-report/v1', schemaVersion: 1 });
     expect(report.decision).toBe('promote');
     expect(report.totals).toMatchObject({ total: 3, passed: 3, failed: 0, regressions: 0 });
     expect(report.items.map((i) => i.id)).toEqual(['a', 'b', 'c']);

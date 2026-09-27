@@ -28,7 +28,6 @@ import {
   reportV5Schema,
   suiteCandidateDatasetDigest,
   suiteExecutionPolicyDigest,
-  SUITE_REPORT_SCHEMA_VERSION,
   type CriterionItem,
   type SuiteCandidateItem,
   type SuiteReport,
@@ -381,7 +380,7 @@ export async function preflightSuiteRelease(
   });
   if (manifest.trialPlan !== null) {
     throw new Error(
-      'evaluator suite trialPlan independent_repetitions is valid producer metadata but unsupported by Dailies v5 execution',
+      'evaluator suite trialPlan independent_repetitions is valid producer metadata but unsupported by Dailies suite execution',
     );
   }
   const policy = verifyReleasePolicy(config.policy, manifest);
@@ -475,7 +474,6 @@ async function executePreflightedSuiteRelease(
     candidate: candidateExecutionIdentity(config.candidate),
   };
   const report: SuiteReport = {
-    schemaVersion: SUITE_REPORT_SCHEMA_VERSION,
     startedAt,
     finishedAt: now().toISOString(),
     scope: suiteReleaseScope(config, inputArtifact),

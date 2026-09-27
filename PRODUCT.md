@@ -95,21 +95,22 @@ The products share explicit evidence contracts, not product ownership.
 
 ## Current state versus target state
 
-Current Dailies is a local release CLI with command/HTTP candidates, the v4
-single-criterion exact-match/HTTP/Rubrist paths, retries, and tri-state reports.
-Schema v4 requires exact-byte input identity and one declared evidence scope,
-derives and enforces evidence trust, and retains explicitly unavailable
-producer provenance. Additive schema v5 consumes an exact pinned Rubrist
-policy-free suite manifest and separate receipt evidence, preserves
-criterion/suite/scope/trust identity, and applies explicit mandatory,
-blocking, advisory, or same-unit compensatory customer policy. Generic HTTP
-evidence remains visibly self-reported and inadmissible without a reasoned
-customer override. Additive schema v6 consumes exact local
-`rubrist/binary-calibration/v1` artifacts under customer policy v2, preserves a
-separate sealed calibration scope, evaluates repeated calibration trials
-without pooling, and emits a canonical calibration-aware report while keeping
-the receipt unchanged. Every schema consumes Rubrist's v1 evidence contracts
-(ADR-0008), and an evaluator's abstention counts as not passing (ADR-0009). Repeated
+Current Dailies is a local release CLI with command/HTTP candidates, retries,
+and tri-state reports in two formats (ADR-0010). The single format
+(`dailies/single-config/v1`) runs one exact-match, HTTP, or Rubrist judge; it
+requires exact-byte input identity and one declared evidence scope, derives
+and enforces evidence trust, and retains explicitly unavailable producer
+provenance. Generic HTTP evidence remains visibly self-reported and
+inadmissible without a reasoned customer override. The suite format
+(`dailies/suite-config/v1`) consumes an exact pinned Rubrist policy-free suite
+manifest and separate receipt evidence, preserves criterion/suite/scope/trust
+identity, and applies explicit mandatory, blocking, advisory, or same-unit
+compensatory customer policy (`dailies/release-policy/v1`). It can also
+consume exact local `rubrist/binary-calibration/v1` artifacts, preserving a
+separate sealed calibration scope and evaluating repeated calibration trials
+without pooling, and emits a canonical report while keeping the receipt
+unchanged. Both formats consume Rubrist's v1 evidence contracts (ADR-0008),
+and an evaluator's abstention counts as not passing (ADR-0009). Repeated
 candidate-assessment execution, staged rollout, and hosted control-plane ideas
 remain demand-gated.
 

@@ -55,7 +55,7 @@ async function runStep(
   const configPath = join(dir, 'project', 'dailies.config.json');
   await mkdir(dirname(configPath));
   if (options.withConfig !== false) {
-    await writeFile(configPath, JSON.stringify({ schemaVersion: 4, output: { dir: './gate-out' } }), 'utf8');
+    await writeFile(configPath, JSON.stringify({ contract: 'dailies/single-config/v1', schemaVersion: 1, output: { dir: './gate-out' } }), 'utf8');
   }
   const outDir = join(dir, 'project', 'gate-out');
   if (options.staleReport) {
@@ -69,7 +69,7 @@ async function runStep(
     `printf '%s\\n' "$@" > ${JSON.stringify(argsFile)}`,
     ...(fake.decision === undefined ? [] : [
       `mkdir -p ${JSON.stringify(outDir)}`,
-      `printf '%s' '{"schemaVersion":4,"decision":"${fake.decision}","finishedAt":"'"$(date +%s%N)"'"}' > ${JSON.stringify(join(outDir, 'report.json'))}`,
+      `printf '%s' '{"contract":"dailies/single-report/v1","schemaVersion":1,"decision":"${fake.decision}","finishedAt":"'"$(date +%s%N)"'"}' > ${JSON.stringify(join(outDir, 'report.json'))}`,
       `printf '# Dailies report\\n\\ndecision: ${fake.decision} %s\\n' "$(date +%s%N)" > ${JSON.stringify(join(outDir, 'report.md'))}`,
     ]),
     `exit ${fake.exit}`,

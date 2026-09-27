@@ -32,14 +32,13 @@ The local CLI is the current product surface. It:
 - requires exact-byte JSONL identity and a declared evidence scope;
 - derives deterministic, verified, or self-reported trust and enforces the
   safe admissibility default; and
-- emits a scope-bound v4 tri-state release report.
-- additively consumes a pinned Rubrist evaluator-suite manifest with separate
-  criterion receipts in v5, applies explicit customer criterion policy, and
-  retains v4 execution compatibility; and
-- additively consumes exact local binary-calibration artifacts in v6, applies
-  per-trial customer policy without pooling, retains calibration and candidate
-  scopes separately, and emits canonical calibration-aware tri-state reports;
-  and
+- emits a scope-bound single-format tri-state release report.
+- in the suite format, consumes a pinned Rubrist evaluator-suite manifest with
+  separate criterion receipts and applies explicit customer criterion policy;
+- in the suite format, optionally consumes exact local binary-calibration
+  artifacts, applies per-trial customer policy without pooling, retains
+  calibration and candidate scopes separately, and emits canonical tri-state
+  reports; and
 - runs an authored, local-only invariant robustness gate across the supported
   runner, CLI, report-parser, and policy seams. The gate is internal
   correctness evidence only, requires zero false promotions plus exact
@@ -71,13 +70,13 @@ The next planning pass may divide work into batches, but it must cover:
 2. trust class through item results, aggregation, reports, and policy, with the
    safe default enforced;
 3. criterion and suite-policy mapping without implicit compensation
-   (**implemented in additive v5 for null-trial Rubrist suites**);
+   (**implemented in the suite format for null-trial Rubrist suites**);
 4. conformance fixtures for scope, trust, incomplete, tampered, and conflicting
    multi-criterion evidence;
 5. adversarial decision tests for false promotion, false blocking,
    inconclusive handling, determinism, and retry behavior; and
 6. Rubrist calibration consumption through the separate binary-calibration
-   artifact contract (**implemented as the local-file schema-v6 path**).
+   artifact contract (**implemented as the suite format's local-file path**).
 
 The first, Dailies-only portion of Batch 6 comparative-evidence preparation is
 implemented as the authored invariant gate. Decision gate 5 remains open, so

@@ -29,7 +29,8 @@ const THREE_ITEMS = TWO_ITEMS + '\n{"id":"c","input":"z","baseline_output":"z"}\
 /** A hand-formatted v4 config whose layout should survive an in-place update. */
 function formattedConfig(digest: string, expectedItems: number): string {
   return `{
-  "schemaVersion": 4,
+  "contract": "dailies/single-config/v1",
+  "schemaVersion": 1,
   "inputs": {
     "type": "jsonl",
     "path": "cases.jsonl",
@@ -78,7 +79,7 @@ describe('dailies digest', () => {
     const { configPath } = await writeProject(text, TWO_ITEMS);
     const result = await syncInputDigest(configPath);
     expect(result).toMatchObject({
-      schemaVersion: 4,
+      contract: 'dailies/single-config/v1',
       matches: true,
       written: false,
       digest: { declared: sha256(TWO_ITEMS), observed: sha256(TWO_ITEMS) },
@@ -119,23 +120,24 @@ describe('dailies digest', () => {
     expect(lines.at(-1)).toContain('does not match');
   });
 
-  it('refuses unknown or missing schema versions without touching the file', async () => {
-    for (const version of [3, 7, '4', undefined]) {
+  it('refuses unknown or missing contracts without touching the file', async () => {
+    for (const contract of ['dailies/single-config/v0', 'dailies/suite-report/v1', 4, undefined]) {
       const text = JSON.stringify({
-        ...(version === undefined ? {} : { schemaVersion: version }),
+        ...(contract === undefined ? {} : { contract }),
         inputs: { type: 'jsonl', path: 'cases.jsonl', digest: 'sha256:0' },
         scope: { expectedItems: 1 },
       }, null, 2) + '\n';
       const { configPath } = await writeProject(text, TWO_ITEMS);
-      await expect(syncInputDigest(configPath)).rejects.toThrow(/unsupported config schema version/);
+      await expect(syncInputDigest(configPath)).rejects.toThrow(/unsupported config contract/);
       expect(await readFile(configPath, 'utf8')).toBe(text);
     }
   });
 
-  it('accepts v5 and v6 configs and leaves every other key byte-identical', async () => {
-    for (const schemaVersion of [5, 6]) {
+  it('accepts suite configs and leaves every other key byte-identical', async () => {
+    for (const contract of ['dailies/suite-config/v1']) {
       const text = `{
-  "schemaVersion": ${schemaVersion},
+  "contract": "${contract}",
+  "schemaVersion": 1,
   "inputs": { "type": "jsonl", "path": "cases.jsonl", "digest": "${sha256('old')}" },
   "scope": { "id": "s", "kind": "regression_corpus", "expectedItems": 1 },
   "suite": {
@@ -150,7 +152,7 @@ describe('dailies digest', () => {
 `;
       const { configPath } = await writeProject(text, TWO_ITEMS);
       const result = await syncInputDigest(configPath);
-      expect(result).toMatchObject({ schemaVersion, written: true });
+      expect(result).toMatchObject({ contract, written: true });
       const updated = await readFile(configPath, 'utf8');
       expect(updated).toBe(
         text
@@ -166,7 +168,8 @@ describe('dailies digest', () => {
 
   it('fills in a missing digest or expectedItems by reserializing with the original key order', async () => {
     const text = JSON.stringify({
-      schemaVersion: 4,
+      contract: 'dailies/single-config/v1',
+      schemaVersion: 1,
       output: { dir: 'out' },
       inputs: { type: 'jsonl', path: 'cases.jsonl' },
       scope: { id: 's', kind: 'regression_corpus' },
@@ -179,8 +182,8 @@ describe('dailies digest', () => {
       expectedItems: { declared: undefined, observed: 2 },
     });
     const updated = await readFile(configPath, 'utf8');
-    expect(Object.keys(JSON.parse(updated) as object)).toEqual(['schemaVersion', 'output', 'inputs', 'scope']);
-    expect(updated.startsWith('{\n    "schemaVersion": 4,')).toBe(true);
+    expect(Object.keys(JSON.parse(updated) as object)).toEqual(['contract', 'schemaVersion', 'output', 'inputs', 'scope']);
+    expect(updated.startsWith('{\n    "contract": "dailies/single-config/v1",')).toBe(true);
     expect(JSON.parse(updated)).toMatchObject({
       inputs: { digest: sha256(TWO_ITEMS) },
       scope: { expectedItems: 2 },
@@ -215,6 +218,6 @@ describe('dailies digest', () => {
     await writeFile(configPath, JSON.stringify({ schemaVersion: 3, inputs: {}, scope: {} }), 'utf8');
     const unsupported = await runCli(['digest', '--config', 'dailies.config.json'], dir);
     expect(unsupported.code).toBe(2);
-    expect(unsupported.stderr).toContain('unsupported config schema version: 3');
+    expect(unsupported.stderr).toContain('unsupported config contract: missing');
   });
 });

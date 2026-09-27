@@ -1,5 +1,6 @@
 {
-  "schemaVersion": 5,
+  "contract": "dailies/suite-config/v1",
+  "schemaVersion": 1,
   "inputs": {
     "type": "jsonl",
     "path": "cases.jsonl",
@@ -35,6 +36,7 @@
     }
   },
   "policy": {
+    "contract": "dailies/release-policy/v1",
     "schemaVersion": 1,
     "id": "example-support-release-policy",
     "version": "1",
@@ -49,7 +51,8 @@
           "kind": "binary_threshold/v1",
           "minPassRate": 1,
           "maxRegressions": 0
-        }
+        },
+        "calibrationRequirement": null
       },
       {
         "criterionVersionId": "criterionv_refund_policy_2",
@@ -59,7 +62,8 @@
           "kind": "binary_threshold/v1",
           "minPassRate": 1,
           "maxRegressions": 0
-        }
+        },
+        "calibrationRequirement": null
       }
     ],
     "compensationGroups": []

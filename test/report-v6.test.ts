@@ -125,7 +125,8 @@ function requirement(artifact: BinaryCalibrationArtifact) {
 
 function policy(manifest: EvaluatorSuiteManifest, artifact: BinaryCalibrationArtifact): ReleasePolicyV2 {
   return verifyReleasePolicyV2({
-    schemaVersion: 2,
+    contract: 'dailies/release-policy/v1',
+    schemaVersion: 1,
     id: 'release-policy-v6',
     version: '1',
     manifestId: manifest.manifestId,
@@ -193,7 +194,6 @@ function candidateReport(
   }];
   const totals = aggregateCriterionItems(criterionItems);
   const report: SuiteReport = {
-    schemaVersion: 5,
     startedAt: STARTED_AT,
     finishedAt: FINISHED_AT,
     scope,
@@ -343,7 +343,7 @@ function tamper(report: CalibrationSuiteReport, mutate: (copy: any) => void): un
 describe('calibration-aware report v6', () => {
   it('retains separate release/calibration scopes and independently verifies deterministic bytes', () => {
     const report = completedReport();
-    expect(report.schemaVersion).toBe(6);
+    expect(report).toMatchObject({ contract: 'dailies/suite-report/v1', schemaVersion: 1 });
     expect(report.releaseScope.kind).toBe('regression_corpus');
     expect(report.criteria[0]!.calibrationTruthScope?.kind).toBe('sealed_validation_calibration');
     expect(report.criteria[0]!.evidenceState).toBe('verified');
@@ -367,7 +367,7 @@ describe('calibration-aware report v6', () => {
     expect(parseCanonicalCalibrationReportV6Bytes(first)).toEqual(report);
     const raw = structuredClone(report);
     const inspection = parseReportForInspection(raw);
-    expect(inspection).toMatchObject({ schemaVersion: 6 });
+    expect(inspection).toMatchObject({ contract: 'dailies/suite-report/v1' });
     expect(inspection.report).toEqual(report);
     expect(inspection.report).not.toBe(raw);
   });
@@ -391,7 +391,7 @@ describe('calibration-aware report v6', () => {
       calibrationCollections: [collectionFor(fixture)],
     });
     const markdown = renderCalibrationReportMarkdown(report);
-    expect(markdown).toContain('# Calibration-aware criterion release report: BLOCK');
+    expect(markdown).toContain('# Suite release report: BLOCK');
     expect(markdown).toContain('verified/rubrist_binary_calibration_v1');
     expect(markdown).toContain('Separate calibration truth scope: sealed_validation_calibration/');
     expect(markdown).toContain('Artifact age: 3598000 ms');

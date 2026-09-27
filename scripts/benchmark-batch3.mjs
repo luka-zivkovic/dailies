@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import {
-  SUITE_REPORT_SCHEMA_VERSION,
   aggregateCriterionItems,
   applyReleasePolicy,
   buildSuiteDecisionStatement,
@@ -84,7 +83,6 @@ function syntheticManifest(criterionCount) {
 
 function syntheticPolicy(manifest) {
   return {
-    schemaVersion: 1,
     id: `benchmark_policy_${manifest.members.length}`,
     version: '1',
     manifestId: manifest.manifestId,
@@ -301,7 +299,6 @@ function deriveValidatedReport(fixture) {
     output: candidate.candidate_output,
   }));
   return reportV5Schema.parse({
-    schemaVersion: SUITE_REPORT_SCHEMA_VERSION,
     startedAt: FIXED_TIME,
     finishedAt: FIXED_TIME,
     scope: {

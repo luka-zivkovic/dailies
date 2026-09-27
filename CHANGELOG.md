@@ -5,6 +5,29 @@ versioning while the public API remains pre-1.0.
 
 ## Unreleased
 
+- Keep two formats with named identifiers (ADR-0010, founder decision
+  2026-09-27). Each configuration and report declares a `contract` beside
+  `schemaVersion: 1`, and the CLI, the digest command, and
+  `parseReportForInspection` dispatch on it:
+  - the **single** format is the former configuration and report 4:
+    `dailies/single-config/v1` and `dailies/single-report/v1`;
+  - the **suite** format is the former calibration-aware configuration and
+    report 6: `dailies/suite-config/v1` and `dailies/suite-report/v1`. It may
+    leave out `calibrationEvidence`, which binds a null source for every
+    criterion;
+  - release policy 2 is the only policy, `dailies/release-policy/v1`.
+
+  Configuration and report 5 and release policy 1 are removed as formats;
+  their runner, aggregation, and decision statement remain as the suite's
+  embedded candidate assessment, which has no identifier of its own. The
+  authored-invariant seams become `single_*`, `candidate_policy`, and
+  `suite_policy`, and the scenario IDs drop their v5/v6 names. The suite
+  report's decision statement reads "under release policy", its markdown
+  heading is "Suite release report", and a configuration naming neither
+  contract is refused with both named. The report references are now `docs/single-format.md` and
+  `docs/suite-format.md`, and the examples are `fixtures/examples/suite/` and
+  `fixtures/examples/suite-calibrated/`. Configurations and reports written
+  before this change can't be read.
 - Take Rubrist's launch-baseline contract names (Rubrist Batch 8G, Dailies
   ADR-0010): the vendored contracts are `rubrist/assessment-receipt/v1`,
   `rubrist/binary-calibration/v1`, and `rubrist/evaluator-suite-manifest/v1`
