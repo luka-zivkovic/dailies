@@ -1,6 +1,6 @@
 # Portfolio implementation batches
 
-Status: **Batch 6 product foundations complete: Rubrist Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5; Batch 7 Rubrist production outcome monitoring is complete under Rubrist ADR-0013; Batch 8 model-agnostic evaluator execution is implemented under Rubrist ADR-0014 (8A through 8G merged), with its live exit-gate checks of Claude and OpenRouter bindings still to run**
+Status: **Batch 6 product foundations complete: Rubrist Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5; Batch 7 Rubrist production outcome monitoring is complete under Rubrist ADR-0013; Batch 8 model-agnostic evaluator execution is implemented under Rubrist ADR-0014 (8A through 8G merged); its exit gate passes in the test suites and in live checks of Claude and TypeSafe bindings, except for OpenRouter, whose live checks are still to run (no key)**
 
 Last reviewed: 2026-09-27
 
@@ -561,14 +561,14 @@ and binary-calibration v1 bytes are unchanged.
 
 ## Batch 8 — Model-agnostic evaluator execution and evidence v2
 
-Implementation status: **8A through 8G merged; live Claude and OpenRouter
-exit-gate checks still to run**. Decision gate 12 was accepted on 2026-09-25
-and is recorded in Rubrist ADR-0014, including the founder's answers to its
-four open questions and later decisions: receipts carry a definition digest,
-v2 replaces v1, a launch baseline restarts every versioned identifier at v1,
-and how typed-question evaluators record their verdicts, credentials, and
-state. Every slice gets an independent review against its exact diff, and
-each review's correctness findings are resolved before merge.
+Implementation status: **8A through 8G merged; the live OpenRouter
+exit-gate checks are still to run**. Decision gate 12 was accepted on
+2026-09-25 and is recorded in Rubrist ADR-0014, including the founder's
+answers to its four open questions and later decisions: receipts carry a
+definition digest, v2 replaces v1, a launch baseline restarts every versioned
+identifier at v1, and how typed-question evaluators record their verdicts,
+credentials, and state. Every slice gets an independent review against its
+exact diff, and each review's correctness findings are resolved before merge.
 
 - 8A (#125, #127–#130), 8B (#132, #133), and 8C (#134) are merged; #126
   and #131 amended ADR-0014.
@@ -614,26 +614,38 @@ each review's correctness findings are resolved before merge.
     carry no version (dailies#25).
   - The v2 names in this batch's plan below were scaffolding; those
     contracts are now v1.
-- The exit gate was partly checked on 2026-09-27, and is not yet passed:
+- The exit gate was checked on 2026-09-27, in the test suites and, for
+  Claude and TypeSafe bindings, live. Everything but OpenRouter passes:
   - The automated test suites pass: Rubrist's unit (1,704) and Postgres
     (148) tests, Dailies (331), and Casefile (187).
+  - `claude-opus-5-5` and `claude-sonnet-5` were checked live, each saved
+    with adaptive thinking at `medium` effort and temperature 1. Each
+    resolved with one confirming call and judged in one call. Each sealed
+    calibration of 3 items and 1 trial passed a one-call re-check, made one
+    call per item, and minted a complete artifact. Resolution and the
+    re-check also read the model's published capabilities once each, which
+    isn't a probe.
+  - A `claude-sonnet-5` binding saved with temperature unset was refused at
+    the gate: resolution showed the model accepts temperature with the
+    saved reasoning, so the author must state it.
+  - On `claude-opus-5-5`, a stated temperature of 0 and disabled thinking
+    each failed resolution with Anthropic's own message. The first says
+    temperature may only be 1 when thinking is on, and adaptive is the
+    model's only thinking mode; the check's probe at 1 was accepted. So
+    the picker shows the temperature field. Q1 below expected it hidden
+    for this model, but ADR-0014 hides it only where the check shows the
+    model rejecting the parameter itself.
   - TypeSafe was checked live: a `jev-1.13.0` binding with threshold 0.5
     resolved in one call and judged in one call (`native_probability`, no
     rationale). Its sealed calibration of 3 items and 1 trial passed a
     one-call re-check, made one call per item, and minted a complete
     artifact. `jev-latest` was refused at the gates with no call, and a
     typed-question evaluator without a threshold was refused.
-  - Five resolutions ran against live endpoints, and each left the saved
-    binding and version row unchanged. Only TypeSafe's resolved; the four
-    Claude ones were refused authentication (401) and stayed unresolved.
-  - Not yet run live: `claude-opus-5-5` and `claude-sonnet-5` resolving,
-    judging, and running sealed calibration, and the checks that a rejected
-    parameter or reasoning mode fails resolution (the configured Anthropic
-    key was rejected); and every OpenRouter check (no key). Tests stub
-    these providers and cover the paths in parts. One physical call per
-    item is tested in the provider-neutral calibration worker and a
-    TypeSafe run; no test runs a Claude or OpenRouter sealed calibration
-    end to end, or a successful OpenRouter resolution.
+  - All six live resolutions, five Claude and one TypeSafe, left the saved
+    binding and version row unchanged.
+  - Not yet run live: every OpenRouter check (no key). Tests stub
+    OpenRouter and cover its paths in parts; no test runs a successful
+    OpenRouter resolution or sealed calibration end to end.
 
 This batch changes Rubrist and Dailies. Both switch to the v2 contracts in
 one window and drop v1 support. Casefile changes only in the launch baseline
