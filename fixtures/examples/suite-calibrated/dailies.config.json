@@ -1,5 +1,6 @@
 {
-  "schemaVersion": 6,
+  "contract": "dailies/suite-config/v1",
+  "schemaVersion": 1,
   "inputs": {
     "type": "jsonl",
     "path": "cases.jsonl",
@@ -35,7 +36,8 @@
     }
   },
   "policy": {
-    "schemaVersion": 2,
+    "contract": "dailies/release-policy/v1",
+    "schemaVersion": 1,
     "id": "example-support-calibrated-release-policy",
     "version": "1",
     "manifestId": "suite_manifest_support_quality_1",

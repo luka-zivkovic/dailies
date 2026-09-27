@@ -12,7 +12,6 @@ import {
 } from './config.js';
 import { releasePolicyV1Schema } from './policy.js';
 
-export const SUITE_CONFIG_SCHEMA_VERSION = 5;
 
 export const suiteInputItemSchema = z.object({
   id: z.string().min(1),
@@ -44,7 +43,6 @@ export const suiteProviderConfigSchema = z.object({
 }).strict();
 
 export const suiteConfigSchema = z.object({
-  schemaVersion: z.literal(SUITE_CONFIG_SCHEMA_VERSION),
   inputs: inputsConfigSchema,
   scope: scopeConfigSchema,
   candidate: candidateConfigSchema,
@@ -70,15 +68,11 @@ export type SuiteConfig = z.infer<typeof suiteConfigSchema>;
 export type SuiteInputItem = z.infer<typeof suiteInputItemSchema>;
 export type SuiteProviderConfig = z.infer<typeof suiteProviderConfigSchema>;
 
+/**
+ * The suite's candidate assessment configuration: what the suite runner
+ * projects from a suite configuration, with calibration requirements left
+ * out. It is not a format of its own (ADR-0010), so it carries no contract.
+ */
 export function parseSuiteConfig(raw: unknown): SuiteConfig {
-  const version = typeof raw === 'object' && raw !== null && 'schemaVersion' in raw
-    ? (raw as { schemaVersion?: unknown }).schemaVersion
-    : undefined;
-  if (version !== SUITE_CONFIG_SCHEMA_VERSION) {
-    throw new Error(
-      `unsupported suite config schema version: ${version === undefined ? 'missing' : String(version)}; ` +
-      `criterion release execution requires schemaVersion ${SUITE_CONFIG_SCHEMA_VERSION}`,
-    );
-  }
   return suiteConfigSchema.parse(raw);
 }

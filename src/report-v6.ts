@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { SUITE_REPORT_CONTRACT } from './contracts.js';
 import {
   binaryCalibrationArtifactByteDigest,
   binaryCalibrationArtifactSchema,
@@ -47,7 +48,6 @@ import {
   type EvaluatorSuiteManifest,
 } from './suite-manifest.js';
 
-export const CALIBRATION_REPORT_SCHEMA_VERSION = 6;
 
 const digestSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
 const exactUtcMillisecondsSchema = z.string().regex(
@@ -171,7 +171,8 @@ const compensationResultSchema = z.object({
 }).strict();
 
 const reportV6ShapeSchema = z.object({
-  schemaVersion: z.literal(CALIBRATION_REPORT_SCHEMA_VERSION),
+  contract: z.literal(SUITE_REPORT_CONTRACT),
+  schemaVersion: z.literal(1),
   startedAt: exactUtcMillisecondsSchema,
   finishedAt: exactUtcMillisecondsSchema,
   evaluatedAt: exactUtcMillisecondsSchema,
@@ -691,7 +692,8 @@ export function buildCalibrationReportV6(
     };
   });
   const basis = {
-    schemaVersion: CALIBRATION_REPORT_SCHEMA_VERSION,
+    contract: SUITE_REPORT_CONTRACT,
+    schemaVersion: 1 as const,
     startedAt: input.startedAt,
     finishedAt: input.finishedAt,
     evaluatedAt: input.evaluatedAt,

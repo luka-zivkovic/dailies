@@ -1,17 +1,20 @@
-# Dailies report and configuration v4
+# Dailies single format
 
-Status: **accepted Batch 1B contract**
+Status: **accepted launch contract** (ADR-0010)
 
-Version 4 makes evidence scope and trust part of the release decision. Its
-Rubrist evidence is the assessment receipt, `rubrist/assessment-receipt/v1` (ADR-0008), and it does not introduce
-multi-criterion policy.
-It remains an executable compatibility contract after additive v5 introduced
-criterion suites; v4 artifacts are never reinterpreted as suite evidence.
+The single format releases a candidate against one judge: exact match, a
+generic HTTP judge, or a Rubrist evaluator. Its configuration is
+`dailies/single-config/v1` and its report is `dailies/single-report/v1`. It
+makes evidence scope and trust part of the release decision. Its Rubrist
+evidence is the assessment receipt, `rubrist/assessment-receipt/v1`
+(ADR-0008). It has no multi-criterion policy; that is the
+[suite format](suite-format.md). A single report is never read as suite
+evidence.
 
 ## Configuration contract
 
 Release execution accepts only a strict configuration with
-`schemaVersion: 4`.
+`"contract": "dailies/single-config/v1"` and `"schemaVersion": 1`.
 
 The input declaration pins the exact JSONL bytes with a lowercase
 `sha256:<64 hex>` digest. Dailies verifies that digest before candidate work.
@@ -56,8 +59,8 @@ actually produced verified evidence.
 
 ## Report contract
 
-`report.json` has `schemaVersion: 4`, `decision`, and no `verdict` field. It
-retains:
+`report.json` has `"contract": "dailies/single-report/v1"`,
+`"schemaVersion": 1`, `decision`, and no `verdict` field. It retains:
 
 - the declared scope;
 - verified exact-input artifact digest, byte length, and item count;
@@ -100,16 +103,17 @@ item) yields none: every submitted item becomes an `incomplete` judge error.
 
 ## Report inspection
 
-`parseReportForInspection` accepts valid v4, v5, and v6 reports as distinct
-return variants and never upgrades one into another. Historical v3 reports are
-no longer readable (ADR-0008). Versions 1 to 3, unknown versions, and objects
-without an explicit version are rejected with a version diagnostic.
+`parseReportForInspection` dispatches on the report's `contract`. It returns a
+single report or a suite report as distinct variants and never converts one
+into the other. Any other contract, or none, is rejected with a contract
+diagnostic. Reports written before the launch baseline are not readable
+(ADR-0010).
 
-The v4 execution schema never accepts a v3 report, and configuration without
-an explicit v4 scope/trust contract is rejected before execution.
+Configuration that doesn't name `dailies/single-config/v1` or
+`dailies/suite-config/v1` is rejected before execution.
 
-Schema validation proves report consistency, not report authenticity. The v4
-report is not signed: a party that can rewrite the scope, trust policy, items,
+Schema validation proves report consistency, not report authenticity. The
+single report is not signed: a party that can rewrite the scope, trust policy, items,
 and decision consistently can create a different internally valid report.
 Consumers must protect the report artifact and separately authenticate any
 provider evidence; a later signing contract must be versioned explicitly.

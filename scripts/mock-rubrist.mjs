@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Minimal local stand-in for the Rubrist release-evidence API used by the
-// runnable v5/v6 examples under fixtures/examples/. It implements only the
+// runnable suite examples under fixtures/examples/. It implements only the
 // three endpoints Dailies calls (batch submit, eval-run poll, assessment
 // receipt) and produces structurally valid receipt artifacts whose
 // digests bind to the manifest and the submitted candidate outputs.
@@ -12,7 +12,7 @@
 // a manifest's skillDigest must be mockSkillDigest(member), as the bundled
 // examples' manifests are (scripts/build-examples.mjs).
 //
-//   node scripts/mock-rubrist.mjs --manifest fixtures/examples/v5-suite/suite-manifest.json
+//   node scripts/mock-rubrist.mjs --manifest fixtures/examples/suite/suite-manifest.json
 //   node scripts/mock-rubrist.mjs --manifest <path> --port 0 --fail-criterion criterionv_safety_2
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';

@@ -1,5 +1,6 @@
 {
-  "schemaVersion": 4,
+  "contract": "dailies/single-config/v1",
+  "schemaVersion": 1,
   "inputs": {
     "type": "jsonl",
     "path": "example-inputs.jsonl",

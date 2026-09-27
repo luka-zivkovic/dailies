@@ -102,16 +102,16 @@ npm run build
 node dist/cli.js --config fixtures/dailies.config.json
 ```
 
-Runnable v5 (evaluator suite) and v6 (calibration-aware) examples live under
-[`fixtures/examples/`](fixtures/examples/README.md). Their manifests and
+Runnable suite examples, one without and one with calibration evidence, live
+under [`fixtures/examples/`](fixtures/examples/README.md). Their manifests and
 calibration artifacts are verified offline, but receipt evidence always
 comes from a Rubrist HTTP endpoint, so they ship with a local stub that
 returns scripted, structurally valid receipts:
 
 ```sh
-node scripts/mock-rubrist.mjs --manifest fixtures/examples/v5-suite/suite-manifest.json &
-node dist/cli.js --config fixtures/examples/v5-suite/dailies.config.json
-node dist/cli.js --config fixtures/examples/v6-calibration/dailies.config.json
+node scripts/mock-rubrist.mjs --manifest fixtures/examples/suite/suite-manifest.json &
+node dist/cli.js --config fixtures/examples/suite/dailies.config.json
+node dist/cli.js --config fixtures/examples/suite-calibrated/dailies.config.json
 ```
 
 A `promote` from these examples demonstrates the report format only; the
@@ -130,8 +130,8 @@ The command exits with:
 | Command | Purpose | Exit codes |
 | --- | --- | --- |
 | `dailies --config <path>` | Run the release evaluation and write `report.json` and `report.md`. | `0` promote, `1` block, `2` inconclusive or run error |
-| `dailies init [directory]` | Create a runnable, digest-pinned schema-v4 starter without overwriting existing files. | `0` created, `2` refused or failed |
-| `dailies digest --config <path>` | Recompute the JSONL input digest and line count and update `inputs.digest` and `scope.expectedItems` in place (schema v4, v5, and v6). | `0` updated or already current, `2` error |
+| `dailies init [directory]` | Create a runnable, digest-pinned single-format starter without overwriting existing files. | `0` created, `2` refused or failed |
+| `dailies digest --config <path>` | Recompute the JSONL input digest and line count and update `inputs.digest` and `scope.expectedItems` in place (single and suite configurations). | `0` updated or already current, `2` error |
 | `dailies digest --config <path> --check` | Report whether the config matches the input artifact without writing. | `0` match, `1` mismatch, `2` error |
 
 Paths inside a config resolve relative to the config file. `dailies digest`
@@ -204,12 +204,13 @@ Dailies makes those assumptions explicit:
 
 ## Minimal configuration
 
-This schema-v4 example evaluates one criterion over an exact, digest-pinned
-JSONL regression corpus:
+This single-format example evaluates one criterion over an exact,
+digest-pinned JSONL regression corpus:
 
 ```json
 {
-  "schemaVersion": 4,
+  "contract": "dailies/single-config/v1",
+  "schemaVersion": 1,
   "inputs": {
     "type": "jsonl",
     "path": "cases.jsonl",
@@ -249,7 +250,7 @@ context and never silently implies that the baseline passed.
 ```
 
 See the [bundled configuration](fixtures/dailies.config.json) and
-[configuration reference](docs/report-v4.md) for the complete contract.
+[single-format reference](docs/single-format.md) for the complete contract.
 
 ## Evidence integrations
 
@@ -277,19 +278,19 @@ open questions. Imported results would stay `self_reported`, even if Dailies
 ran the platform itself and pinned the output file's digest. A file digest
 proves which bytes Dailies read. It does not verify the platform's results.
 
-## Configuration generations
+## Formats
 
-Dailies keeps earlier report formats readable while adding new capability
-through explicit schema versions:
+Dailies has two formats. Each configuration and report names its format in a
+`contract` field, which the CLI and report inspection dispatch on (ADR-0010):
 
-- **v4 — single criterion:** one declared scope with exact-match, HTTP, or Rubrist evidence.
-- **v5 — evaluator suite:** a pinned, policy-free Rubrist suite with separate evidence and policy for each criterion.
-- **v6 — calibration-aware suite:** exact local calibration artifacts, evaluated per trial without silently pooling variance.
+- **Single** (`dailies/single-config/v1`, `dailies/single-report/v1`): one declared scope with exact-match, HTTP, or Rubrist evidence.
+- **Suite** (`dailies/suite-config/v1`, `dailies/suite-report/v1`): a pinned, policy-free Rubrist suite under a customer release policy (`dailies/release-policy/v1`), with separate evidence and policy for each criterion and, optionally, exact local calibration artifacts evaluated per trial without silently pooling variance.
 
-The detailed contracts live in [report v4](docs/report-v4.md),
-[report v5](docs/report-v5.md), and [report v6](docs/report-v6.md), and
-each generation has a runnable example: [v4](fixtures/dailies.config.json),
-[v5](fixtures/examples/v5-suite/), and [v6](fixtures/examples/v6-calibration/).
+The detailed contracts live in the [single format](docs/single-format.md) and
+[suite format](docs/suite-format.md) references, and each has a runnable
+example: [single](fixtures/dailies.config.json), and the
+[suite](fixtures/examples/suite/) without and
+[with calibration](fixtures/examples/suite-calibrated/).
 
 ## Decision safety
 

@@ -18,10 +18,10 @@ npx dailies@latest init <dir>
 ```
 
 This writes `<dir>/dailies.cases.jsonl` (three demonstration cases) and
-`<dir>/dailies.config.json` (schema v4, one evidence scope, exact-match
-judge, and a SHA-256 digest of the exact corpus bytes). It refuses to
-overwrite either file, so an existing setup is left alone. Report both
-created paths to the user.
+`<dir>/dailies.config.json` (the single format, one evidence scope,
+exact-match judge, and a SHA-256 digest of the exact corpus bytes). It
+refuses to overwrite either file, so an existing setup is left alone. Report
+both created paths to the user.
 
 The starter scope claims only the three generated behaviors. Before the
 decision means anything for a real release, the user must replace the cases,

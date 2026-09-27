@@ -7,7 +7,6 @@ import {
 
 const digest = `sha256:${'1'.repeat(64)}`;
 const policy: ReleasePolicyV1 = {
-  schemaVersion: 1,
   id: 'properties',
   version: '1',
   manifestId: 'manifest',

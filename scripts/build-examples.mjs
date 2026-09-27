@@ -18,7 +18,6 @@ import {
   parseCanonicalBinaryCalibrationBytes,
 } from '../dist/binary-calibration.js';
 import { canonicalJson, sha256Digest } from '../dist/rubrist.js';
-import { parseSuiteConfig } from '../dist/config-v5.js';
 import { parseSuiteConfigV6 } from '../dist/config-v6.js';
 import {
   evaluatorSuiteManifestDigest,
@@ -180,13 +179,17 @@ export async function buildExamples(outDir) {
   };
   const files = new Map();
 
-  const v5Config = {
-    schemaVersion: 5,
+  // A suite without calibration: the policy states no calibration requirement
+  // and the configuration leaves calibrationEvidence out (Dailies ADR-0010).
+  const suiteConfig = {
+    contract: 'dailies/suite-config/v1',
+    schemaVersion: 1,
     inputs: shared.inputs,
     scope: scope('example-support-suite-regressions-v1'),
     candidate: shared.candidate,
     suite: shared.suite,
     policy: {
+      contract: 'dailies/release-policy/v1',
       schemaVersion: 1,
       id: 'example-support-release-policy',
       version: '1',
@@ -197,6 +200,7 @@ export async function buildExamples(outDir) {
         evidenceRequirement: 'mandatory',
         consequence: 'blocking',
         rule: criterionRule(),
+        calibrationRequirement: null,
       })),
       compensationGroups: [],
     },
@@ -204,16 +208,16 @@ export async function buildExamples(outDir) {
     timeoutMs: shared.timeoutMs,
     output: shared.output,
   };
-  parseSuiteConfig(v5Config);
-  files.set('v5-suite/cases.jsonl', casesBytes);
-  files.set('v5-suite/suite-manifest.json', manifestBytes);
-  files.set('v5-suite/dailies.config.json', Buffer.from(JSON.stringify(v5Config, null, 2) + '\n'));
+  parseSuiteConfigV6(suiteConfig);
+  files.set('suite/cases.jsonl', casesBytes);
+  files.set('suite/suite-manifest.json', manifestBytes);
+  files.set('suite/dailies.config.json', Buffer.from(JSON.stringify(suiteConfig, null, 2) + '\n'));
 
   const calibrationEvidence = [];
   for (const member of manifest.members) {
     const { bytes, artifact } = await calibrationArtifact(manifest, member);
     const fileName = `calibration-${member.criterionId.replace(/^criterion_/, '')}.json`;
-    files.set(`v6-calibration/${fileName}`, bytes);
+    files.set(`suite-calibrated/${fileName}`, bytes);
     calibrationEvidence.push({
       criterionVersionId: member.criterionVersionId,
       source: {
@@ -224,14 +228,16 @@ export async function buildExamples(outDir) {
       },
     });
   }
-  const v6Config = {
-    schemaVersion: 6,
+  const calibratedConfig = {
+    contract: 'dailies/suite-config/v1',
+    schemaVersion: 1,
     inputs: shared.inputs,
     scope: scope('example-support-suite-regressions-v1'),
     candidate: shared.candidate,
     suite: shared.suite,
     policy: {
-      schemaVersion: 2,
+      contract: 'dailies/release-policy/v1',
+      schemaVersion: 1,
       id: 'example-support-calibrated-release-policy',
       version: '1',
       manifestId: manifest.manifestId,
@@ -250,10 +256,10 @@ export async function buildExamples(outDir) {
     timeoutMs: shared.timeoutMs,
     output: shared.output,
   };
-  parseSuiteConfigV6(v6Config);
-  files.set('v6-calibration/cases.jsonl', casesBytes);
-  files.set('v6-calibration/suite-manifest.json', manifestBytes);
-  files.set('v6-calibration/dailies.config.json', Buffer.from(JSON.stringify(v6Config, null, 2) + '\n'));
+  parseSuiteConfigV6(calibratedConfig);
+  files.set('suite-calibrated/cases.jsonl', casesBytes);
+  files.set('suite-calibrated/suite-manifest.json', manifestBytes);
+  files.set('suite-calibrated/dailies.config.json', Buffer.from(JSON.stringify(calibratedConfig, null, 2) + '\n'));
 
   for (const [relativePath, bytes] of files) {
     const target = join(outDir, relativePath);

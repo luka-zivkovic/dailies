@@ -20,7 +20,8 @@ const identity = expectedBinaryCalibrationIdentity(artifact);
 
 function rawConfig(): SuiteConfigV6 {
   return {
-    schemaVersion: 6,
+    contract: 'dailies/suite-config/v1',
+    schemaVersion: 1,
     inputs: {
       type: 'jsonl',
       path: 'cases.jsonl',
@@ -50,7 +51,8 @@ function rawConfig(): SuiteConfigV6 {
       },
     },
     policy: {
-      schemaVersion: 2,
+      contract: 'dailies/release-policy/v1',
+      schemaVersion: 1,
       id: 'release-policy',
       version: '1',
       manifestId: identity.suiteManifestId!,
@@ -81,11 +83,11 @@ function rawConfig(): SuiteConfigV6 {
 }
 
 describe('suite configuration v6', () => {
-  it('parses additively without reinterpreting schema v5', () => {
+  it('parses a suite configuration, which the candidate assessment configuration refuses', () => {
     const parsed = parseSuiteConfigV6(rawConfig());
-    expect(parsed.schemaVersion).toBe(6);
+    expect(parsed).toMatchObject({ contract: 'dailies/suite-config/v1', schemaVersion: 1 });
     expect(parsed.calibrationEvidence[0]?.source?.expectedIdentity).toEqual(identity);
-    expect(() => parseSuiteConfig(rawConfig())).toThrow(/schemaVersion 5/);
+    expect(() => parseSuiteConfig(rawConfig())).toThrow();
   });
 
   it('requires exact ordered policy coverage but permits explicit source absence', () => {

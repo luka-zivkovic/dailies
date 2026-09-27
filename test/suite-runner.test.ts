@@ -198,7 +198,6 @@ async function fixture(
   const candidatePort = await listen(candidateServer);
   const rubrist = await mockRubrist(manifest, modes);
   const config = parseSuiteConfig({
-    schemaVersion: 5,
     inputs: { type: 'jsonl', path: inputPath, digest: sha256Bytes(inputBytes) },
     scope: {
       id: 'support-suite',
@@ -228,7 +227,6 @@ async function fixture(
       },
     },
     policy: {
-      schemaVersion: 1,
       id: 'suite-policy',
       version: '1',
       manifestId: manifest.manifestId,
@@ -282,59 +280,6 @@ describe('criterion suite runner', () => {
       await expect(runSuiteRelease(test.config)).rejects.toThrow(/unsupported by Dailies v5/);
       expect(test.candidateCalls).toBe(0);
       expect(test.rubrist.submissions).toHaveLength(0);
-    } finally {
-      close(test.candidateServer);
-      close(test.rubrist.server);
-    }
-  });
-
-  it('dispatches v5 through the CLI and keeps report/exit-code agreement', async () => {
-    const test = await fixture(['blocking', 'advisory']);
-    const configPath = join(dirname(test.config.inputs.path), 'dailies-v5.json');
-    await writeFile(configPath, JSON.stringify(test.config), 'utf8');
-    try {
-      const cli = await runCli(configPath);
-      const report = reportV5Schema.parse(JSON.parse(await readFile(
-        join(test.config.output.dir, 'report.json'),
-        'utf8',
-      )));
-      expect(cli.code).toBe(0);
-      expect(cli.stdout).toContain('decision: promote | criteria 2');
-      expect(report.decision).toBe('promote');
-      expect(await readFile(join(test.config.output.dir, 'report.md'), 'utf8'))
-        .toContain('# Criterion release report: PROMOTE');
-    } finally {
-      close(test.candidateServer);
-      close(test.rubrist.server);
-    }
-  });
-
-  it.each([
-    ['block', 1, ['blocking', 'blocking'] as const, {}],
-    [
-      'inconclusive',
-      2,
-      ['advisory', 'blocking'] as const,
-      { skillv_safety_1: 'binding-tamper' as const },
-    ],
-  ] as const)('keeps CLI %s report and exit code aligned', async (
-    expectedDecision,
-    expectedCode,
-    consequences,
-    modes,
-  ) => {
-    const test = await fixture([...consequences], modes);
-    const configPath = join(dirname(test.config.inputs.path), `dailies-v5-${expectedDecision}.json`);
-    await writeFile(configPath, JSON.stringify(test.config), 'utf8');
-    try {
-      const cli = await runCli(configPath);
-      const report = reportV5Schema.parse(JSON.parse(await readFile(
-        join(test.config.output.dir, 'report.json'),
-        'utf8',
-      )));
-      expect(cli.code).toBe(expectedCode);
-      expect(report.decision).toBe(expectedDecision);
-      expect(cli.stdout).toContain(`decision: ${expectedDecision}`);
     } finally {
       close(test.candidateServer);
       close(test.rubrist.server);
@@ -401,7 +346,6 @@ describe('criterion suite runner', () => {
         new Set(test.manifest.members.map((member) => member.skillVersionId)),
       );
       expect(report).toMatchObject({
-        schemaVersion: 5,
         decision: 'promote',
         decisionPrecedence: 'policy_satisfied',
         candidateExecution: { total: 2, succeeded: 2, failed: 0 },
@@ -422,9 +366,8 @@ describe('criterion suite runner', () => {
         policyResult: { consequence: 'advisory', rulePassed: false },
       });
       expect(reportV5Schema.safeParse(report).success).toBe(true);
-      expect(parseReportForInspection(report)).toMatchObject({
-        schemaVersion: 5,
-      });
+      // The candidate assessment is not a report format of its own (ADR-0010).
+      expect(() => parseReportForInspection(report)).toThrow(/unsupported report contract: missing/);
 
       const mutations: Array<[string, (candidate: Record<string, any>) => void]> = [
         ['manifest digest', (candidate) => { candidate.manifest.manifestDigest = `sha256:${'0'.repeat(64)}`; }],

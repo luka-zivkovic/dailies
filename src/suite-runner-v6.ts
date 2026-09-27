@@ -50,7 +50,6 @@ export interface PreflightedCalibrationSuiteRelease {
 
 function candidateConfigProjection(config: SuiteConfigV6): SuiteConfig {
   return {
-    schemaVersion: 5,
     inputs: config.inputs,
     scope: config.scope,
     candidate: config.candidate,

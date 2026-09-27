@@ -28,7 +28,6 @@ import {
   reportV5Schema,
   suiteCandidateDatasetDigest,
   suiteExecutionPolicyDigest,
-  SUITE_REPORT_SCHEMA_VERSION,
   type CriterionItem,
   type SuiteCandidateItem,
   type SuiteReport,
@@ -475,7 +474,6 @@ async function executePreflightedSuiteRelease(
     candidate: candidateExecutionIdentity(config.candidate),
   };
   const report: SuiteReport = {
-    schemaVersion: SUITE_REPORT_SCHEMA_VERSION,
     startedAt,
     finishedAt: now().toISOString(),
     scope: suiteReleaseScope(config, inputArtifact),

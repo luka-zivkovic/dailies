@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { declaredContract, SINGLE_CONFIG_CONTRACT } from './contracts.js';
 
 /** Default per-call timeout for candidate/judge invocations, in milliseconds. */
 export const DEFAULT_TIMEOUT_MS = 60_000;
@@ -7,7 +8,6 @@ export const DEFAULT_RUBRIST_POLL_TIMEOUT_MS = 300_000;
 export const MAX_RUBRIST_POLL_INTERVAL_MS = 30_000;
 export const MAX_RUBRIST_POLL_TIMEOUT_MS = 1_800_000;
 
-export const CONFIG_SCHEMA_VERSION = 4;
 export const SHA256_DIGEST_PATTERN = /^sha256:[0-9a-f]{64}$/;
 
 const nonBlankStringSchema = z.string().min(1).refine((value) => value.trim().length > 0, {
@@ -144,7 +144,8 @@ export const judgeConfigSchema = z.discriminatedUnion('type', [
 ]);
 
 export const configSchema = z.object({
-  schemaVersion: z.literal(CONFIG_SCHEMA_VERSION),
+  contract: z.literal(SINGLE_CONFIG_CONTRACT),
+  schemaVersion: z.literal(1),
   inputs: inputsConfigSchema,
   scope: scopeConfigSchema,
   candidate: candidateConfigSchema,
@@ -190,13 +191,11 @@ export const inputItemSchema = z.object({
 export type InputItem = z.infer<typeof inputItemSchema>;
 
 export function parseConfig(raw: unknown): Config {
-  const version = typeof raw === 'object' && raw !== null && 'schemaVersion' in raw
-    ? (raw as { schemaVersion?: unknown }).schemaVersion
-    : undefined;
-  if (version !== CONFIG_SCHEMA_VERSION) {
+  const contract = declaredContract(raw);
+  if (contract !== SINGLE_CONFIG_CONTRACT) {
     throw new Error(
-      `unsupported config schema version: ${version === undefined ? 'missing' : String(version)}; ` +
-        `release execution requires schemaVersion ${CONFIG_SCHEMA_VERSION}`,
+      `unsupported config contract: ${contract === undefined ? 'missing' : String(contract)}; ` +
+        `single-criterion release execution requires ${SINGLE_CONFIG_CONTRACT}`,
     );
   }
   return configSchema.parse(raw);

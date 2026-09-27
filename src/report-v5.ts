@@ -23,7 +23,6 @@ import {
   verifyReceiptManifestBinding,
 } from './suite-manifest.js';
 
-export const SUITE_REPORT_SCHEMA_VERSION = 5;
 const digestSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
 const decisionSchema = z.enum(['promote', 'block', 'inconclusive']);
 const comparisonSchema = z.enum([
@@ -247,7 +246,6 @@ const reportTrustPolicySchema = z.object({
 }).passthrough().pipe(trustPolicySchema);
 
 const reportV5ShapeSchema = z.object({
-  schemaVersion: z.literal(SUITE_REPORT_SCHEMA_VERSION),
   startedAt: z.string().datetime({ offset: true }),
   finishedAt: z.string().datetime({ offset: true }),
   scope: suiteScopeSchema,

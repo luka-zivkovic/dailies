@@ -89,13 +89,14 @@ separate and must still satisfy their exact authored oracle.
 
 ## Current authored matrix
 
-The executable gate composes real supported v4 runner and packaged CLI paths,
-the strict report parser, and the v5/v6 pure policy functions. It covers all
+The executable gate composes the real single-format runner and packaged CLI
+paths, the strict report parser, and the pure policy functions of the
+candidate assessment and the suite. It covers all
 Batch 6 internal families:
 
 | Family | Current cell |
 | --- | --- |
-| control | packaged v4 CLI with deterministic passing evidence |
+| control | packaged single-format CLI with deterministic passing evidence |
 | timeout | bounded permanent candidate and HTTP-judge timeouts |
 | transport | bounded candidate/judge transport failures and judge HTTP 503 |
 | protocol | malformed successful candidate and judge payloads |
@@ -104,7 +105,7 @@ Batch 6 internal families:
 | mixed trust | the same complete self-report denied and explicitly admitted |
 | scope mismatch | exact input/scope identity mismatch before execution |
 | nondeterminism | seeded, out-of-order concurrent completion with stable semantics |
-| multi-criterion conflict | applicable v5 precedence including compensation failure, plus v6 own-calibration incompleteness and integrity against another valid block |
+| multi-criterion conflict | applicable candidate-assessment precedence including compensation failure, plus the suite's own-calibration incompleteness and integrity against another valid block |
 
 This matrix supplements the larger focused test corpus for receipt retries,
 operation ledgers, manifest/calibration identity swaps, report mutation,

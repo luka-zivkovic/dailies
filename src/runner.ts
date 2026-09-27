@@ -1,4 +1,5 @@
 import { runCandidate } from './candidate.js';
+import { SINGLE_REPORT_CONTRACT } from './contracts.js';
 import type { Config, InputItem } from './config.js';
 import {
   RUBRIST_CLIENT_ITEM_ID_MAX_LENGTH,
@@ -17,7 +18,6 @@ import {
   buildDecisionStatement,
   compareOutcome,
   decideDecision,
-  REPORT_SCHEMA_VERSION,
   reportSchema,
   type ItemResult,
   type Report,
@@ -322,7 +322,8 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
   const admissible = trust.status === 'complete' && trust.admissible;
   const decision = decideDecision(totals, config.thresholds, admissible);
   const report: Report = {
-    schemaVersion: REPORT_SCHEMA_VERSION,
+    contract: SINGLE_REPORT_CONTRACT,
+    schemaVersion: 1,
     judgeType: config.judge.type,
     startedAt,
     finishedAt: now().toISOString(),

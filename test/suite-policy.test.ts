@@ -19,7 +19,6 @@ const manifest = verifyEvaluatorSuiteManifest(JSON.parse(readFileSync(
 
 function policy(overrides: Partial<ReleasePolicyV1> = {}): ReleasePolicyV1 {
   return verifyReleasePolicy({
-    schemaVersion: 1,
     id: 'customer-release',
     version: '1',
     manifestId: manifest.manifestId,

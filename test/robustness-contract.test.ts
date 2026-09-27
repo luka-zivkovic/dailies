@@ -43,7 +43,7 @@ function promoteScenario(
     id: 'clean-promote',
     family: 'control',
     description: 'Complete admissible evidence satisfies policy.',
-    seam: 'v4_policy',
+    seam: 'single_policy',
     repeatCount: 2,
     safetyOracle: {
       expectation: 'release_allowed',
@@ -73,7 +73,7 @@ function observation(
   overrides: Partial<AuthoredInvariantObservation> = {},
 ): AuthoredInvariantObservation {
   return {
-    source: 'v4_policy',
+    source: 'single_policy',
     native: { terminal: 'report', decision: 'promote', decisionPrecedence: null },
     exitCode: null,
     processSignal: null,
@@ -117,7 +117,7 @@ describe('authored invariant contracts', () => {
       ...promoteScenario(),
       id: 'tampered-preflight',
       family: 'tamper',
-      seam: 'v4_cli',
+      seam: 'single_cli',
       repeatCount: 1,
       safetyOracle: {
         expectation: 'insufficient_evidence',
@@ -139,7 +139,7 @@ describe('authored invariant contracts', () => {
     const outcome = evaluateAuthoredInvariantOutcome({
       scenario: abort,
       observation: {
-        source: 'v4_cli',
+        source: 'single_cli',
         native: { terminal: 'abort', decision: null, decisionPrecedence: null },
         exitCode: 2,
         processSignal: null,

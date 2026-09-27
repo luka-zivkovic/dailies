@@ -1,7 +1,8 @@
 import { createHash } from 'node:crypto';
 import { mkdir, open, unlink, type FileHandle } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
-import { CONFIG_SCHEMA_VERSION, type Config, type InputItem } from './config.js';
+import { type Config, type InputItem } from './config.js';
+import { SINGLE_CONFIG_CONTRACT } from './contracts.js';
 
 export const STARTER_CONFIG_FILENAME = 'dailies.config.json';
 export const STARTER_INPUTS_FILENAME = 'dailies.cases.jsonl';
@@ -66,7 +67,7 @@ function existingFileError(error: unknown, fallbackPath: string): Error {
   return new Error(`refusing to overwrite existing file: ${path}`, { cause: error });
 }
 
-/** Create a deterministic, runnable schema-v4 starter without overwriting user files. */
+/** Create a deterministic, runnable single-criterion starter without overwriting user files. */
 export async function initializeDailiesProject(
   targetDirectory: string = '.',
 ): Promise<InitializeResult> {
@@ -75,7 +76,8 @@ export async function initializeDailiesProject(
   const configPath = join(directory, STARTER_CONFIG_FILENAME);
   const inputsBytes = STARTER_ITEMS.map((item) => JSON.stringify(item)).join('\n') + '\n';
   const config: Config = {
-    schemaVersion: CONFIG_SCHEMA_VERSION,
+    contract: SINGLE_CONFIG_CONTRACT,
+    schemaVersion: 1,
     inputs: {
       type: 'jsonl',
       path: STARTER_INPUTS_FILENAME,

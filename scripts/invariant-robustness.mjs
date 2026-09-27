@@ -100,7 +100,7 @@ function scenario({
   minimumMaxInFlight = 0,
   requireDistinctCompletionOrders = false,
 }) {
-  const emitsFullReport = seam === 'v4_runner' || seam === 'v4_cli';
+  const emitsFullReport = seam === 'single_runner' || seam === 'single_cli';
   return authoredInvariantScenarioSchema.parse({
     contract: AUTHORED_INVARIANT_SCENARIO_CONTRACT,
     schemaVersion: 1,
@@ -116,7 +116,7 @@ function scenario({
       terminal,
       decision: terminal === 'report' ? decision : null,
       decisionPrecedence: terminal === 'report' ? precedence : null,
-      exitCode: seam === 'v4_cli'
+      exitCode: seam === 'single_cli'
         ? terminal === 'report' ? exitCode(decision) : 2
         : null,
       expectedProcessSignal,
@@ -131,7 +131,7 @@ function scenario({
 }
 
 function policyObservation(source, result) {
-  const classification = source === 'v5_policy'
+  const classification = source === 'candidate_policy'
     ? classifyV5InvariantDecision(result)
     : classifyV6InvariantDecision(result);
   return {
@@ -152,7 +152,6 @@ function policyObservation(source, result) {
 
 function v5Policy() {
   return releasePolicyV1Schema.parse({
-    schemaVersion: 1,
     id: 'authored-v5-policy',
     version: '1',
     manifestId: 'authored-manifest',
@@ -193,7 +192,6 @@ function criterionEvidence(
 
 function v5CompensationPolicy() {
   return releasePolicyV1Schema.parse({
-    schemaVersion: 1,
     id: 'authored-v5-compensation-policy',
     version: '1',
     manifestId: 'authored-manifest',
@@ -241,7 +239,8 @@ const calibrationRequirement = {
 
 function v6Policy() {
   return releasePolicyV2Schema.parse({
-    schemaVersion: 2,
+    contract: 'dailies/release-policy/v1',
+    schemaVersion: 1,
     id: 'authored-v6-policy',
     version: '1',
     manifestId: 'authored-manifest',
@@ -391,7 +390,8 @@ async function runV4Fixture(mode, seed) {
     }
 
     const config = {
-      schemaVersion: 4,
+      contract: 'dailies/single-config/v1',
+      schemaVersion: 1,
       inputs: { type: 'jsonl', path: inputPath, digest: sha256Bytes(inputBytes) },
       scope: {
         id: `authored-${mode}`,
@@ -464,7 +464,7 @@ function runnerExecutor(mode) {
     const classification = classifyV4InvariantReport(result.report);
     return {
       observation: {
-        source: 'v4_runner',
+        source: 'single_runner',
         native: {
           terminal: 'report',
           decision: result.report.decision,
@@ -543,7 +543,8 @@ async function runV4CliFixture(tampered) {
       "process.stdout.write(process.argv[3]);\n");
     const outputDir = join(dir, 'out');
     const config = {
-      schemaVersion: 4,
+      contract: 'dailies/single-config/v1',
+      schemaVersion: 1,
       inputs: {
         type: 'jsonl',
         path: 'inputs.jsonl',
@@ -642,7 +643,7 @@ function cliExecutor(tampered) {
       );
       return {
         observation: {
-          source: 'v4_cli',
+          source: 'single_cli',
           native: { terminal: 'abort', decision: null, decisionPrecedence: null },
           exitCode: result.cli.code,
           processSignal: result.cli.signal,
@@ -658,7 +659,7 @@ function cliExecutor(tampered) {
     const classification = classifyV4InvariantReport(result.report);
     return {
       observation: {
-        source: 'v4_cli',
+        source: 'single_cli',
         native: {
           terminal: 'report',
           decision: result.report.decision,
@@ -693,7 +694,8 @@ async function scopeMismatchExecutor() {
       "appendFileSync(process.argv[2], 'call\\n');\n" +
       "process.stdout.write(process.argv[3]);\n");
     const config = {
-      schemaVersion: 4,
+      contract: 'dailies/single-config/v1',
+      schemaVersion: 1,
       inputs: { type: 'jsonl', path: inputPath, digest: `sha256:${'0'.repeat(64)}` },
       scope: {
         id: 'mismatched-scope',
@@ -727,7 +729,7 @@ async function scopeMismatchExecutor() {
       const classification = classifyAuthoredInvariantThrownError(error, 'scope_binding');
       return {
         observation: {
-          source: 'v4_runner',
+          source: 'single_runner',
           native: { terminal: 'abort', decision: null, decisionPrecedence: null },
           exitCode: null,
           processSignal: null,
@@ -778,7 +780,7 @@ const registered = [
     scenario: scenario({
       id: 'control-cli-promote',
       family: 'control',
-      seam: 'v4_cli',
+      seam: 'single_cli',
       description: 'The packaged CLI promotes complete deterministic passing evidence.',
       expectation: 'release_allowed',
       rationale: 'All required deterministic evidence is complete and passing.',
@@ -793,7 +795,7 @@ const registered = [
     scenario: scenario({
       id: 'timeout-judge-remains-inconclusive',
       family: 'timeout',
-      seam: 'v4_runner',
+      seam: 'single_runner',
       description: 'A permanently hung judge is retried within bounds and cannot promote.',
       expectation: 'insufficient_evidence',
       rationale: 'The candidate ran but required judge evidence never completed.',
@@ -809,7 +811,7 @@ const registered = [
     scenario: scenario({
       id: 'transport-candidate-failure-blocks',
       family: 'transport',
-      seam: 'v4_runner',
+      seam: 'single_runner',
       description: 'A required candidate transport failure is never skipped.',
       expectation: 'release_denied',
       rationale: 'The required candidate could not execute after bounded attempts.',
@@ -825,7 +827,7 @@ const registered = [
     scenario: scenario({
       id: 'timeout-candidate-failure-blocks',
       family: 'timeout',
-      seam: 'v4_runner',
+      seam: 'single_runner',
       description: 'A required candidate timeout is never skipped or mistaken for judge failure.',
       expectation: 'release_denied',
       rationale: 'The required candidate could not execute after bounded timeout attempts.',
@@ -841,7 +843,7 @@ const registered = [
     scenario: scenario({
       id: 'transport-judge-failure-inconclusive',
       family: 'transport',
-      seam: 'v4_runner',
+      seam: 'single_runner',
       description: 'A permanent judge transport failure cannot become candidate evidence.',
       expectation: 'insufficient_evidence',
       rationale: 'The candidate ran but required judge evidence never completed.',
@@ -857,7 +859,7 @@ const registered = [
     scenario: scenario({
       id: 'protocol-malformed-judge-inconclusive',
       family: 'protocol',
-      seam: 'v4_runner',
+      seam: 'single_runner',
       description: 'A malformed successful judge payload cannot become release evidence.',
       expectation: 'insufficient_evidence',
       rationale: 'The evidence protocol did not produce a valid required result.',
@@ -873,7 +875,7 @@ const registered = [
     scenario: scenario({
       id: 'protocol-malformed-candidate-inconclusive',
       family: 'protocol',
-      seam: 'v4_runner',
+      seam: 'single_runner',
       description: 'A malformed successful candidate payload is a protocol-integrity failure.',
       expectation: 'insufficient_evidence',
       rationale: 'The candidate channel returned an invalid output contract.',
@@ -889,7 +891,7 @@ const registered = [
     scenario: scenario({
       id: 'partial-coverage-never-promotes',
       family: 'partial_coverage',
-      seam: 'v4_runner',
+      seam: 'single_runner',
       description: 'Threshold slack cannot promote a partially judged required scope.',
       expectation: 'insufficient_evidence',
       rationale: 'Only one of two required items has completed judge evidence.',
@@ -905,7 +907,7 @@ const registered = [
     scenario: scenario({
       id: 'tamper-input-digest-aborts-cli',
       family: 'tamper',
-      seam: 'v4_cli',
+      seam: 'single_cli',
       description: 'The packaged CLI rejects changed input bytes before candidate execution.',
       expectation: 'insufficient_evidence',
       rationale: 'The configured exact-byte input identity does not match the file.',
@@ -921,7 +923,7 @@ const registered = [
     scenario: scenario({
       id: 'mixed-trust-self-report-not-admitted',
       family: 'mixed_trust',
-      seam: 'v4_runner',
+      seam: 'single_runner',
       description: 'Complete self-reported evidence cannot promote without admission.',
       expectation: 'insufficient_evidence',
       rationale: 'The trust policy does not admit the evidence source.',
@@ -936,7 +938,7 @@ const registered = [
     scenario: scenario({
       id: 'mixed-trust-self-report-explicitly-admitted',
       family: 'mixed_trust',
-      seam: 'v4_runner',
+      seam: 'single_runner',
       description: 'The same complete self-reported evidence promotes under an explicit admission.',
       expectation: 'release_allowed',
       rationale: 'The authored trust policy explicitly admits this local self-reported source.',
@@ -951,7 +953,7 @@ const registered = [
     scenario: scenario({
       id: 'transport-judge-http-503-inconclusive',
       family: 'transport',
-      seam: 'v4_runner',
+      seam: 'single_runner',
       description: 'A retryable HTTP 503 from the judge remains typed incomplete evidence.',
       expectation: 'insufficient_evidence',
       rationale: 'The candidate ran, but the required judge returned no usable evidence.',
@@ -983,7 +985,7 @@ const registered = [
     scenario: scenario({
       id: 'scope-input-identity-mismatch-aborts',
       family: 'scope_mismatch',
-      seam: 'v4_runner',
+      seam: 'single_runner',
       description: 'A release scope cannot execute against different input bytes.',
       expectation: 'insufficient_evidence',
       rationale: 'The declared evidence scope is not bound to the observed input artifact.',
@@ -999,7 +1001,7 @@ const registered = [
     scenario: scenario({
       id: 'nondeterminism-completion-order-stable',
       family: 'nondeterminism',
-      seam: 'v4_runner',
+      seam: 'single_runner',
       description: 'Different concurrent completion orders retain one semantic outcome.',
       expectation: 'release_allowed',
       rationale: 'The candidate and exact judge are deterministic and all evidence is complete.',
@@ -1016,7 +1018,7 @@ const registered = [
     scenario: scenario({
       id: 'multi-v5-integrity-outranks-block',
       family: 'multi_criterion_conflict',
-      seam: 'v5_policy',
+      seam: 'candidate_policy',
       description: 'Required integrity failure outranks a different blocking result.',
       expectation: 'insufficient_evidence',
       rationale: 'An unverifiable required channel prevents a trustworthy release decision.',
@@ -1026,7 +1028,7 @@ const registered = [
       observationClass: 'protocol_integrity_failure',
       errorKind: 'protocol',
     }),
-    execute: pureExecutor('v5_policy', () => applyReleasePolicy(v5Policy(), [
+    execute: pureExecutor('candidate_policy', () => applyReleasePolicy(v5Policy(), [
       criterionEvidence('criterion-a', { evidenceState: 'integrity_failure' }),
       criterionEvidence('criterion-b', { passRate: 0 }),
     ], false)),
@@ -1035,7 +1037,7 @@ const registered = [
     scenario: scenario({
       id: 'multi-v5-block-outranks-unrelated-missing',
       family: 'multi_criterion_conflict',
-      seam: 'v5_policy',
+      seam: 'candidate_policy',
       description: 'A complete blocking failure outranks unrelated mandatory incompleteness.',
       expectation: 'release_denied',
       rationale: 'Missing unrelated evidence cannot rescue a known policy violation.',
@@ -1045,7 +1047,7 @@ const registered = [
       observationClass: 'partial_coverage',
       errorKind: 'incomplete',
     }),
-    execute: pureExecutor('v5_policy', () => applyReleasePolicy(v5Policy(), [
+    execute: pureExecutor('candidate_policy', () => applyReleasePolicy(v5Policy(), [
       criterionEvidence('criterion-a', { evidenceState: 'incomplete' }),
       criterionEvidence('criterion-b', { passRate: 0 }),
     ], false)),
@@ -1054,7 +1056,7 @@ const registered = [
     scenario: scenario({
       id: 'multi-v5-candidate-failure-blocks',
       family: 'multi_criterion_conflict',
-      seam: 'v5_policy',
+      seam: 'candidate_policy',
       description: 'A required candidate execution failure precedes completed assessment policy.',
       expectation: 'release_denied',
       rationale: 'The required release candidate did not execute successfully.',
@@ -1064,7 +1066,7 @@ const registered = [
       observationClass: 'candidate_execution_failure',
       errorKind: 'execution',
     }),
-    execute: pureExecutor('v5_policy', () => applyReleasePolicy(v5Policy(), [
+    execute: pureExecutor('candidate_policy', () => applyReleasePolicy(v5Policy(), [
       criterionEvidence('criterion-a'),
       criterionEvidence('criterion-b'),
     ], true)),
@@ -1073,7 +1075,7 @@ const registered = [
     scenario: scenario({
       id: 'multi-v5-mandatory-incomplete',
       family: 'multi_criterion_conflict',
-      seam: 'v5_policy',
+      seam: 'candidate_policy',
       description: 'Mandatory incompleteness is inconclusive when no blocking result exists.',
       expectation: 'insufficient_evidence',
       rationale: 'Required criterion evidence is missing and no independent block is known.',
@@ -1083,7 +1085,7 @@ const registered = [
       observationClass: 'partial_coverage',
       errorKind: 'incomplete',
     }),
-    execute: pureExecutor('v5_policy', () => applyReleasePolicy(v5Policy(), [
+    execute: pureExecutor('candidate_policy', () => applyReleasePolicy(v5Policy(), [
       criterionEvidence('criterion-a', { evidenceState: 'incomplete' }),
       criterionEvidence('criterion-b'),
     ], false)),
@@ -1092,7 +1094,7 @@ const registered = [
     scenario: scenario({
       id: 'multi-v5-policy-satisfied',
       family: 'multi_criterion_conflict',
-      seam: 'v5_policy',
+      seam: 'candidate_policy',
       description: 'Complete admissible multi-criterion evidence can promote.',
       expectation: 'release_allowed',
       rationale: 'Every required criterion is complete, admissible, and policy-passing.',
@@ -1101,7 +1103,7 @@ const registered = [
       evidenceState: 'complete',
       observationClass: 'policy_result',
     }),
-    execute: pureExecutor('v5_policy', () => applyReleasePolicy(v5Policy(), [
+    execute: pureExecutor('candidate_policy', () => applyReleasePolicy(v5Policy(), [
       criterionEvidence('criterion-a'),
       criterionEvidence('criterion-b'),
     ], false)),
@@ -1110,7 +1112,7 @@ const registered = [
     scenario: scenario({
       id: 'multi-v5-compensation-failure',
       family: 'multi_criterion_conflict',
-      seam: 'v5_policy',
+      seam: 'candidate_policy',
       description: 'Complete compensatory evidence below its exact weighted threshold blocks.',
       expectation: 'release_denied',
       rationale: 'Both operands are complete, but the authored weighted policy is not satisfied.',
@@ -1119,7 +1121,7 @@ const registered = [
       evidenceState: 'complete',
       observationClass: 'policy_result',
     }),
-    execute: pureExecutor('v5_policy', () => applyReleasePolicy(v5CompensationPolicy(), [
+    execute: pureExecutor('candidate_policy', () => applyReleasePolicy(v5CompensationPolicy(), [
       criterionEvidence('criterion-a', { passRate: 0.5, passed: 1, total: 2 }),
       criterionEvidence('criterion-b', { passRate: 0.5, passed: 1, total: 2 }),
     ], false)),
@@ -1128,7 +1130,7 @@ const registered = [
     scenario: scenario({
       id: 'multi-v6-own-calibration-missing',
       family: 'multi_criterion_conflict',
-      seam: 'v6_policy',
+      seam: 'suite_policy',
       description: 'A failing assessment cannot block without its own required calibration.',
       expectation: 'insufficient_evidence',
       rationale: 'The criterion needed to establish the block is not release-admissible.',
@@ -1138,7 +1140,7 @@ const registered = [
       observationClass: 'partial_coverage',
       errorKind: 'incomplete',
     }),
-    execute: pureExecutor('v6_policy', () => applyReleasePolicyV2(v6Policy(), [
+    execute: pureExecutor('suite_policy', () => applyReleasePolicyV2(v6Policy(), [
       criterionEvidence('criterion-a', { passRate: 0 }),
       criterionEvidence('criterion-b'),
     ], [
@@ -1150,7 +1152,7 @@ const registered = [
     scenario: scenario({
       id: 'multi-v6-valid-block-outranks-other-missing',
       family: 'multi_criterion_conflict',
-      seam: 'v6_policy',
+      seam: 'suite_policy',
       description: 'An independently calibrated block outranks unrelated missing calibration.',
       expectation: 'release_denied',
       rationale: 'The blocking criterion has complete admissible assessment and calibration.',
@@ -1160,7 +1162,7 @@ const registered = [
       observationClass: 'partial_coverage',
       errorKind: 'incomplete',
     }),
-    execute: pureExecutor('v6_policy', () => applyReleasePolicyV2(v6Policy(), [
+    execute: pureExecutor('suite_policy', () => applyReleasePolicyV2(v6Policy(), [
       criterionEvidence('criterion-a'),
       criterionEvidence('criterion-b', { passRate: 0 }),
     ], [
@@ -1172,7 +1174,7 @@ const registered = [
     scenario: scenario({
       id: 'multi-v6-own-calibration-integrity-outranks-valid-block',
       family: 'multi_criterion_conflict',
-      seam: 'v6_policy',
+      seam: 'suite_policy',
       description: 'A required calibration integrity failure outranks another valid block.',
       expectation: 'insufficient_evidence',
       rationale: 'A required calibration artifact failed exact integrity verification.',
@@ -1182,7 +1184,7 @@ const registered = [
       observationClass: 'artifact_tamper',
       errorKind: 'protocol',
     }),
-    execute: pureExecutor('v6_policy', () => applyReleasePolicyV2(v6Policy(), [
+    execute: pureExecutor('suite_policy', () => applyReleasePolicyV2(v6Policy(), [
       criterionEvidence('criterion-a'),
       criterionEvidence('criterion-b', { passRate: 0 }),
     ], [

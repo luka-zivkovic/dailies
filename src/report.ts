@@ -14,17 +14,10 @@ import { ERROR_KINDS, type ErrorKind } from './errors.js';
 import { judgeResultSchema } from './judge.js';
 import { attemptLedgerSchema } from './retry.js';
 import {
-  reportV5Schema,
-  SUITE_REPORT_SCHEMA_VERSION,
-  type SuiteReport,
-} from './report-v5.js';
-import {
-  CALIBRATION_REPORT_SCHEMA_VERSION,
   reportV6Schema,
   type CalibrationSuiteReport,
 } from './report-v6.js';
-
-export const REPORT_SCHEMA_VERSION = 4;
+import { declaredContract, SINGLE_REPORT_CONTRACT, SUITE_REPORT_CONTRACT } from './contracts.js';
 
 /**
  * An abstention is a Rubrist evaluator's completed outcome that neither passes
@@ -560,7 +553,8 @@ const trustSummarySchema = z.discriminatedUnion('status', [z.object({
 }).strict()]);
 
 const reportV4ShapeSchema = z.object({
-  schemaVersion: z.literal(REPORT_SCHEMA_VERSION),
+  contract: z.literal(SINGLE_REPORT_CONTRACT),
+  schemaVersion: z.literal(1),
   ...commonReportFields,
   scope: reportScopeSchema,
   trustPolicy: reportTrustPolicySchema,
@@ -734,36 +728,27 @@ export type { ErrorKind };
 export type Decision = Report['decision'];
 
 export type ReportInspection =
-  | { schemaVersion: 4; report: Report }
-  | { schemaVersion: 5; report: SuiteReport }
-  | { schemaVersion: 6; report: CalibrationSuiteReport };
+  | { contract: typeof SINGLE_REPORT_CONTRACT; report: Report }
+  | { contract: typeof SUITE_REPORT_CONTRACT; report: CalibrationSuiteReport };
 
-/** Parse v4 through v6 reports without normalizing or upgrading versions. */
+/** Parse a single or suite report by its contract, without normalizing it. */
 export function parseReportForInspection(raw: unknown): ReportInspection {
-  if (typeof raw !== 'object' || raw === null || !('schemaVersion' in raw)) {
-    throw new Error('unsupported report schema version: missing');
-  }
-  const version = (raw as { schemaVersion?: unknown }).schemaVersion;
-  if (version === REPORT_SCHEMA_VERSION) {
+  const contract = declaredContract(raw);
+  if (contract === SINGLE_REPORT_CONTRACT) {
     reportSchema.parse(raw);
-    return { schemaVersion: 4, report: raw as Report };
+    return { contract, report: raw as Report };
   }
-  if (version === SUITE_REPORT_SCHEMA_VERSION) {
-    reportV5Schema.parse(raw);
-    return { schemaVersion: 5, report: raw as SuiteReport };
-  }
-  if (version === CALIBRATION_REPORT_SCHEMA_VERSION) {
+  if (contract === SUITE_REPORT_CONTRACT) {
     try {
-      const report = reportV6Schema.parse(raw);
-      return { schemaVersion: 6, report };
+      return { contract, report: reportV6Schema.parse(raw) };
     } catch (error) {
       throw new Error(
-        `invalid report schema version 6: ${error instanceof Error ? error.message : String(error)}`,
+        `invalid ${SUITE_REPORT_CONTRACT} report: ${error instanceof Error ? error.message : String(error)}`,
         { cause: error },
       );
     }
   }
-  throw new Error(`unsupported report schema version: ${String(version)}`);
+  throw new Error(`unsupported report contract: ${contract === undefined ? 'missing' : String(contract)}`);
 }
 
 export interface Totals {

@@ -118,11 +118,11 @@ export const authoredInvariantScenarioSchema = z.object({
   family: authoredInvariantFamilySchema,
   description: nonBlankStringSchema,
   seam: z.enum([
-    'v4_policy',
-    'v4_runner',
-    'v4_cli',
-    'v5_policy',
-    'v6_policy',
+    'single_policy',
+    'single_runner',
+    'single_cli',
+    'candidate_policy',
+    'suite_policy',
     'report_parser',
   ]),
   repeatCount: z.number().int().min(1).max(100),
@@ -162,7 +162,7 @@ export const authoredInvariantScenarioSchema = z.object({
       message: 'insufficient_evidence requires inconclusive or a typed preflight abort',
     });
   }
-  if (scenario.seam === 'v4_cli' && dailies.terminal === 'report') {
+  if (scenario.seam === 'single_cli' && dailies.terminal === 'report') {
     const expectedExitCode = dailies.decision === 'promote' ? 0 :
       dailies.decision === 'block' ? 1 : 2;
     if (dailies.exitCode !== expectedExitCode) {
@@ -173,28 +173,28 @@ export const authoredInvariantScenarioSchema = z.object({
       });
     }
   }
-  if (scenario.seam === 'v4_cli' && dailies.terminal === 'abort' && dailies.exitCode !== 2) {
+  if (scenario.seam === 'single_cli' && dailies.terminal === 'abort' && dailies.exitCode !== 2) {
     ctx.addIssue({
       code: 'custom',
       path: ['dailiesOracle', 'exitCode'],
-      message: 'v4_cli abort requires exit code 2',
+      message: 'single_cli abort requires exit code 2',
     });
   }
-  if (scenario.seam !== 'v4_cli' && dailies.exitCode !== null) {
+  if (scenario.seam !== 'single_cli' && dailies.exitCode !== null) {
     ctx.addIssue({
       code: 'custom',
       path: ['dailiesOracle', 'exitCode'],
       message: 'only the CLI seam has an exit-code oracle',
     });
   }
-  if (scenario.seam !== 'v4_cli' && dailies.expectedProcessSignal !== null) {
+  if (scenario.seam !== 'single_cli' && dailies.expectedProcessSignal !== null) {
     ctx.addIssue({
       code: 'custom',
       path: ['dailiesOracle', 'expectedProcessSignal'],
       message: 'only the CLI seam has a process-signal oracle',
     });
   }
-  if ((scenario.seam === 'v5_policy' || scenario.seam === 'v6_policy') &&
+  if ((scenario.seam === 'candidate_policy' || scenario.seam === 'suite_policy') &&
     dailies.decisionPrecedence === null) {
     ctx.addIssue({
       code: 'custom',
@@ -202,15 +202,15 @@ export const authoredInvariantScenarioSchema = z.object({
       message: `${scenario.seam} requires an exact non-null decision precedence`,
     });
   }
-  if ((scenario.seam === 'v4_policy' || scenario.seam === 'v4_runner' ||
-    scenario.seam === 'v4_cli') && dailies.decisionPrecedence !== null) {
+  if ((scenario.seam === 'single_policy' || scenario.seam === 'single_runner' ||
+    scenario.seam === 'single_cli') && dailies.decisionPrecedence !== null) {
     ctx.addIssue({
       code: 'custom',
       path: ['dailiesOracle', 'decisionPrecedence'],
       message: `${scenario.seam} does not emit a decision precedence`,
     });
   }
-  const emitsFullReport = scenario.seam === 'v4_runner' || scenario.seam === 'v4_cli';
+  const emitsFullReport = scenario.seam === 'single_runner' || scenario.seam === 'single_cli';
   if (dailies.terminal === 'report' && dailies.reportMustValidate !== emitsFullReport) {
     ctx.addIssue({
       code: 'custom',
@@ -249,11 +249,11 @@ const observedTerminalSchema = z.discriminatedUnion('terminal', [
 
 export const authoredInvariantObservationSchema = z.object({
   source: z.enum([
-    'v4_policy',
-    'v4_runner',
-    'v4_cli',
-    'v5_policy',
-    'v6_policy',
+    'single_policy',
+    'single_runner',
+    'single_cli',
+    'candidate_policy',
+    'suite_policy',
     'report_parser',
   ]),
   native: observedTerminalSchema,

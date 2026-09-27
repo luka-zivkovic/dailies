@@ -1,6 +1,13 @@
 export {
+  RELEASE_POLICY_CONTRACT,
+  SINGLE_CONFIG_CONTRACT,
+  SINGLE_REPORT_CONTRACT,
+  SUITE_CONFIG_CONTRACT,
+  SUITE_REPORT_CONTRACT,
+  declaredContract,
+} from './contracts.js';
+export {
   configSchema,
-  CONFIG_SCHEMA_VERSION,
   DEFAULT_RUBRIST_POLL_INTERVAL_MS,
   DEFAULT_RUBRIST_POLL_TIMEOUT_MS,
   DEFAULT_TIMEOUT_MS,
@@ -28,7 +35,6 @@ export {
   suiteConfigSchema,
   suiteInputItemSchema,
   suiteProviderConfigSchema,
-  SUITE_CONFIG_SCHEMA_VERSION,
   type SuiteConfig,
   type SuiteInputItem,
   type SuiteProviderConfig,
@@ -39,7 +45,6 @@ export {
   expectedBinaryCalibrationIdentitySchema,
   parseSuiteConfigV6,
   suiteConfigV6Schema,
-  SUITE_CONFIG_V6_SCHEMA_VERSION,
   type CalibrationEvidenceBinding,
   type CalibrationEvidenceFileSource,
   type ExpectedBinaryCalibrationIdentityConfig,
@@ -201,7 +206,6 @@ export {
   itemResultSchema,
   parseReportForInspection,
   renderMarkdown,
-  REPORT_SCHEMA_VERSION,
   reportSchema,
   type Decision,
   type ErrorStage,
@@ -222,7 +226,6 @@ export {
   reportV5Schema,
   suiteCandidateDatasetDigest,
   suiteExecutionPolicyDigest,
-  SUITE_REPORT_SCHEMA_VERSION,
   type CriterionItem,
   type CriterionTotals,
   type SuiteCandidateItem,
@@ -231,7 +234,6 @@ export {
 export {
   buildCalibrationDecisionStatement,
   buildCalibrationReportV6,
-  CALIBRATION_REPORT_SCHEMA_VERSION,
   parseCanonicalCalibrationReportV6Bytes,
   renderCalibrationReportMarkdown,
   reportV6Schema,
@@ -320,7 +322,7 @@ export {
   type ExpectedEvaluatorSuiteManifest,
 } from './suite-manifest.js';
 export {
-  DIGEST_SUPPORTED_SCHEMA_VERSIONS,
+  DIGEST_SUPPORTED_CONTRACTS,
   formatDigestSyncResult,
   inputArtifactDigest,
   inputArtifactLineCount,

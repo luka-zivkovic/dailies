@@ -1,4 +1,5 @@
 import { createHash } from 'node:crypto';
+import { RELEASE_POLICY_CONTRACT } from './contracts.js';
 import { z } from 'zod';
 import {
   compareExactRationals,
@@ -140,7 +141,8 @@ export const criterionPolicyV2Schema = z.discriminatedUnion('consequence', [
 ]);
 
 export const releasePolicyV2Schema = z.object({
-  schemaVersion: z.literal(2),
+  contract: z.literal(RELEASE_POLICY_CONTRACT),
+  schemaVersion: z.literal(1),
   id: nonBlankStringSchema,
   version: nonBlankStringSchema,
   manifestId: nonBlankStringSchema,
@@ -160,7 +162,6 @@ export type ReleasePolicyV2 = z.infer<typeof releasePolicyV2Schema>;
 
 export function releasePolicyV2CandidateProjection(policy: ReleasePolicyV2): ReleasePolicyV1 {
   return {
-    schemaVersion: 1,
     id: policy.id,
     version: policy.version,
     manifestId: policy.manifestId,
