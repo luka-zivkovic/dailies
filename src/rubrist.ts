@@ -16,12 +16,12 @@ import {
 } from './retry.js';
 import { RubristProtocolError } from './rubrist-canonical.js';
 import {
-  rubristReceiptV2Schema,
-  verifyRubristReceiptV2,
+  rubristReceiptSchema,
+  verifyRubristReceipt,
   type RubristOutcome,
-  type RubristReceiptV2,
-  type RubristReceiptV2Verification,
-} from './rubrist-receipt-v2.js';
+  type RubristReceipt,
+  type RubristReceiptVerification,
+} from './rubrist-receipt.js';
 
 export { RubristProtocolError, canonicalJson, sha256Digest } from './rubrist-canonical.js';
 
@@ -119,16 +119,16 @@ export interface RubristCandidateItem {
 export interface RubristAssessment {
   /** Eval-run identity returned by the independently recorded batch submission. */
   evalRunId: string;
-  receipt: RubristReceiptV2;
+  receipt: RubristReceipt;
   /** Every item's verified outcome; collection returns only complete receipts. */
   outcomes: Map<string, RubristOutcome>;
   operations: RubristEvidenceOperation[];
 }
 
 export class RubristIncompleteError extends OperationError {
-  readonly receipt: RubristReceiptV2;
+  readonly receipt: RubristReceipt;
 
-  constructor(receipt: RubristReceiptV2) {
+  constructor(receipt: RubristReceipt) {
     super('Rubrist assessment receipt is structurally valid but incomplete', 'incomplete');
     this.name = 'RubristIncompleteError';
     this.receipt = receipt;
@@ -137,14 +137,14 @@ export class RubristIncompleteError extends OperationError {
 
 export class RubristCollectionError extends OperationError {
   readonly operations: RubristEvidenceOperation[];
-  readonly receipt?: RubristReceiptV2;
+  readonly receipt?: RubristReceipt;
   readonly evalRunId?: string;
   readonly originalError: unknown;
 
   constructor(
     error: unknown,
     operations: RubristEvidenceOperation[],
-    receipt?: RubristReceiptV2,
+    receipt?: RubristReceipt,
     evalRunId?: string,
   ) {
     const detail = classifyOperationError(error);
@@ -259,7 +259,7 @@ async function executeEvidenceOperation<T>(
 function collectOperationFailure(
   error: unknown,
   operations: RubristEvidenceOperation[],
-  receipt?: RubristReceiptV2,
+  receipt?: RubristReceipt,
   evalRunId?: string,
 ): never {
   if (error instanceof RubristOperationFailure) {
@@ -438,8 +438,8 @@ export async function collectRubristAssessment(
     judge.url,
     `/api/v1/eval-runs/${encodeURIComponent(batch.evalRunId)}/assessment-receipt`,
   );
-  let receipt: RubristReceiptV2;
-  let verification: RubristReceiptV2Verification;
+  let receipt: RubristReceipt;
+  let verification: RubristReceiptVerification;
   try {
     const remainingMs = deadline - Date.now();
     if (remainingMs <= 0) {
@@ -466,7 +466,7 @@ export async function collectRubristAssessment(
           'Rubrist assessment receipt',
         );
         const parsedReceipt = protocolParse(
-          rubristReceiptV2Schema,
+          rubristReceiptSchema,
           receiptRaw,
           'Rubrist assessment receipt',
         );
@@ -480,7 +480,7 @@ export async function collectRubristAssessment(
         }
         return {
           receipt: parsedReceipt,
-          verification: verifyRubristReceiptV2(receiptRaw, {
+          verification: verifyRubristReceipt(receiptRaw, {
             evalRunId: batch.evalRunId,
             skillVersionId: judge.skillVersionId,
             candidates,

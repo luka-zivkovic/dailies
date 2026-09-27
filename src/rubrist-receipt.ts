@@ -3,17 +3,17 @@ import type { RubristCandidateItem } from './rubrist.js';
 import { canonicalJson, RubristProtocolError, sha256Digest } from './rubrist-canonical.js';
 import {
   rubristEvaluatorIdentitySchema,
-  rubristSkillDigestV2,
-  rubristV2CountSchema,
-  rubristV2DigestSchema,
-  withRubristV2RawGuards,
-} from './rubrist-v2.js';
+  rubristSkillDigest,
+  rubristCountSchema,
+  rubristDigestSchema,
+  withRubristRawGuards,
+} from './rubrist-identity.js';
 
-// Rubrist assessment receipt v2 (contracts/assessment-receipt-v2.md), verified
-// independently of Rubrist's runtime. It replaced receipt v1 in every report
-// format (Dailies ADR-0008).
+// Rubrist assessment receipt (contracts/assessment-receipt-v1.md), verified
+// independently of Rubrist's runtime. Every report format consumes it
+// (Dailies ADR-0008).
 
-export const RUBRIST_RECEIPT_V2_CONTRACT = 'rubrist/assessment-receipt/v2';
+export const RUBRIST_RECEIPT_CONTRACT = 'rubrist/assessment-receipt/v1';
 
 const identifierSchema = z.string().min(1);
 
@@ -33,7 +33,7 @@ const failureKinds = [
 const itemSchema = z.object({
   clientItemId: identifierSchema,
   caseId: identifierSchema,
-  contentDigest: rubristV2DigestSchema,
+  contentDigest: rubristDigestSchema,
   result: z.discriminatedUnion('state', [
     z.object({ state: z.literal('outcome'), outcome: z.enum(['pass', 'fail', 'abstain']) }).strict(),
     z.object({ state: z.literal('failure'), failureKind: z.enum(failureKinds) }).strict(),
@@ -51,13 +51,13 @@ const itemSchema = z.object({
     systemFingerprint: z.string().nullable(),
     upstreamProvider: z.string().nullable(),
     thinkingReturned: z.boolean().nullable(),
-    reasoningTokens: rubristV2CountSchema.nullable(),
+    reasoningTokens: rubristCountSchema.nullable(),
   }).strict().nullable(),
 }).strict();
 
 const receiptObjectSchema = z.object({
-  contract: z.literal(RUBRIST_RECEIPT_V2_CONTRACT),
-  schemaVersion: z.literal(2),
+  contract: z.literal(RUBRIST_RECEIPT_CONTRACT),
+  schemaVersion: z.literal(1),
   receiptId: identifierSchema,
   evalRunId: identifierSchema,
   projectId: identifierSchema,
@@ -66,27 +66,27 @@ const receiptObjectSchema = z.object({
   status: z.enum(['complete', 'incomplete']),
   run: z.object({
     status: z.enum(['pending', 'running', 'completed', 'failed', 'canceled']),
-    totalItems: rubristV2CountSchema,
-    passItems: rubristV2CountSchema,
-    failItems: rubristV2CountSchema,
-    abstainedItems: rubristV2CountSchema,
-    failedItems: rubristV2CountSchema,
-    notAttemptedItems: rubristV2CountSchema,
-    agreedItems: rubristV2CountSchema,
+    totalItems: rubristCountSchema,
+    passItems: rubristCountSchema,
+    failItems: rubristCountSchema,
+    abstainedItems: rubristCountSchema,
+    failedItems: rubristCountSchema,
+    notAttemptedItems: rubristCountSchema,
+    agreedItems: rubristCountSchema,
   }).strict(),
   evaluator: rubristEvaluatorIdentitySchema,
-  skillDigest: rubristV2DigestSchema,
-  datasetDigest: rubristV2DigestSchema,
+  skillDigest: rubristDigestSchema,
+  datasetDigest: rubristDigestSchema,
   items: z.array(itemSchema).min(1),
-  evidenceDigest: rubristV2DigestSchema,
+  evidenceDigest: rubristDigestSchema,
 }).strict();
 
-export const rubristReceiptV2Schema = withRubristV2RawGuards(receiptObjectSchema, 'assessment receipts');
-export type RubristReceiptV2 = z.infer<typeof receiptObjectSchema>;
-export type RubristReceiptV2Item = RubristReceiptV2['items'][number];
+export const rubristReceiptSchema = withRubristRawGuards(receiptObjectSchema, 'assessment receipts');
+export type RubristReceipt = z.infer<typeof receiptObjectSchema>;
+export type RubristReceiptItem = RubristReceipt['items'][number];
 
 /** Identities the consumer already holds, such as the suite manifest member's skillDigest. */
-export interface RubristReceiptV2Expectations {
+export interface RubristReceiptExpectations {
   evalRunId?: string | undefined;
   skillVersionId?: string | undefined;
   skillDigest?: string | undefined;
@@ -97,7 +97,7 @@ export interface RubristReceiptV2Expectations {
 /** An item's outcome: the evaluator passed it, failed it, or abstained. */
 export type RubristOutcome = 'pass' | 'fail' | 'abstain';
 
-export interface RubristReceiptV2Verification {
+export interface RubristReceiptVerification {
   status: 'complete' | 'incomplete';
   /**
    * Every item's outcome, for a complete receipt only: an incomplete receipt
@@ -109,10 +109,10 @@ export interface RubristReceiptV2Verification {
 const byCodeUnit = (left: string, right: string) => left < right ? -1 : left > right ? 1 : 0;
 
 function fail(message: string): never {
-  throw new RubristProtocolError(`Rubrist receipt v2 ${message}`);
+  throw new RubristProtocolError(`Rubrist receipt ${message}`);
 }
 
-function verifyItem(item: RubristReceiptV2Item, receipt: RubristReceiptV2): void {
+function verifyItem(item: RubristReceiptItem, receipt: RubristReceipt): void {
   const where = `item ${item.clientItemId}`;
   const hasOutcome = item.result.state === 'outcome';
   if (hasOutcome !== (item.verdictId !== null)) fail(`${where}: verdictId must be present exactly for items with an outcome`);
@@ -134,17 +134,17 @@ function verifyItem(item: RubristReceiptV2Item, receipt: RubristReceiptV2): void
   }
 }
 
-/** Every semantic rule of receipt v2, plus candidate linkage when the candidates are supplied. */
-export function verifyRubristReceiptV2(
+/** Every semantic rule of the assessment receipt, plus candidate linkage when the candidates are supplied. */
+export function verifyRubristReceipt(
   raw: unknown,
-  expected: RubristReceiptV2Expectations = {},
-): RubristReceiptV2Verification {
-  const parsed = rubristReceiptV2Schema.safeParse(raw);
+  expected: RubristReceiptExpectations = {},
+): RubristReceiptVerification {
+  const parsed = rubristReceiptSchema.safeParse(raw);
   if (!parsed.success) fail(`is structurally invalid: ${parsed.error.issues[0]?.message ?? 'unknown issue'}`);
   const receipt = parsed.data;
   const { evidenceDigest: _excluded, ...unsigned } = receipt;
   if (receipt.evidenceDigest !== sha256Digest(unsigned)) fail('evidenceDigest mismatch');
-  if (receipt.skillDigest !== rubristSkillDigestV2(receipt.evaluator)) fail('skillDigest mismatch');
+  if (receipt.skillDigest !== rubristSkillDigest(receipt.evaluator)) fail('skillDigest mismatch');
   const ids = receipt.items.map((item) => item.clientItemId);
   if (new Set(ids).size !== ids.length) fail('clientItemId values must be unique');
   const sorted = [...ids].sort(byCodeUnit);
@@ -204,11 +204,11 @@ export function verifyRubristReceiptV2(
   return { status: receipt.status, outcomes };
 }
 
-/** Parse an exact canonical receipt v2 copy: valid UTF-8, no byte-order mark, canonical JSON, every rule. */
-export function parseCanonicalRubristReceiptV2Bytes(
+/** Parse an exact canonical receipt copy: valid UTF-8, no byte-order mark, canonical JSON, every rule. */
+export function parseCanonicalRubristReceiptBytes(
   bytes: Uint8Array,
-  expected: RubristReceiptV2Expectations = {},
-): { receipt: RubristReceiptV2; verification: RubristReceiptV2Verification } {
+  expected: RubristReceiptExpectations = {},
+): { receipt: RubristReceipt; verification: RubristReceiptVerification } {
   let text: string;
   try {
     text = new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes);
@@ -221,7 +221,7 @@ export function parseCanonicalRubristReceiptV2Bytes(
   } catch {
     fail('bytes are not valid JSON');
   }
-  const verification = verifyRubristReceiptV2(raw, expected);
+  const verification = verifyRubristReceipt(raw, expected);
   if (canonicalJson(raw) !== text) fail('copy is not exact canonical JSON');
-  return { receipt: raw as RubristReceiptV2, verification };
+  return { receipt: raw as RubristReceipt, verification };
 }

@@ -11,7 +11,7 @@ import {
   expectedBinaryCalibrationIdentity,
   parseCanonicalBinaryCalibrationBytes,
   type BinaryCalibrationArtifact,
-} from '../src/binary-calibration-v2.js';
+} from '../src/binary-calibration.js';
 import { canonicalJson, sha256Digest } from '../src/rubrist.js';
 import { MAX_CALIBRATION_FILE_BYTES } from '../src/calibration-file.js';
 import { parseSuiteConfigV6, type SuiteConfigV6 } from '../src/config-v6.js';
@@ -20,12 +20,12 @@ import { parseCanonicalCalibrationReportV6Bytes } from '../src/report-v6.js';
 import { preflightCalibrationSuiteRelease } from '../src/suite-runner-v6.js';
 import { runCalibrationSuiteRelease } from '../src/suite-runner-v6.js';
 import {
-  evaluatorSuiteManifestV2Digest,
-  verifyEvaluatorSuiteManifestV2,
-  type EvaluatorSuiteManifestV2,
-  type EvaluatorSuiteManifestV2Member,
-} from '../src/suite-manifest-v2.js';
-import { evaluatorIdentityFor, knownEvaluatorIdentity, receiptV2 } from './rubrist-v2-support.js';
+  evaluatorSuiteManifestDigest,
+  verifyEvaluatorSuiteManifest,
+  type EvaluatorSuiteManifest,
+  type EvaluatorSuiteManifestMember,
+} from '../src/suite-manifest.js';
+import { evaluatorIdentityFor, knownEvaluatorIdentity, receiptDocument } from './rubrist-support.js';
 
 const tempDirs: string[] = [];
 
@@ -56,25 +56,25 @@ const calibrationRequirement: BinaryCalibrationRequirementV1 = {
   }],
 };
 
-async function manifestFixture(): Promise<EvaluatorSuiteManifestV2> {
+async function manifestFixture(): Promise<EvaluatorSuiteManifest> {
   const raw = JSON.parse(await readFile(
-    new URL('../contracts/fixtures/evaluator-suite-manifest-v2.complete.json', import.meta.url),
+    new URL('../contracts/fixtures/evaluator-suite-manifest-v1.complete.json', import.meta.url),
     'utf8',
-  )) as EvaluatorSuiteManifestV2;
+  )) as EvaluatorSuiteManifest;
   raw.trialPlan = null;
   // The second member's fixture evaluator is typed-question; these tests bind a prompted one.
   raw.members[1]!.skillDigest = sha256Digest(knownEvaluatorIdentity('repeated'));
-  raw.manifestDigest = evaluatorSuiteManifestV2Digest(raw);
-  return verifyEvaluatorSuiteManifestV2(raw);
+  raw.manifestDigest = evaluatorSuiteManifestDigest(raw);
+  return verifyEvaluatorSuiteManifest(raw);
 }
 
 async function calibrationForMember(
-  manifest: EvaluatorSuiteManifestV2,
-  member: EvaluatorSuiteManifestV2Member,
+  manifest: EvaluatorSuiteManifest,
+  member: EvaluatorSuiteManifestMember,
   fixtureName: 'complete' | 'repeated' | 'incomplete' = 'complete',
 ): Promise<{ bytes: Uint8Array; artifact: BinaryCalibrationArtifact }> {
   const fixtureBytes = await readFile(
-    new URL(`../contracts/fixtures/binary-calibration-v2.${fixtureName}.json`, import.meta.url),
+    new URL(`../contracts/fixtures/binary-calibration-v1.${fixtureName}.json`, import.meta.url),
   );
   const artifact = structuredClone(
     parseCanonicalBinaryCalibrationBytes(fixtureBytes),
@@ -121,7 +121,7 @@ async function calibrationForMember(
 async function preflightFixture(): Promise<{
   dir: string;
   config: SuiteConfigV6;
-  manifest: EvaluatorSuiteManifestV2;
+  manifest: EvaluatorSuiteManifest;
   calibrationBytes: Map<string, Uint8Array>;
 }> {
   const dir = await mkdtemp(join(tmpdir(), 'dailies-v6-preflight-'));
@@ -228,13 +228,13 @@ interface SubmittedItem {
 }
 
 function assessmentReceipt(
-  manifest: EvaluatorSuiteManifestV2,
+  manifest: EvaluatorSuiteManifest,
   skillVersionId: string,
   items: SubmittedItem[],
   failingPositions: Set<number>,
 ): Record<string, unknown> {
   const member = manifest.members.find((entry) => entry.skillVersionId === skillVersionId)!;
-  return receiptV2({
+  return receiptDocument({
     evalRunId: `run-${skillVersionId}`,
     projectId: manifest.projectId,
     skillId: member.skillId,

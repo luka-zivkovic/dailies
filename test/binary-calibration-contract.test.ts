@@ -17,7 +17,7 @@ import {
   wilsonScoreBinary64,
   type BinaryCalibrationArtifact,
   type ExpectedBinaryCalibrationIdentity,
-} from '../src/binary-calibration-v2.js';
+} from '../src/binary-calibration.js';
 
 type Mutation =
   | { op: 'add'; path: string; value: unknown }
@@ -38,7 +38,7 @@ interface ConformanceCase {
 }
 
 interface ConformanceCorpus {
-  contract: 'rubrist/binary-calibration/v2';
+  contract: 'rubrist/binary-calibration/v1';
   baseFixture: string;
   expectedIdentityByFixture: Record<string, ExpectedBinaryCalibrationIdentity>;
   cases: ConformanceCase[];
@@ -47,13 +47,13 @@ interface ConformanceCorpus {
 const contractRoot = new URL('../contracts/', import.meta.url);
 // Byte-identical to Rubrist's published copies (Dailies ADR-0008).
 const pinnedFileDigests = {
-  schema: '9aecd12e6acc87c639dcb7edf947d2ffdb6963190d818495c2e0a083226b3f69',
-  specification: 'b39770e55b4d730810cebc5b4522e9a1eb142b23868f0fed4942d06edf8916fd',
-  complete: '32a29cd8debe0d20a67c23d23e4586ffad39a1f4df547d76843637c20cda3cd7',
-  repeated: '7ab1f936e8b7bfe087c2aad4e9d2a4405e011de341204fdd3d4d0c15871a5a6a',
-  incomplete: '16935ddbba3067ed3925bbcab2bb4f3a84dba20aa3b2e8af3eba75e9efd078d1',
-  typedQuestion: 'e27f3c1e89bfd8a9471fa4b2f048edb07f09eec981d86162fd299871cbf61a2a',
-  conformance: '19556716d2af7c38cbbb229c9f6185ffacdb4829ca6517984c3ddf7880bf4d8b',
+  schema: 'c427a1f142a8f10efacdf8ccb061ee7e2772d3ce01d098c6598cbbcdf6b26a8e',
+  specification: 'e746ede31c475111f2097f44260d988ccdeb85326184ff4dfd26f3923ab7d876',
+  complete: '58bacf44a44f9beb990856b879be5cc0cb4e6063aefafb6a05abc4f79da2d14b',
+  repeated: 'd44084f8777901fd3c87519848d1dd8e20cbb2a4d32e903bc751a40ab5c56b8d',
+  incomplete: '93eef8f7e35e66ed7a2f426064fcd14bd11ad72a580f57fe156e7e71dbb31513',
+  typedQuestion: '4bad5ab0a0482824b481e340b30907e9a8ee768f475878e8c55082a8b57410a2',
+  conformance: '1f601de44ccfc7f6556b8879ac1f18e9247119647d8f2c1a88efc69fe4d1921d',
   wilsonReference: '948ac238d7b5780dd160dd29bbcad52259c3ae574287fc19fb63cdc41e02d8dd',
 } as const;
 
@@ -70,7 +70,7 @@ function fileDigest(relativePath: string): string {
 }
 
 function corpus(): ConformanceCorpus {
-  return json('fixtures/binary-calibration-v2.conformance.json') as ConformanceCorpus;
+  return json('fixtures/binary-calibration-v1.conformance.json') as ConformanceCorpus;
 }
 
 function fixture(name: string): BinaryCalibrationArtifact {
@@ -155,23 +155,23 @@ function materialize(testCase: ConformanceCase, defaultFixture: string): {
   return { artifact, fixtureName };
 }
 
-describe('vendored Rubrist binary calibration v2 contract (Dailies ADR-0008)', () => {
+describe('vendored Rubrist binary calibration contract (Dailies ADR-0008)', () => {
   it('pins only the reviewed public producer bytes', () => {
-    expect(fileDigest('binary-calibration-v2.schema.json')).toBe(pinnedFileDigests.schema);
-    expect(fileDigest('binary-calibration-v2.md')).toBe(pinnedFileDigests.specification);
-    expect(fileDigest('fixtures/binary-calibration-v2.complete.json')).toBe(pinnedFileDigests.complete);
-    expect(fileDigest('fixtures/binary-calibration-v2.repeated.json')).toBe(pinnedFileDigests.repeated);
-    expect(fileDigest('fixtures/binary-calibration-v2.incomplete.json')).toBe(pinnedFileDigests.incomplete);
-    expect(fileDigest('fixtures/binary-calibration-v2.typed-question.json')).toBe(pinnedFileDigests.typedQuestion);
-    expect(fileDigest('fixtures/binary-calibration-v2.conformance.json')).toBe(pinnedFileDigests.conformance);
+    expect(fileDigest('binary-calibration-v1.schema.json')).toBe(pinnedFileDigests.schema);
+    expect(fileDigest('binary-calibration-v1.md')).toBe(pinnedFileDigests.specification);
+    expect(fileDigest('fixtures/binary-calibration-v1.complete.json')).toBe(pinnedFileDigests.complete);
+    expect(fileDigest('fixtures/binary-calibration-v1.repeated.json')).toBe(pinnedFileDigests.repeated);
+    expect(fileDigest('fixtures/binary-calibration-v1.incomplete.json')).toBe(pinnedFileDigests.incomplete);
+    expect(fileDigest('fixtures/binary-calibration-v1.typed-question.json')).toBe(pinnedFileDigests.typedQuestion);
+    expect(fileDigest('fixtures/binary-calibration-v1.conformance.json')).toBe(pinnedFileDigests.conformance);
     expect(fileDigest('reference/binary-calibration-wilson-v1.py')).toBe(
       pinnedFileDigests.wilsonReference,
     );
     // The private ledger is Rubrist's alone; only its commitment digest is public.
-    expect(() => bytes('binary-calibration-private-ledger-v2.schema.json')).toThrow();
-    expect(() => bytes('fixtures/binary-calibration-private-ledger-v2.complete.json')).toThrow();
-    expect(() => bytes('fixtures/binary-calibration-private-ledger-v2.incomplete.json')).toThrow();
-    expect(() => bytes('binary-calibration-private-ledger-v2.md')).toThrow();
+    expect(() => bytes('binary-calibration-private-ledger-v1.schema.json')).toThrow();
+    expect(() => bytes('fixtures/binary-calibration-private-ledger-v1.complete.json')).toThrow();
+    expect(() => bytes('fixtures/binary-calibration-private-ledger-v1.incomplete.json')).toThrow();
+    expect(() => bytes('binary-calibration-private-ledger-v1.md')).toThrow();
   });
 
   it('accepts all four exact canonical transport fixtures with complete expected identity', () => {
@@ -193,7 +193,7 @@ describe('vendored Rubrist binary calibration v2 contract (Dailies ADR-0008)', (
   });
 
   it('requires the complete closed expected-identity tuple', () => {
-    const complete = fixture('binary-calibration-v2.complete.json');
+    const complete = fixture('binary-calibration-v1.complete.json');
     const expected = expectedBinaryCalibrationIdentity(complete);
     const { drawDigest: _missing, ...partial } = expected;
     expect(() => verifyBinaryCalibrationArtifact(
@@ -212,7 +212,7 @@ describe('vendored Rubrist binary calibration v2 contract (Dailies ADR-0008)', (
   });
 
   it('rejects BOM, invalid UTF-8, invalid JSON, and noncanonical transport bytes', () => {
-    const complete = bytes('fixtures/binary-calibration-v2.complete.json');
+    const complete = bytes('fixtures/binary-calibration-v1.complete.json');
     expect(() => parseCanonicalBinaryCalibrationBytes(Buffer.concat([
       Buffer.from([0xef, 0xbb, 0xbf]),
       complete,
@@ -226,7 +226,7 @@ describe('vendored Rubrist binary calibration v2 contract (Dailies ADR-0008)', (
   });
 
   it('matches JSON Schema structure and every portable semantic case independently', () => {
-    const schema = json('binary-calibration-v2.schema.json');
+    const schema = json('binary-calibration-v1.schema.json');
     const validate = new Ajv2020({ strict: true, allErrors: true }).compile(schema as object);
     const vectors = corpus();
     expect(vectors.cases).toHaveLength(114);

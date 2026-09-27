@@ -5,6 +5,13 @@ versioning while the public API remains pre-1.0.
 
 ## Unreleased
 
+- Take Rubrist's launch-baseline contract names (Rubrist Batch 8G, Dailies
+  ADR-0010): the vendored contracts are `rubrist/assessment-receipt/v1`,
+  `rubrist/binary-calibration/v1`, and `rubrist/evaluator-suite-manifest/v1`
+  with schema version 1 and the `rubrist/evaluator-identity/v1` basis, and
+  the evidence kinds are `rubrist_receipt_v1` and
+  `rubrist_binary_calibration_v1`. Their modules and exports drop the `v2`
+  suffix (for example `src/rubrist-receipt.ts` and `verifyRubristReceipt`).
 - Switch every report format to Rubrist v2 evidence in place (ADR-0008
   decision 2, with Rubrist Batch 8D). Reports v4 to v6 verify assessment
   receipt v2, v5 and v6 pin evaluator suite manifest v2, and v6 verifies

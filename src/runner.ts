@@ -7,7 +7,7 @@ import {
   collectRubristAssessment,
   type RubristEvidenceOperation,
 } from './rubrist.js';
-import type { RubristOutcome, RubristReceiptV2 } from './rubrist-receipt-v2.js';
+import type { RubristOutcome, RubristReceipt } from './rubrist-receipt.js';
 import { classifyOperationError } from './errors.js';
 import { judgeItem } from './judge.js';
 import { loadInputArtifact } from './inputs.js';
@@ -233,7 +233,7 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
     evalRunId?: string;
     status: 'complete' | 'incomplete' | 'failed';
     operations: RubristEvidenceOperation[];
-    receipt?: RubristReceiptV2;
+    receipt?: RubristReceipt;
   } | undefined;
   let items: ItemResult[];
   if (config.judge.type === 'rubrist') {
@@ -308,7 +308,7 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
   const trustPath = config.judge.type === 'exact-match'
     ? { class: 'deterministic' as const, derivation: 'exact_match_v1' as const }
     : config.judge.type === 'rubrist'
-      ? { class: 'verified' as const, derivation: 'rubrist_receipt_v2' as const }
+      ? { class: 'verified' as const, derivation: 'rubrist_receipt_v1' as const }
       : { class: 'self_reported' as const, derivation: 'http_judge_v1' as const };
   const policyAdmissible = config.trustPolicy.admissibleClasses.includes(trustPath.class);
   const trust = totals.evaluated > 0

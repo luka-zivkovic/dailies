@@ -1,15 +1,15 @@
 import { z } from 'zod';
 import { sha256Digest } from './rubrist-canonical.js';
 
-// Shared building blocks for the Rubrist v2 evidence Dailies verifies
+// Shared building blocks for the Rubrist evidence Dailies verifies
 // (Rubrist ADR-0014; Dailies ADR-0008). This is Dailies' own implementation of
 // the vendored contracts in contracts/: nothing here imports Rubrist code.
 
-export const RUBRIST_EVALUATOR_IDENTITY_BASIS = 'rubrist/evaluator-identity/v2';
-export const RUBRIST_V2_MAX_JSON_DEPTH = 64;
+export const RUBRIST_EVALUATOR_IDENTITY_BASIS = 'rubrist/evaluator-identity/v1';
+export const RUBRIST_MAX_JSON_DEPTH = 64;
 
-export const rubristV2DigestSchema = z.string().regex(/^sha256:[a-f0-9]{64}$/);
-export const rubristV2CountSchema = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
+export const rubristDigestSchema = z.string().regex(/^sha256:[a-f0-9]{64}$/);
+export const rubristCountSchema = z.number().int().min(0).max(Number.MAX_SAFE_INTEGER);
 
 /** Whether a string holds an unpaired UTF-16 surrogate. */
 function stringHasLoneSurrogate(value: string): boolean {
@@ -27,12 +27,12 @@ function stringHasLoneSurrogate(value: string): boolean {
 }
 
 /**
- * The raw-document rules the v2 contracts share and JSON Schema can't fully
+ * The raw-document rules the contracts share and JSON Schema can't fully
  * express, checked iteratively so hostile nesting fails validation instead of
  * the stack: nesting beyond depth 64 (the root is depth 0), an own `__proto__`
  * key anywhere, and a lone surrogate in any key or string.
  */
-export function rubristV2RawDocumentProblem(raw: unknown): string | null {
+export function rubristRawDocumentProblem(raw: unknown): string | null {
   const stack: Array<{ entry: unknown; depth: number }> = [{ entry: raw, depth: 0 }];
   while (stack.length > 0) {
     const { entry, depth } = stack.pop()!;
@@ -41,7 +41,7 @@ export function rubristV2RawDocumentProblem(raw: unknown): string | null {
       continue;
     }
     if (entry === null || typeof entry !== 'object') continue;
-    if (depth > RUBRIST_V2_MAX_JSON_DEPTH) return `must not nest deeper than ${RUBRIST_V2_MAX_JSON_DEPTH} levels`;
+    if (depth > RUBRIST_MAX_JSON_DEPTH) return `must not nest deeper than ${RUBRIST_MAX_JSON_DEPTH} levels`;
     if (Array.isArray(entry)) {
       for (const child of entry) stack.push({ entry: child, depth: depth + 1 });
       continue;
@@ -56,9 +56,9 @@ export function rubristV2RawDocumentProblem(raw: unknown): string | null {
 }
 
 /** Wrap an object schema so the raw document is checked first. */
-export function withRubristV2RawGuards<T extends z.ZodTypeAny>(schema: T, noun: string) {
+export function withRubristRawGuards<T extends z.ZodTypeAny>(schema: T, noun: string) {
   return z.unknown().superRefine((raw, ctx) => {
-    const problem = rubristV2RawDocumentProblem(raw);
+    const problem = rubristRawDocumentProblem(raw);
     if (problem !== null) ctx.addIssue({ code: z.ZodIssueCode.custom, message: `${noun} ${problem}` });
   }).pipe(schema);
 }
@@ -96,7 +96,7 @@ const REASONING_FAMILY: Partial<Record<Provider, 'anthropic' | 'openai' | 'openr
   custom: 'openai',
 };
 
-// Calibration v2 states this in its JSON Schema; receipts and manifests reject
+// Calibration states this in its JSON Schema; receipts and manifests reject
 // lone surrogates anywhere through their raw guards.
 const modelTextSchema = z.string().min(1).max(240)
   .refine((value) => !stringHasLoneSurrogate(value), 'model text must not contain lone UTF-16 surrogates');
@@ -129,7 +129,7 @@ export const rubristExecutionBindingSchema = z.object({
   provider: z.enum(providers),
   endpoint: z.discriminatedUnion('kind', [
     z.object({ kind: z.literal('managed') }).strict(),
-    z.object({ kind: z.literal('custom'), baseUrlDigest: rubristV2DigestSchema }).strict(),
+    z.object({ kind: z.literal('custom'), baseUrlDigest: rubristDigestSchema }).strict(),
   ]),
   modelId: modelTextSchema,
   modelVersion: modelTextSchema,
@@ -174,15 +174,15 @@ export const rubristExecutionBindingSchema = z.object({
 });
 export type RubristExecutionBinding = z.infer<typeof rubristExecutionBindingSchema>;
 
-/** The evaluator identity v2 evidence carries: never the definition's text, only its digest. */
+/** The evaluator identity the evidence carries: never the definition's text, only its digest. */
 export const rubristEvaluatorIdentitySchema = z.object({
   basis: z.literal(RUBRIST_EVALUATOR_IDENTITY_BASIS),
-  definitionDigest: rubristV2DigestSchema,
+  definitionDigest: rubristDigestSchema,
   executionBinding: rubristExecutionBindingSchema,
 }).strict();
 export type RubristEvaluatorIdentity = z.infer<typeof rubristEvaluatorIdentitySchema>;
 
-/** skillDigest v2: SHA-256 over the canonical evaluator identity. */
-export function rubristSkillDigestV2(identity: RubristEvaluatorIdentity): string {
+/** skillDigest: SHA-256 over the canonical evaluator identity. */
+export function rubristSkillDigest(identity: RubristEvaluatorIdentity): string {
   return sha256Digest(identity);
 }

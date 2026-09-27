@@ -106,7 +106,7 @@ function listen(server: Server): Promise<number> {
 }
 
 const MOCK_EVALUATOR = {
-  basis: 'rubrist/evaluator-identity/v2',
+  basis: 'rubrist/evaluator-identity/v1',
   definitionDigest: `sha256:${'d'.repeat(64)}`,
   executionBinding: {
     provider: 'mock',
@@ -214,8 +214,8 @@ function buildReceipt(submitted: SubmittedItem[], mode: MockMode): Record<string
   const incomplete = mode === 'incomplete' || mode === 'canceled';
   const runStatus = mode === 'canceled' ? 'canceled' : incomplete ? 'failed' : 'completed';
   const receipt: Record<string, unknown> = {
-    contract: 'rubrist/assessment-receipt/v2',
-    schemaVersion: 2,
+    contract: 'rubrist/assessment-receipt/v1',
+    schemaVersion: 1,
     receiptId: 'receipt-run-1',
     evalRunId: 'run-1',
     projectId: 'project-1',
@@ -231,7 +231,7 @@ function buildReceipt(submitted: SubmittedItem[], mode: MockMode): Record<string
     items,
   };
 
-  if (mode === 'extra-field') receipt.calibrationRef = 'not-part-of-v2';
+  if (mode === 'extra-field') receipt.calibrationRef = 'not-part-of-the-contract';
   if (mode === 'future-schema') receipt.schemaVersion = 3;
   if (mode === 'dataset-mismatch') receipt.datasetDigest = `sha256:${'1'.repeat(64)}`;
   receipt.evidenceDigest = independentDigest(receipt);
@@ -556,7 +556,7 @@ describe('Rubrist release-evidence boundary', () => {
       expect(strict.trust).toEqual({
         status: 'complete',
         class: 'verified',
-        derivation: 'rubrist_receipt_v2',
+        derivation: 'rubrist_receipt_v1',
         admissible: true,
       });
       expect(strict.items.every((item) => item.trustClass === 'verified')).toBe(true);
@@ -771,7 +771,7 @@ describe('Rubrist release-evidence boundary', () => {
       expect(report.evidence).toBeUndefined();
       expect(report.trust).toEqual({
         status: 'unavailable',
-        derivation: 'rubrist_receipt_v2',
+        derivation: 'rubrist_receipt_v1',
         admissible: false,
         reason: 'no_completed_evidence',
       });
@@ -870,7 +870,7 @@ describe('Rubrist release-evidence boundary', () => {
       )).toBe(true);
       expect(report.trust).toEqual({
         status: 'unavailable',
-        derivation: 'rubrist_receipt_v2',
+        derivation: 'rubrist_receipt_v1',
         admissible: false,
         reason: 'no_completed_evidence',
       });
@@ -879,7 +879,7 @@ describe('Rubrist release-evidence boundary', () => {
       forgedVerifiedTrust.trust = {
         status: 'complete',
         class: 'verified',
-        derivation: 'rubrist_receipt_v2',
+        derivation: 'rubrist_receipt_v1',
         admissible: true,
       };
       expect(reportSchema.safeParse(forgedVerifiedTrust).success).toBe(false);
@@ -911,7 +911,7 @@ describe('Rubrist release-evidence boundary', () => {
       expect(report.decision).toBe('inconclusive');
       expect(report.trust).toEqual({
         status: 'unavailable',
-        derivation: 'rubrist_receipt_v2',
+        derivation: 'rubrist_receipt_v1',
         admissible: false,
         reason: 'no_completed_evidence',
       });

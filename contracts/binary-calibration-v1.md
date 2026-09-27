@@ -1,10 +1,9 @@
-# Binary calibration artifact v2 specification
+# Binary calibration artifact v1 specification
 
-This document is normative for `rubrist/binary-calibration/v2` alongside
-`binary-calibration-v2.schema.json`. Rubrist ADR-0014 section 7 decides it.
-v2 keeps every rule of v1 except what ADR-0014 changes:
+This document is normative for `rubrist/binary-calibration/v1` alongside
+`binary-calibration-v1.schema.json`. Rubrist ADR-0014 section 7 decides it:
 
-- the evaluator is the v2 evaluator identity (basis, definition digest, and
+- the evaluator is the evaluator identity (basis, definition digest, and
   execution binding), with `skillDigest` and `requestedBindingDigest`
   recomputed from it;
 - error codes are the shared failure taxonomy of ADR-0014 section 6;
@@ -13,13 +12,11 @@ v2 keeps every rule of v1 except what ADR-0014 changes:
 - provider identity groups record the OpenRouter upstream that served the
   calls.
 
-v2 replaces v1 (ADR-0014 decision 6). The v1 documents are deleted with the
-v1 code, and at the launch baseline this contract takes the v1 name
-(decision 7). The artifact is immutable, aggregate-only,
+The artifact is immutable, aggregate-only,
 single-criterion evidence from one exact binary evaluator version measured
 against one exact governed-blind sealed-validation revision. It is not an
 assessment receipt, a provider transcript, or a release decision, and it does
-not change `rubrist/assessment-receipt/v2` or the evaluator suite manifest.
+not change `rubrist/assessment-receipt/v1` or the evaluator suite manifest.
 
 ## Closed public boundary
 
@@ -28,20 +25,20 @@ per-item attempts, dataset item identities, labels, payloads, rationales,
 provider request/response IDs, and per-observation commitments are invalid.
 The artifact publishes aggregate counts sufficient to recompute every metric.
 Aggregate-only is not anonymous: a class with very small support can disclose
-its aggregate outcome. v2 applies no differential privacy or suppression.
+its aggregate outcome. It applies no differential privacy or suppression.
 Consumers must expose minimum-support policy and operators must govern sealed
 population size accordingly; no public item linkage is added to solve this.
 
 The artifact includes one holistic commitment to the separately named private
-`rubrist/binary-calibration-private-ledger/v2`. That ledger contains the ordered
+`rubrist/binary-calibration-private-ledger/v1`. That ledger contains the ordered
 logical attempt evidence needed by the producer to reconstruct the aggregates.
 It remains inside the protected sealed execution boundary and has no read API.
 The commitment is SHA-256 over its exact canonical bytes. The public contract
 does not make that digest dereferenceable and does not expose subordinate
 observation commitments. A future ledger read or export is a development
-exposure under ADR-0007 and cannot be added to v2.
+exposure under ADR-0007 and cannot be added to this contract.
 
-The private ledger v2 commitment input is exact canonical JSON with this closed
+The private-ledger commitment input is exact canonical JSON with this closed
 shape: root `contract`, `schemaVersion`, `artifactId`, `calibrationRunId`,
 `canonicalizationVersion`, `projectId`, `revisionDigest`, `requestedProvider`,
 `itemCount`, `trialsPerItem`, and `records`; each record contains
@@ -68,7 +65,7 @@ globally requested provider; its observed model/version/fingerprint fields may
 be null for `requested_only` evidence, but the logical record is never omitted.
 
 The ledger root contract is exactly
-`rubrist/binary-calibration-private-ledger/v2` with schema version `2`.
+`rubrist/binary-calibration-private-ledger/v1` with schema version `1`.
 Item/commitment digests use the public lowercase SHA-256 form, salts match
 `^[a-f0-9]{64}$`, trial indexes are zero through nine, provider is a non-empty
 Unicode-scalar string capped at 4,096 code points, and observed provider fields
@@ -83,7 +80,7 @@ model, version, fingerprint, or upstream. Outcomes have at least one call.
 identity field, upstream included, requires at least one call; other typed
 failures may have zero or more calls.
 The strict structural schema is
-`binary-calibration-private-ledger-v2.schema.json`; it is producer-internal and
+`binary-calibration-private-ledger-v1.schema.json`; it is producer-internal and
 does not authorize a ledger API or export.
 
 The public artifact is complete evidence about its declared aggregate
@@ -97,9 +94,9 @@ The artifact binds:
 - artifact, calibration-run, project, and correction-lineage identity;
 - exact criterion ID, criterion-version ID, and criterion digest;
 - exact skill and skill-version IDs, the evaluator identity (`basis`,
-  `definitionDigest`, and the execution binding, the same object receipt v2
-  carries as `evaluator`), `skillDigest`, the output-contract digest, and
-  `requestedBindingDigest`;
+  `definitionDigest`, and the execution binding, the same object the
+  assessment receipt carries as `evaluator`), `skillDigest`, the
+  output-contract digest, and `requestedBindingDigest`;
 - an optional exact suite-manifest/member binding;
 - dataset revision ID, `revisionDigest`, `contentDigest`, item count,
   `sealed_validation` role, `sealed_intake` source, and `governed_blind`
@@ -115,7 +112,7 @@ The artifact binds:
 
 `revisionDigest` already binds the role and the multiset of frozen item
 digests in lexicographic digest order; it is not an item presentation-order
-claim. v2 does not invent a redundant `truthSetDigest`.
+claim. The artifact does not invent a redundant `truthSetDigest`.
 
 `executionBinding.modelVersion` records what Rubrist requested. It is not
 silently treated as observed immutable provider identity. Observed identity is
@@ -127,10 +124,10 @@ reported separately in each trial's provider groups.
 definition itself is not in the artifact, so a verifier needs it only to check
 `definitionDigest`. The execution binding's rules (the protocol belongs to the
 provider family, endpoints, routing, reasoning shapes, and unset settings as
-`null`) are structural and identical to receipt v2's.
+`null`) are structural and identical to the assessment receipt's.
 
 `outputContractDigest` is SHA-256 over canonical JSON of the definition's
-output contract. For a prompted definition that is v1's object:
+output contract. For a prompted definition that is this object:
 
 ```json
 {
@@ -170,7 +167,7 @@ bindings.
 ## Canonical JSON and time
 
 `canonicalizationVersion` is exactly `rubrist-canonical-json/v1`, the same
-algorithm used by assessment receipt v2:
+algorithm used by the assessment receipt:
 
 1. object keys sort lexicographically by ECMAScript UTF-16 code units at every
    depth;
@@ -183,8 +180,8 @@ Calibration tightens the admissible input domain. Every digest-covered number
 is a nonnegative safe integer, exact fraction component, or lowercase 16-hex
 binary64 bit string, except the execution binding's sampling settings:
 `temperature` in `[0,2]` and `topP` in `[0,1]` are finite JSON numbers
-serialized as ECMAScript does, exactly as in receipt v2 and `skillDigest`.
-Negative zero is invalid everywhere. Every string and object key must
+serialized as ECMAScript does, exactly as in the assessment receipt and
+`skillDigest`. Negative zero is invalid everywhere. Every string and object key must
 contain Unicode scalar values; unpaired UTF-16 surrogates are invalid. NFC and
 NFD strings remain distinct. UTF-8 BOM-prefixed bytes are invalid.
 Public free-text/identity strings are capped at 4,096 Unicode code points,
@@ -238,7 +235,7 @@ Trials are ordered contiguously from zero. Each independent repetition is a
 fresh logical provider assessment for every frozen item. Provider transport
 retries do not become trials. Trial labels are never averaged or voted.
 The ordered vector of trial aggregates and metrics is the repeated-trial
-distribution; v2 intentionally adds no pooled metric or unqualified mean.
+distribution; the artifact intentionally adds no pooled metric or unqualified mean.
 
 Each trial partitions every planned item into exactly one logical outcome:
 
@@ -263,7 +260,7 @@ retries. Provider identity groups are observation-level sorted, unique
 aggregate buckets. Their `observationCount` values sum exactly to `planned`,
 including not-attempted, errored, and `outcome_unknown` observations. Every
 group uses the globally pinned `evaluator.identity.executionBinding.provider`;
-v2 has no provider-null or `unavailable` identity. An observation with no
+The artifact has no provider-null or `unavailable` identity. An observation with no
 returned model, version, or fingerprint remains `requested_only`, including
 pre-call failures and not-attempted items, because the requested provider
 identity is still known. `upstreamProvider` records the OpenRouter upstream
@@ -412,7 +409,7 @@ binary64 implementation of the pinned operation sequence. Producer tests
 cross-check its output against the TypeScript implementation and the golden
 vectors; consumers may use it as a readable portability oracle.
 
-No informative decimal interval is part of v2. Dailies policy thresholds must
+No informative decimal interval is part of this contract. Dailies policy thresholds must
 be canonical decimal strings and comparisons with interval bounds must decode
 binary64 to an exact integer/exponent rational before cross-multiplication.
 Converting both values to a host float is not policy verification.
@@ -475,7 +472,7 @@ nonbranching sequence and do not erase earlier bytes.
 
 A later exposure, provenance discovery, provider disclosure, or policy change
 is a revocation or changed admissibility fact, not a correction of the
-historical artifact. It is appended outside artifact v2 and never changes its
+historical artifact. It is appended outside the artifact and never changes its
 bytes or status. A consumer retrieving an artifact must also check the
 producer's separately authenticated current revocation state once Batch 5B
 defines that read contract. A portable artifact alone cannot prove that no
@@ -498,8 +495,8 @@ the nullable suite manifest ID/digest/member position as one exact tuple.
 
 Calibration has its own calibration scope: exact criterion, evaluator, sealed
 revision, exposure snapshots, population/draw provenance, and measurement
-time. It does not upgrade the candidate execution scope in assessment receipt
-v2.
+time. It does not upgrade the candidate execution scope in the assessment
+receipt.
 
 Provider identity admissibility is policy. If any observed provider group is
 below a customer's minimum strength, Dailies treats the entire criterion's
@@ -522,7 +519,7 @@ is closed.
 
 ## Portable conformance corpus
 
-`fixtures/binary-calibration-v2.conformance.json` is a language-neutral test
+`fixtures/binary-calibration-v1.conformance.json` is a language-neutral test
 program. `baseFixture` selects the default exact artifact;
 `expectedIdentityByFixture` supplies the complete consumer expectation for
 every selectable base; a case may select another `baseFixture` and apply
@@ -562,6 +559,6 @@ evaluator version:
 The two private-ledger fixtures belong to the `complete` and `incomplete`
 artifacts and reconcile with them exactly.
 
-Artifact v2 is closed. New metric fields, interval methods, provider
+The artifact is closed. New metric fields, interval methods, provider
 observation surfaces, private-ledger reads, nonsealed evidence classes,
 categorical/scalar calibration, or policy fields require a new version.

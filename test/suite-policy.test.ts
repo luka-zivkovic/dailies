@@ -8,14 +8,14 @@ import {
   type ReleasePolicyV1,
 } from '../src/policy.js';
 import {
-  verifyEvaluatorSuiteManifestV2,
-  type EvaluatorSuiteManifestV2,
-} from '../src/suite-manifest-v2.js';
+  verifyEvaluatorSuiteManifest,
+  type EvaluatorSuiteManifest,
+} from '../src/suite-manifest.js';
 
-const manifest = verifyEvaluatorSuiteManifestV2(JSON.parse(readFileSync(
-  new URL('../contracts/fixtures/evaluator-suite-manifest-v2.complete.json', import.meta.url),
+const manifest = verifyEvaluatorSuiteManifest(JSON.parse(readFileSync(
+  new URL('../contracts/fixtures/evaluator-suite-manifest-v1.complete.json', import.meta.url),
   'utf8',
-)) as EvaluatorSuiteManifestV2);
+)) as EvaluatorSuiteManifest);
 
 function policy(overrides: Partial<ReleasePolicyV1> = {}): ReleasePolicyV1 {
   return verifyReleasePolicy({

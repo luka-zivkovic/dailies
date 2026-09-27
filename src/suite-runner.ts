@@ -7,7 +7,7 @@ import {
   collectRubristAssessment,
   type RubristEvidenceOperation,
 } from './rubrist.js';
-import { verifyRubristReceiptV2, type RubristOutcome } from './rubrist-receipt-v2.js';
+import { verifyRubristReceipt, type RubristOutcome } from './rubrist-receipt.js';
 import { classifyOperationError } from './errors.js';
 import {
   loadInputArtifactWithSchema,
@@ -35,11 +35,11 @@ import {
 } from './report-v5.js';
 import { RetryFailure, runWithRetry, type AttemptRecord } from './retry.js';
 import {
-  loadEvaluatorSuiteManifestV2,
-  verifyReceiptV2ManifestBinding,
-  type EvaluatorSuiteManifestV2,
-  type EvaluatorSuiteManifestV2Member,
-} from './suite-manifest-v2.js';
+  loadEvaluatorSuiteManifest,
+  verifyReceiptManifestBinding,
+  type EvaluatorSuiteManifest,
+  type EvaluatorSuiteManifestMember,
+} from './suite-manifest.js';
 
 interface CandidateSuccess {
   item: SuiteInputItem;
@@ -92,7 +92,7 @@ async function executeCandidate(config: SuiteConfig, item: SuiteInputItem): Prom
 
 function criterionItems(
   candidates: SuiteCandidateItem[],
-  member: EvaluatorSuiteManifestV2Member,
+  member: EvaluatorSuiteManifestMember,
   outcomes: Map<string, RubristOutcome>,
 ): CriterionItem[] {
   return candidates.map((candidate) => {
@@ -112,8 +112,8 @@ function criterionItems(
 }
 
 function baseCriterionResult(
-  manifest: EvaluatorSuiteManifestV2,
-  member: EvaluatorSuiteManifestV2Member,
+  manifest: EvaluatorSuiteManifest,
+  member: EvaluatorSuiteManifestMember,
   config: SuiteConfig,
   inputDigest: string,
 ) {
@@ -134,8 +134,8 @@ function baseCriterionResult(
 }
 
 async function collectCriterion(
-  manifest: EvaluatorSuiteManifestV2,
-  member: EvaluatorSuiteManifestV2Member,
+  manifest: EvaluatorSuiteManifest,
+  member: EvaluatorSuiteManifestMember,
   config: SuiteConfig,
   candidates: SuiteCandidateItem[],
   deadline: number,
@@ -152,7 +152,7 @@ async function collectCriterion(
       ...base,
       trust: {
         status: 'unavailable',
-        derivation: 'rubrist_receipt_v2',
+        derivation: 'rubrist_receipt_v1',
         admissible: false,
         reason: 'no_candidate_outputs',
       },
@@ -176,7 +176,7 @@ async function collectCriterion(
       ...base,
       trust: {
         status: 'unavailable',
-        derivation: 'rubrist_receipt_v2',
+        derivation: 'rubrist_receipt_v1',
         admissible: false,
         reason: 'integrity_failure',
       },
@@ -217,14 +217,14 @@ async function collectCriterion(
     operations = assessment.operations;
     collectedEvalRunId = assessment.evalRunId;
     collectedReceipt = assessment.receipt;
-    verifyReceiptV2ManifestBinding(assessment.receipt, manifest, member);
+    verifyReceiptManifestBinding(assessment.receipt, manifest, member);
     const items = criterionItems(candidates, member, assessment.outcomes);
     return {
       ...base,
       trust: {
         status: 'complete',
         class: 'verified',
-        derivation: 'rubrist_receipt_v2',
+        derivation: 'rubrist_receipt_v1',
         admissible: config.trustPolicy.admissibleClasses.includes('verified'),
       },
       evidence: {
@@ -245,7 +245,7 @@ async function collectCriterion(
     let bindingRejectionReason: string | undefined;
     if (receipt !== undefined && evalRunId !== undefined) {
       try {
-        verifyRubristReceiptV2(receipt, {
+        verifyRubristReceipt(receipt, {
           evalRunId,
           skillVersionId: member.skillVersionId,
           candidates: successful.map((candidate) => ({
@@ -255,7 +255,7 @@ async function collectCriterion(
           })),
         });
         try {
-          verifyReceiptV2ManifestBinding(receipt, manifest, member);
+          verifyReceiptManifestBinding(receipt, manifest, member);
         } catch (bindingError) {
           bindingRejectedReceipt = receipt;
           bindingRejectionReason = bindingError instanceof Error
@@ -268,7 +268,7 @@ async function collectCriterion(
           ...base,
           trust: {
             status: 'unavailable',
-            derivation: 'rubrist_receipt_v2',
+            derivation: 'rubrist_receipt_v1',
             admissible: false,
             reason: 'incomplete_evidence',
           },
@@ -300,7 +300,7 @@ async function collectCriterion(
       ...base,
       trust: {
         status: 'unavailable',
-        derivation: 'rubrist_receipt_v2',
+        derivation: 'rubrist_receipt_v1',
         admissible: false,
         reason: 'integrity_failure',
       },
@@ -323,7 +323,7 @@ export interface RunSuiteOptions {
 
 export interface PreflightedSuiteRelease {
   inputArtifact: ParsedInputArtifact<SuiteInputItem>;
-  manifest: EvaluatorSuiteManifestV2;
+  manifest: EvaluatorSuiteManifest;
   policy: ReturnType<typeof verifyReleasePolicy>;
 }
 
@@ -375,7 +375,7 @@ export async function preflightSuiteRelease(
       `but the exact input artifact contains ${inputArtifact.items.length}`,
     );
   }
-  const manifest = await loadEvaluatorSuiteManifestV2(config.suite.manifest.path, {
+  const manifest = await loadEvaluatorSuiteManifest(config.suite.manifest.path, {
     manifestId: config.suite.manifest.manifestId,
     manifestDigest: config.suite.manifest.manifestDigest,
   });

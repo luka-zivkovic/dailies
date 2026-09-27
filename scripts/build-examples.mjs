@@ -16,14 +16,14 @@ import {
   binaryCalibrationEvidenceDigest,
   expectedBinaryCalibrationIdentity,
   parseCanonicalBinaryCalibrationBytes,
-} from '../dist/binary-calibration-v2.js';
+} from '../dist/binary-calibration.js';
 import { canonicalJson, sha256Digest } from '../dist/rubrist.js';
 import { parseSuiteConfig } from '../dist/config-v5.js';
 import { parseSuiteConfigV6 } from '../dist/config-v6.js';
 import {
-  evaluatorSuiteManifestV2Digest,
-  verifyEvaluatorSuiteManifestV2,
-} from '../dist/suite-manifest-v2.js';
+  evaluatorSuiteManifestDigest,
+  verifyEvaluatorSuiteManifest,
+} from '../dist/suite-manifest.js';
 import { mockEvaluatorIdentity, mockSkillDigest } from './mock-rubrist.mjs';
 
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
@@ -98,18 +98,18 @@ function criterionRule() {
 /** The vendored manifest fixture, with each member bound to its mock evaluator. */
 async function loadManifest() {
   const raw = JSON.parse(await readFile(
-    join(repoRoot, 'contracts', 'fixtures', 'evaluator-suite-manifest-v2.complete.json'),
+    join(repoRoot, 'contracts', 'fixtures', 'evaluator-suite-manifest-v1.complete.json'),
     'utf8',
   ));
-  const manifest = verifyEvaluatorSuiteManifestV2(raw);
+  const manifest = verifyEvaluatorSuiteManifest(raw);
   for (const member of manifest.members) member.skillDigest = mockSkillDigest(member);
-  manifest.manifestDigest = evaluatorSuiteManifestV2Digest(manifest);
-  return verifyEvaluatorSuiteManifestV2(manifest);
+  manifest.manifestDigest = evaluatorSuiteManifestDigest(manifest);
+  return verifyEvaluatorSuiteManifest(manifest);
 }
 
 async function calibrationArtifact(manifest, member) {
   const fixtureBytes = await readFile(
-    join(repoRoot, 'contracts', 'fixtures', 'binary-calibration-v2.complete.json'),
+    join(repoRoot, 'contracts', 'fixtures', 'binary-calibration-v1.complete.json'),
   );
   const artifact = structuredClone(parseCanonicalBinaryCalibrationBytes(fixtureBytes));
   artifact.artifactId = `example-calibration-${member.criterionId}`;

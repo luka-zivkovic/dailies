@@ -1,17 +1,14 @@
-# Assessment receipt v2 digest and conformance specification
+# Assessment receipt v1 digest and conformance specification
 
-This document is normative for Rubrist assessment receipt v2 alongside
-`assessment-receipt-v2.schema.json`. The schema defines structure; this
+This document is normative for `rubrist/assessment-receipt/v1` alongside
+`assessment-receipt-v1.schema.json`. The schema defines structure; this
 document defines canonical bytes, digests, and the semantic rules a
 structurally valid receipt must also satisfy. Rubrist ADR-0014 section 7
-decides the contract. Receipt v2 replaces receipt v1 (ADR-0014 decision 6);
-the v1 documents are deleted with the v1 code, and at the launch baseline
-this contract takes the v1 name (decision 7).
+decides the contract.
 
 ## Canonical JSON and digests
 
-Canonical JSON is the same as in receipt v1. It accepts JSON values only and
-serializes `null`, booleans, strings, and finite numbers exactly as
+Canonical JSON accepts JSON values only and serializes `null`, booleans, strings, and finite numbers exactly as
 ECMAScript `JSON.stringify` does, which is the RFC 8785 string and number
 representation. Arrays keep their order. Object keys are sorted recursively
 by exact UTF-16 code unit order, with no insignificant whitespace and no
@@ -27,13 +24,13 @@ characters.
 - `evidenceDigest` hashes the complete receipt with only the
   `evidenceDigest` member omitted.
 - `evaluator.definitionDigest` hashes the evaluator definition object. The
-  definition itself is not in the receipt; `skill-format/v2` carries it and
+  definition itself is not in the receipt; `skill-format/v1` carries it and
   defines its shape, and both vectors below carry one. A typed-question
   definition holds its question as `question.digest`, the digest of the
   canonical object `{ "type": "noul", "instructions": ..., "criteria":
   { "true": ..., "false": ... } }`.
 - `skillDigest` hashes the `evaluator` object:
-  `{ "basis": "rubrist/evaluator-identity/v2", "definitionDigest": ...,
+  `{ "basis": "rubrist/evaluator-identity/v1", "definitionDigest": ...,
   "executionBinding": ... }`. A verifier recomputes it from the receipt
   alone and needs the definition only to check `definitionDigest`.
 
@@ -104,14 +101,14 @@ checks the expected `evalRunId` and `skillVersionId`.
 
 ## Portable fixtures
 
-- `fixtures/assessment-receipt-v2.complete.json`: a prompted evaluator on the
+- `fixtures/assessment-receipt-v1.complete.json`: a prompted evaluator on the
   seeded default binding, with a pass, a fail, and an abstention. The receipt
   is complete. The vector also carries the definition and the candidates.
-- `fixtures/assessment-receipt-v2.incomplete.json`: a typed-question
+- `fixtures/assessment-receipt-v1.incomplete.json`: a typed-question
   evaluator on a canceled run, with an outcome, a timeout, and an item that
   was not attempted. The vector also carries the definition, the question
   text, and the candidates.
-- `fixtures/assessment-receipt-v2.conformance.json`: the mutation corpus.
+- `fixtures/assessment-receipt-v1.conformance.json`: the mutation corpus.
 
 Each corpus case starts from its `baseFixture`, or the corpus's, and applies
 its mutations in order:
@@ -132,10 +129,10 @@ Positive controls catch over-tightening as well as under-validation.
 
 The pinned SHA-256 file digests are:
 
-- schema: `701aed7aa5931fad30e876ce3e075c7b3d4de992e0b5eb4537ed26d26c5b7826`;
+- schema: `3b572012a4cf6172ecee46e9de6e821a5bae431f2489ac39e85393f2fb2b5129`;
 - complete fixture:
-  `23b972a1ba9e78c5ea074ea9fb9abf7df74c108c8a58d14f473ee82d910e00eb`;
+  `2f5d3f00eb633da22472242c0c0a9abb2e5e7ab4e7c15bbe28dd2eae77ab20eb`;
 - incomplete fixture:
-  `bdfb4378c78410274a78cf6f7545ed7440e10b67693161a0c211123e10f317b0`;
+  `23e3022bf6d31dec1954bcd890d8c6be7bc5a5c9bba807e25aa053aecbf8cc3a`;
 - conformance corpus:
-  `f9269a1b5d35fa76ddb05a9d47d3722c7abc121d5437237c3e3fb0dba0f54432`.
+  `98924a3591381322f19c9aed9c981b78b6b233a684bb8f27dc6504f1ce363f73`.

@@ -1,6 +1,6 @@
 {
-  "contract": "rubrist/evaluator-suite-manifest/v2",
-  "baseFixture": "evaluator-suite-manifest-v2.complete.json",
+  "contract": "rubrist/evaluator-suite-manifest/v1",
+  "baseFixture": "evaluator-suite-manifest-v1.complete.json",
   "cases": [
     {
       "name": "positive-control",
@@ -78,7 +78,7 @@
         {
           "op": "replace",
           "path": "/schemaVersion",
-          "value": 1
+          "value": 2
         }
       ]
     },
@@ -377,14 +377,14 @@
       ]
     },
     {
-      "name": "v1-contract-id",
+      "name": "v2-contract-id",
       "structural": "reject",
       "semantic": "not-run",
       "mutations": [
         {
           "op": "replace",
           "path": "/contract",
-          "value": "rubrist/evaluator-suite-manifest/v1"
+          "value": "rubrist/evaluator-suite-manifest/v2"
         }
       ]
     },

@@ -1,8 +1,8 @@
 {
-  "contract": "rubrist/binary-calibration/v2",
-  "baseFixture": "binary-calibration-v2.complete.json",
+  "contract": "rubrist/binary-calibration/v1",
+  "baseFixture": "binary-calibration-v1.complete.json",
   "expectedIdentityByFixture": {
-    "binary-calibration-v2.complete.json": {
+    "binary-calibration-v1.complete.json": {
       "artifactId": "calibration-artifact-complete-1",
       "calibrationRunId": "calibration-run-complete-1",
       "projectId": "project-fixture",
@@ -11,7 +11,7 @@
       "criterionDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
       "skillId": "skill-safety",
       "skillVersionId": "skill-version-11",
-      "skillDigest": "sha256:b992cd37b577cc0164ddc39742e468fc9abc2a32a579d4702a16defa0a302502",
+      "skillDigest": "sha256:55b20992a9d74e6382d418787d543da2a0571d8bdd93f14cb58e095cdaa7a1ae",
       "outputContractDigest": "sha256:6bff022dd4e6487d8ca246fd74ebdb4f96c18e23f53d6ea2ccd36ad0871e47dc",
       "requestedBindingDigest": "sha256:7835419c14f96f18dc75f06d9b1bc63aea0e0738e20fb55431073689747d8053",
       "datasetRevisionId": "dataset-revision-sealed-4",
@@ -43,7 +43,7 @@
       "suiteManifestDigest": "sha256:eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee",
       "suiteMemberPosition": 0
     },
-    "binary-calibration-v2.repeated.json": {
+    "binary-calibration-v1.repeated.json": {
       "artifactId": "calibration-artifact-repeated-1",
       "calibrationRunId": "calibration-run-repeated-1",
       "projectId": "project-fixture",
@@ -52,7 +52,7 @@
       "criterionDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
       "skillId": "skill-safety",
       "skillVersionId": "skill-version-12",
-      "skillDigest": "sha256:d60cf0dd9c033d32f92ad1942e01bfd496131cc4ba4423fd1cae7c3783359405",
+      "skillDigest": "sha256:ae3afb2646280025db6632275567aa9f022e3b3c1e61b03aea09ccf667fe9964",
       "outputContractDigest": "sha256:6bff022dd4e6487d8ca246fd74ebdb4f96c18e23f53d6ea2ccd36ad0871e47dc",
       "requestedBindingDigest": "sha256:7186482a328824d15e776d02642f335774c3aff02d0c13f214b2f39edac6eb6d",
       "datasetRevisionId": "dataset-revision-sealed-4",
@@ -84,7 +84,7 @@
       "suiteManifestDigest": null,
       "suiteMemberPosition": null
     },
-    "binary-calibration-v2.incomplete.json": {
+    "binary-calibration-v1.incomplete.json": {
       "artifactId": "calibration-artifact-incomplete-1",
       "calibrationRunId": "calibration-run-incomplete-1",
       "projectId": "project-fixture",
@@ -93,7 +93,7 @@
       "criterionDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
       "skillId": "skill-safety",
       "skillVersionId": "skill-version-13",
-      "skillDigest": "sha256:8a01392e71caf7cd6d9e2672f2e134c0d3f9be5a14859f89cebf98b91dbf933b",
+      "skillDigest": "sha256:e51d84be0d1e4fff65d6a35d197f6310329647111df1f7f0c815d2d68f52ca7c",
       "outputContractDigest": "sha256:6bff022dd4e6487d8ca246fd74ebdb4f96c18e23f53d6ea2ccd36ad0871e47dc",
       "requestedBindingDigest": "sha256:61e3d35827ed4ebc3ee34aadf2c485e15e7b9e7c5870fdb8e9cc921938c6fdf2",
       "datasetRevisionId": "dataset-revision-sealed-5",
@@ -125,7 +125,7 @@
       "suiteManifestDigest": null,
       "suiteMemberPosition": null
     },
-    "binary-calibration-v2.typed-question.json": {
+    "binary-calibration-v1.typed-question.json": {
       "artifactId": "calibration-artifact-typed-1",
       "calibrationRunId": "calibration-run-typed-1",
       "projectId": "project-fixture",
@@ -134,7 +134,7 @@
       "criterionDigest": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
       "skillId": "skill-refund-policy",
       "skillVersionId": "skill-version-21",
-      "skillDigest": "sha256:44a3d7d6f4bb07dcb57dafe33c50ce905bde19e4ab583eaf304ea96d9e662497",
+      "skillDigest": "sha256:8c82ee023e0525d8184ba8de8ce430fc4c9d0f6aeef9d3bce5877ee53968b655",
       "outputContractDigest": "sha256:04cfa73215b5173e0975d67d7fc5327cdcfd66587d828dae85036e4430101e06",
       "requestedBindingDigest": "sha256:391e246e2eb7d166b6f092e237df5fee294c7dfd99920a8f2caa5436f3829e07",
       "datasetRevisionId": "dataset-revision-sealed-6",
@@ -206,7 +206,7 @@
         {
           "op": "replace",
           "path": "/schemaVersion",
-          "value": 1
+          "value": 2
         }
       ]
     },
@@ -401,7 +401,7 @@
     },
     {
       "name": "provider-group-requested-provider-swap",
-      "baseFixture": "binary-calibration-v2.incomplete.json",
+      "baseFixture": "binary-calibration-v1.incomplete.json",
       "structural": "accept",
       "semantic": "reject",
       "errorIncludes": "does not match the requested provider",
@@ -503,7 +503,7 @@
     },
     {
       "name": "positive-class-fail-repeated-control",
-      "baseFixture": "binary-calibration-v2.repeated.json",
+      "baseFixture": "binary-calibration-v1.repeated.json",
       "structural": "accept",
       "semantic": "accept",
       "mutations": []
@@ -585,7 +585,7 @@
     },
     {
       "name": "repeated-trial-plan-count-mismatch",
-      "baseFixture": "binary-calibration-v2.repeated.json",
+      "baseFixture": "binary-calibration-v1.repeated.json",
       "structural": "accept",
       "semantic": "reject",
       "errorIncludes": "trial coverage does not match",
@@ -602,7 +602,7 @@
     },
     {
       "name": "repeated-trials-reordered",
-      "baseFixture": "binary-calibration-v2.repeated.json",
+      "baseFixture": "binary-calibration-v1.repeated.json",
       "structural": "accept",
       "semantic": "reject",
       "errorIncludes": "not ordered by contiguous trialIndex",
@@ -618,7 +618,7 @@
     },
     {
       "name": "repeated-trial-duplicated",
-      "baseFixture": "binary-calibration-v2.repeated.json",
+      "baseFixture": "binary-calibration-v1.repeated.json",
       "structural": "accept",
       "semantic": "reject",
       "errorIncludes": "not ordered by contiguous trialIndex",
@@ -639,7 +639,7 @@
     },
     {
       "name": "provider-groups-reordered",
-      "baseFixture": "binary-calibration-v2.repeated.json",
+      "baseFixture": "binary-calibration-v1.repeated.json",
       "structural": "accept",
       "semantic": "reject",
       "errorIncludes": "provider identity groups are not in canonical order",
@@ -655,7 +655,7 @@
     },
     {
       "name": "provider-group-duplicated",
-      "baseFixture": "binary-calibration-v2.repeated.json",
+      "baseFixture": "binary-calibration-v1.repeated.json",
       "structural": "accept",
       "semantic": "reject",
       "errorIncludes": "duplicate identity",
@@ -672,7 +672,7 @@
     },
     {
       "name": "errors-not-sorted",
-      "baseFixture": "binary-calibration-v2.incomplete.json",
+      "baseFixture": "binary-calibration-v1.incomplete.json",
       "structural": "accept",
       "semantic": "reject",
       "errorIncludes": "error breakdown is not ordered",
@@ -692,7 +692,7 @@
     },
     {
       "name": "error-code-duplicated",
-      "baseFixture": "binary-calibration-v2.incomplete.json",
+      "baseFixture": "binary-calibration-v1.incomplete.json",
       "structural": "accept",
       "semantic": "reject",
       "errorIncludes": "duplicate codes",
@@ -1481,7 +1481,7 @@
     },
     {
       "name": "typesafe-with-temperature",
-      "baseFixture": "binary-calibration-v2.typed-question.json",
+      "baseFixture": "binary-calibration-v1.typed-question.json",
       "structural": "reject",
       "semantic": "not-run",
       "mutations": [
@@ -1494,7 +1494,7 @@
     },
     {
       "name": "openrouter-without-routing",
-      "baseFixture": "binary-calibration-v2.incomplete.json",
+      "baseFixture": "binary-calibration-v1.incomplete.json",
       "structural": "reject",
       "semantic": "not-run",
       "mutations": [
@@ -1507,7 +1507,7 @@
     },
     {
       "name": "unknown-failure-code",
-      "baseFixture": "binary-calibration-v2.incomplete.json",
+      "baseFixture": "binary-calibration-v1.incomplete.json",
       "structural": "reject",
       "semantic": "not-run",
       "mutations": [
@@ -1543,7 +1543,7 @@
     },
     {
       "name": "rejected-request-needs-no-physical-call",
-      "baseFixture": "binary-calibration-v2.incomplete.json",
+      "baseFixture": "binary-calibration-v1.incomplete.json",
       "structural": "accept",
       "semantic": "accept",
       "mutations": [
@@ -1641,7 +1641,7 @@
     },
     {
       "name": "upstreams-split-otherwise-identical-groups",
-      "baseFixture": "binary-calibration-v2.incomplete.json",
+      "baseFixture": "binary-calibration-v1.incomplete.json",
       "structural": "accept",
       "semantic": "accept",
       "mutations": [
@@ -1685,7 +1685,7 @@
     },
     {
       "name": "upstream-split-groups-out-of-order",
-      "baseFixture": "binary-calibration-v2.incomplete.json",
+      "baseFixture": "binary-calibration-v1.incomplete.json",
       "structural": "accept",
       "semantic": "reject",
       "errorIncludes": "not in canonical order",
@@ -1730,7 +1730,7 @@
     },
     {
       "name": "typed-question-abstention",
-      "baseFixture": "binary-calibration-v2.typed-question.json",
+      "baseFixture": "binary-calibration-v1.typed-question.json",
       "structural": "accept",
       "semantic": "reject",
       "errorIncludes": "typed-question evaluators never abstain",

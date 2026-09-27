@@ -2,7 +2,7 @@
 // Minimal local stand-in for the Rubrist release-evidence API used by the
 // runnable v5/v6 examples under fixtures/examples/. It implements only the
 // three endpoints Dailies calls (batch submit, eval-run poll, assessment
-// receipt) and produces structurally valid receipt-v2 artifacts whose
+// receipt) and produces structurally valid receipt artifacts whose
 // digests bind to the manifest and the submitted candidate outputs.
 //
 // It is a fixture server for local runs and tests. It is not Rubrist, it has
@@ -89,13 +89,13 @@ export const MOCK_EXECUTION_BINDING = Object.freeze({
 /** The mock evaluator identity of one manifest member: a definition digest per evaluator version. */
 export function mockEvaluatorIdentity(member) {
   return {
-    basis: 'rubrist/evaluator-identity/v2',
+    basis: 'rubrist/evaluator-identity/v1',
     definitionDigest: sha256Digest({ mockDefinition: member.skillVersionId }),
     executionBinding: structuredClone(MOCK_EXECUTION_BINDING),
   };
 }
 
-/** skillDigest v2 of the member's mock evaluator. */
+/** skillDigest of the member's mock evaluator. */
 export function mockSkillDigest(member) {
   return sha256Digest(mockEvaluatorIdentity(member));
 }
@@ -123,8 +123,8 @@ function buildReceipt(manifest, member, evalRunId, items, outcome) {
   const count = (wanted) => receiptItems.filter((item) => item.result.outcome === wanted).length;
   const evaluator = mockEvaluatorIdentity(member);
   const receipt = {
-    contract: 'rubrist/assessment-receipt/v2',
-    schemaVersion: 2,
+    contract: 'rubrist/assessment-receipt/v1',
+    schemaVersion: 1,
     receiptId: `receipt-${evalRunId}`,
     evalRunId,
     projectId: manifest.projectId,

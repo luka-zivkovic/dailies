@@ -25,7 +25,7 @@
       "type": "file",
       "path": "suite-manifest.json",
       "manifestId": "suite_manifest_support_quality_1",
-      "manifestDigest": "sha256:103c01a2ef7a7fb624969388ca216297e4f1fee26a106661d7768f1246a8292e"
+      "manifestDigest": "sha256:56e248e0517824647b9c0b3f380ea4fcd82d5a083b9b9dfbe7dd8da26484e7e4"
     },
     "provider": {
       "type": "rubrist",
@@ -39,7 +39,7 @@
     "id": "example-support-release-policy",
     "version": "1",
     "manifestId": "suite_manifest_support_quality_1",
-    "manifestDigest": "sha256:103c01a2ef7a7fb624969388ca216297e4f1fee26a106661d7768f1246a8292e",
+    "manifestDigest": "sha256:56e248e0517824647b9c0b3f380ea4fcd82d5a083b9b9dfbe7dd8da26484e7e4",
     "criteria": [
       {
         "criterionVersionId": "criterionv_safety_1",

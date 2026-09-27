@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { sha256Digest } from '../src/rubrist.js';
-import type { RubristEvaluatorIdentity } from '../src/rubrist-v2.js';
+import type { RubristEvaluatorIdentity } from '../src/rubrist-identity.js';
 
-// Receipt v2 test support: signed receipts for an evaluator identity, and the
+// Receipt test support: signed receipts for an evaluator identity, and the
 // identities behind the vendored manifest fixture's members.
 
 function contractFixture(name: string): { evaluator: { identity: RubristEvaluatorIdentity } } {
@@ -13,7 +13,7 @@ type CalibrationFixtureName = 'complete' | 'typed-question' | 'repeated' | 'inco
 
 /** The evaluator identity a calibration fixture carries. */
 export function knownEvaluatorIdentity(name: CalibrationFixtureName): RubristEvaluatorIdentity {
-  return structuredClone(contractFixture(`binary-calibration-v2.${name}.json`).evaluator.identity);
+  return structuredClone(contractFixture(`binary-calibration-v1.${name}.json`).evaluator.identity);
 }
 
 /** The calibration fixtures carry the evaluator identities the manifest fixture's skillDigests name. */
@@ -21,7 +21,7 @@ const KNOWN_IDENTITIES: RubristEvaluatorIdentity[] = (
   ['complete', 'typed-question', 'repeated', 'incomplete'] as const
 ).map(knownEvaluatorIdentity);
 
-/** The identity whose skillDigest v2 is the member's. */
+/** The identity whose skillDigest is the member's. */
 export function evaluatorIdentityFor(member: { skillDigest: string; skillVersionId: string }): RubristEvaluatorIdentity {
   const identity = KNOWN_IDENTITIES.find((candidate) => sha256Digest(candidate) === member.skillDigest);
   if (identity === undefined) throw new Error(`no known evaluator identity for ${member.skillVersionId}`);
@@ -56,7 +56,7 @@ const NOTHING_OBSERVED = {
   reasoningTokens: null,
 };
 
-export interface ReceiptV2Options {
+export interface ReceiptOptions {
   evalRunId: string;
   projectId: string;
   skillId: string;
@@ -66,8 +66,8 @@ export interface ReceiptV2Options {
   runStatus: 'completed' | 'failed' | 'canceled';
 }
 
-/** A signed, internally consistent receipt v2: sorted items, recomputed counters and digests. */
-export function receiptV2(options: ReceiptV2Options): Record<string, unknown> {
+/** A signed, internally consistent receipt: sorted items, recomputed counters and digests. */
+export function receiptDocument(options: ReceiptOptions): Record<string, unknown> {
   const protocol = options.evaluator.executionBinding.verdictProtocol;
   const scoreKind = protocol === 'typed-question/v1' ? 'native_probability' : 'self_reported_score';
   const items = [...options.items]
@@ -103,8 +103,8 @@ export function receiptV2(options: ReceiptV2Options): Record<string, unknown> {
     items.filter((item) => item.result.state === 'outcome' && item.result.outcome === outcome).length;
   const complete = options.runStatus === 'completed' && items.every((item) => item.result.state === 'outcome');
   const receipt: Record<string, unknown> = {
-    contract: 'rubrist/assessment-receipt/v2',
-    schemaVersion: 2,
+    contract: 'rubrist/assessment-receipt/v1',
+    schemaVersion: 1,
     receiptId: `receipt-${options.evalRunId}`,
     evalRunId: options.evalRunId,
     projectId: options.projectId,

@@ -15,7 +15,7 @@ and the test suite fails if the committed files drift from that script.
 
 The suite manifest and, for v6, the binary-calibration artifacts are exact
 local files that Dailies verifies offline (canonical bytes, digests, and the
-complete expected-identity tuple). The receipt-v2 evidence for each criterion
+complete expected-identity tuple). The receipt evidence for each criterion
 is different: v5 and v6 always obtain it from a Rubrist HTTP endpoint (batch
 submit, poll, assessment receipt). There is no pre-fetched receipt path, so
 the examples use `scripts/mock-rubrist.mjs`, a local stub that implements only

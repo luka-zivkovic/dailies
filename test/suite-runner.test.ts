@@ -18,11 +18,11 @@ import {
 import { parseReportForInspection } from '../src/report.js';
 import { runSuiteRelease } from '../src/suite-runner.js';
 import {
-  evaluatorSuiteManifestV2Digest,
-  verifyEvaluatorSuiteManifestV2,
-  type EvaluatorSuiteManifestV2,
-} from '../src/suite-manifest-v2.js';
-import { evaluatorIdentityFor, otherEvaluatorIdentity, receiptV2, type ReceiptItemInput } from './rubrist-v2-support.js';
+  evaluatorSuiteManifestDigest,
+  verifyEvaluatorSuiteManifest,
+  type EvaluatorSuiteManifest,
+} from '../src/suite-manifest.js';
+import { evaluatorIdentityFor, otherEvaluatorIdentity, receiptDocument, type ReceiptItemInput } from './rubrist-support.js';
 import { sha256Bytes } from './v4-fixture.js';
 
 type MemberMode = 'complete' | 'incomplete' | 'binding-tamper' | 'pending' | 'abstain';
@@ -65,7 +65,7 @@ function listen(server: Server): Promise<number> {
 }
 
 function receipt(
-  manifest: EvaluatorSuiteManifestV2,
+  manifest: EvaluatorSuiteManifest,
   submission: Submission,
   mode: MemberMode,
 ): Record<string, unknown> {
@@ -88,7 +88,7 @@ function receipt(
     items[items.length - 1] = { ...items.at(-1)!, result: { state: 'failure', failureKind: 'provider_timeout' } };
   }
   const evaluator = evaluatorIdentityFor(member);
-  return receiptV2({
+  return receiptDocument({
     evalRunId: `run-${submission.skillVersionId}`,
     projectId: manifest.projectId,
     skillId: member.skillId,
@@ -101,7 +101,7 @@ function receipt(
 }
 
 async function mockRubrist(
-  manifest: EvaluatorSuiteManifestV2,
+  manifest: EvaluatorSuiteManifest,
   modes: Record<string, MemberMode> = {},
 ): Promise<{ server: Server; url: string; submissions: Submission[]; readonly maxSubmitInFlight: number }> {
   const submissions: Submission[] = [];
@@ -167,10 +167,10 @@ async function fixture(
 ) {
   const dir = await mkdtemp(join(tmpdir(), 'dailies-suite-'));
   tempDirs.push(dir);
-  const manifest = verifyEvaluatorSuiteManifestV2(JSON.parse(await readFile(
-    new URL('../contracts/fixtures/evaluator-suite-manifest-v2.complete.json', import.meta.url),
+  const manifest = verifyEvaluatorSuiteManifest(JSON.parse(await readFile(
+    new URL('../contracts/fixtures/evaluator-suite-manifest-v1.complete.json', import.meta.url),
     'utf8',
-  )) as EvaluatorSuiteManifestV2);
+  )) as EvaluatorSuiteManifest);
   const manifestPath = join(dir, 'manifest.json');
   await writeFile(manifestPath, canonicalJson(manifest), 'utf8');
   const inputBytes = [
@@ -274,7 +274,7 @@ describe('criterion suite runner', () => {
     const test = await fixture();
     const repeated = structuredClone(test.manifest);
     repeated.trialPlan = { kind: 'independent_repetitions', trialsPerItem: 3 };
-    repeated.manifestDigest = evaluatorSuiteManifestV2Digest(repeated);
+    repeated.manifestDigest = evaluatorSuiteManifestDigest(repeated);
     await writeFile(test.config.suite.manifest.path, canonicalJson(repeated), 'utf8');
     test.config.suite.manifest.manifestDigest = repeated.manifestDigest;
     test.config.policy.manifestDigest = repeated.manifestDigest;

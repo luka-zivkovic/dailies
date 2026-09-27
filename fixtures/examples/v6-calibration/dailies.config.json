@@ -25,7 +25,7 @@
       "type": "file",
       "path": "suite-manifest.json",
       "manifestId": "suite_manifest_support_quality_1",
-      "manifestDigest": "sha256:103c01a2ef7a7fb624969388ca216297e4f1fee26a106661d7768f1246a8292e"
+      "manifestDigest": "sha256:56e248e0517824647b9c0b3f380ea4fcd82d5a083b9b9dfbe7dd8da26484e7e4"
     },
     "provider": {
       "type": "rubrist",
@@ -39,7 +39,7 @@
     "id": "example-support-calibrated-release-policy",
     "version": "1",
     "manifestId": "suite_manifest_support_quality_1",
-    "manifestDigest": "sha256:103c01a2ef7a7fb624969388ca216297e4f1fee26a106661d7768f1246a8292e",
+    "manifestDigest": "sha256:56e248e0517824647b9c0b3f380ea4fcd82d5a083b9b9dfbe7dd8da26484e7e4",
     "criteria": [
       {
         "criterionVersionId": "criterionv_safety_1",
@@ -132,7 +132,7 @@
       "source": {
         "type": "file",
         "path": "calibration-safety.json",
-        "artifactDigest": "sha256:d1b013ed3e368e42866c296009e5719da12afa732cca4115cebc08607978f33a",
+        "artifactDigest": "sha256:c38df3edb5c9439e0aa383dd8cd94a52395f62ac20afd657f5e00850ad121fc7",
         "expectedIdentity": {
           "artifactId": "example-calibration-criterion_safety",
           "calibrationRunId": "example-calibration-run-0",
@@ -142,7 +142,7 @@
           "criterionDigest": "sha256:58fedda31950ab1626e25749f0d08b2153d73117a991be5fe5d4463f0f7f1942",
           "skillId": "skill_safety",
           "skillVersionId": "skillv_safety_1",
-          "skillDigest": "sha256:50044ce56b8d6c120cb7a43ca9f21643a2660e4a413556be4d8ebbe0245a2791",
+          "skillDigest": "sha256:0a53c401fcd8017b77ffab5818c8074dde64f22a6504d174941fbb30c7f93172",
           "outputContractDigest": "sha256:6bff022dd4e6487d8ca246fd74ebdb4f96c18e23f53d6ea2ccd36ad0871e47dc",
           "requestedBindingDigest": "sha256:60e396244ab361ad4bde2390bc049d80a31a3d0c9e4b48c9fb985afd9aead999",
           "datasetRevisionId": "dataset-revision-sealed-4",
@@ -171,7 +171,7 @@
           "trialPlanKind": "single",
           "trialsPerItem": 1,
           "suiteManifestId": "suite_manifest_support_quality_1",
-          "suiteManifestDigest": "sha256:103c01a2ef7a7fb624969388ca216297e4f1fee26a106661d7768f1246a8292e",
+          "suiteManifestDigest": "sha256:56e248e0517824647b9c0b3f380ea4fcd82d5a083b9b9dfbe7dd8da26484e7e4",
           "suiteMemberPosition": 0
         }
       }
@@ -181,7 +181,7 @@
       "source": {
         "type": "file",
         "path": "calibration-refund_policy.json",
-        "artifactDigest": "sha256:b73ec1c02c4e5d7420bf1730f06f1122ed4fb592eed1a02680175a843cad2199",
+        "artifactDigest": "sha256:184f1074b9423aba77987815277eaf503bf75a31b1c541fa3804dc8a284ab88c",
         "expectedIdentity": {
           "artifactId": "example-calibration-criterion_refund_policy",
           "calibrationRunId": "example-calibration-run-1",
@@ -191,7 +191,7 @@
           "criterionDigest": "sha256:bf256075a06d7c8fd315c61313f2d641b34d25a4a10c09eef3773eee1f7cceb6",
           "skillId": "skill_refund_policy",
           "skillVersionId": "skillv_refund_policy_3",
-          "skillDigest": "sha256:2f719481c39acaaee1ddad9b4867d5163dc51de4eba8a826629bd5a9333d8c92",
+          "skillDigest": "sha256:8499785790cb37d862c5a2a6cd527cca5685927284db5d3ff06c63b62095e842",
           "outputContractDigest": "sha256:04cfa73215b5173e0975d67d7fc5327cdcfd66587d828dae85036e4430101e06",
           "requestedBindingDigest": "sha256:60e396244ab361ad4bde2390bc049d80a31a3d0c9e4b48c9fb985afd9aead999",
           "datasetRevisionId": "dataset-revision-sealed-4",
@@ -220,7 +220,7 @@
           "trialPlanKind": "single",
           "trialsPerItem": 1,
           "suiteManifestId": "suite_manifest_support_quality_1",
-          "suiteManifestDigest": "sha256:103c01a2ef7a7fb624969388ca216297e4f1fee26a106661d7768f1246a8292e",
+          "suiteManifestDigest": "sha256:56e248e0517824647b9c0b3f380ea4fcd82d5a083b9b9dfbe7dd8da26484e7e4",
           "suiteMemberPosition": 1
         }
       }

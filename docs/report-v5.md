@@ -10,7 +10,7 @@ is never upgraded into v5.
 ## Evidence boundary
 
 Dailies reads one exact canonical
-`rubrist/evaluator-suite-manifest/v2` artifact (ADR-0008). Configuration pins both its
+`rubrist/evaluator-suite-manifest/v1` artifact (ADR-0008). Configuration pins both its
 `manifestId` and `manifestDigest`; there is no `latest` selection. The first
 runtime transport is an exact local file because Rubrist has not yet accepted a
 public manifest-fetch route.
@@ -18,7 +18,7 @@ public manifest-fetch route.
 The manifest supplies ordered criterion definitions and exact evaluator
 bindings, never release roles or thresholds. Dailies submits one
 `release_evidence` batch for every member and verifies a separate assessment
-receipt v2. Each receipt must match manifest `projectId`, `skillId`,
+receipt. Each receipt must match manifest `projectId`, `skillId`,
 `skillVersionId`, and `skillDigest`, which the receipt recomputes from its
 evaluator identity, in addition to the item, content, dataset, ordering,
 counter, and evidence-digest checks.

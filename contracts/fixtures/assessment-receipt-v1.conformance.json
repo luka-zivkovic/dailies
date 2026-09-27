@@ -1,6 +1,6 @@
 {
-  "contract": "rubrist/assessment-receipt/v2",
-  "baseFixture": "assessment-receipt-v2.complete.json",
+  "contract": "rubrist/assessment-receipt/v1",
+  "baseFixture": "assessment-receipt-v1.complete.json",
   "cases": [
     {
       "name": "positive-control-complete-with-abstention",
@@ -13,7 +13,7 @@
       "structural": "accept",
       "semantic": "accept",
       "mutations": [],
-      "baseFixture": "assessment-receipt-v2.incomplete.json"
+      "baseFixture": "assessment-receipt-v1.incomplete.json"
     },
     {
       "name": "prompted-abstention-without-score-is-valid",
@@ -265,7 +265,7 @@
         {
           "op": "add",
           "path": "/calibrationRef",
-          "value": "not-part-of-v2"
+          "value": "not-part-of-the-contract"
         }
       ]
     },
@@ -345,14 +345,14 @@
       ]
     },
     {
-      "name": "v1-schema-version",
+      "name": "v2-schema-version",
       "structural": "reject",
       "semantic": "not-run",
       "mutations": [
         {
           "op": "replace",
           "path": "/schemaVersion",
-          "value": 1
+          "value": 2
         }
       ]
     },
@@ -364,7 +364,7 @@
         {
           "op": "replace",
           "path": "/contract",
-          "value": "rubrist/assessment-receipt/v1"
+          "value": "rubrist/assessment-receipt/v2"
         }
       ]
     },
@@ -406,7 +406,7 @@
           }
         }
       ],
-      "baseFixture": "assessment-receipt-v2.incomplete.json"
+      "baseFixture": "assessment-receipt-v1.incomplete.json"
     },
     {
       "name": "score-out-of-range",
@@ -523,7 +523,7 @@
           "value": 0
         }
       ],
-      "baseFixture": "assessment-receipt-v2.incomplete.json"
+      "baseFixture": "assessment-receipt-v1.incomplete.json"
     },
     {
       "name": "typesafe-with-prompted-protocol",
@@ -536,7 +536,7 @@
           "value": "prompted-json/v1"
         }
       ],
-      "baseFixture": "assessment-receipt-v2.incomplete.json"
+      "baseFixture": "assessment-receipt-v1.incomplete.json"
     },
     {
       "name": "openrouter-without-routing",
@@ -678,7 +678,7 @@
           }
         }
       ],
-      "baseFixture": "assessment-receipt-v2.incomplete.json"
+      "baseFixture": "assessment-receipt-v1.incomplete.json"
     },
     {
       "name": "typesafe-with-top-p",
@@ -691,7 +691,7 @@
           "value": 0.9
         }
       ],
-      "baseFixture": "assessment-receipt-v2.incomplete.json"
+      "baseFixture": "assessment-receipt-v1.incomplete.json"
     },
     {
       "name": "typesafe-with-token-limit",
@@ -704,7 +704,7 @@
           "value": 256
         }
       ],
-      "baseFixture": "assessment-receipt-v2.incomplete.json"
+      "baseFixture": "assessment-receipt-v1.incomplete.json"
     },
     {
       "name": "mock-with-temperature",
@@ -932,7 +932,7 @@
       "structural": "accept",
       "semantic": "reject",
       "errorIncludes": "skillDigest does not match the expected evaluator",
-      "expectedSkillDigest": "sha256:b237708d5c9293a8b1ce9b32b242e0e519ab1bc2c65621f4dbe5dcf80ac46c2e",
+      "expectedSkillDigest": "sha256:2370be636e2002c213cd5a8f3cd46479d32849141efec8b626d2223ee52343d2",
       "mutations": [
         {
           "op": "replace",
@@ -1050,7 +1050,7 @@
           "op": "recompute-evidence-digest"
         }
       ],
-      "baseFixture": "assessment-receipt-v2.incomplete.json"
+      "baseFixture": "assessment-receipt-v1.incomplete.json"
     },
     {
       "name": "unattempted-item-with-verdict-id",
@@ -1067,7 +1067,7 @@
           "op": "recompute-evidence-digest"
         }
       ],
-      "baseFixture": "assessment-receipt-v2.incomplete.json"
+      "baseFixture": "assessment-receipt-v1.incomplete.json"
     },
     {
       "name": "unattempted-item-with-score",
@@ -1087,7 +1087,7 @@
           "op": "recompute-evidence-digest"
         }
       ],
-      "baseFixture": "assessment-receipt-v2.incomplete.json"
+      "baseFixture": "assessment-receipt-v1.incomplete.json"
     },
     {
       "name": "score-with-failure",
@@ -1107,7 +1107,7 @@
           "op": "recompute-evidence-digest"
         }
       ],
-      "baseFixture": "assessment-receipt-v2.incomplete.json"
+      "baseFixture": "assessment-receipt-v1.incomplete.json"
     },
     {
       "name": "llm-score-labelled-native-probability",
@@ -1140,7 +1140,7 @@
           "op": "recompute-evidence-digest"
         }
       ],
-      "baseFixture": "assessment-receipt-v2.incomplete.json"
+      "baseFixture": "assessment-receipt-v1.incomplete.json"
     },
     {
       "name": "typed-question-abstention",
@@ -1172,7 +1172,7 @@
           "op": "recompute-evidence-digest"
         }
       ],
-      "baseFixture": "assessment-receipt-v2.incomplete.json"
+      "baseFixture": "assessment-receipt-v1.incomplete.json"
     },
     {
       "name": "typed-question-outcome-without-probability",
@@ -1189,7 +1189,7 @@
           "op": "recompute-evidence-digest"
         }
       ],
-      "baseFixture": "assessment-receipt-v2.incomplete.json"
+      "baseFixture": "assessment-receipt-v1.incomplete.json"
     },
     {
       "name": "attempted-item-without-observation",
@@ -1230,7 +1230,7 @@
           "op": "recompute-evidence-digest"
         }
       ],
-      "baseFixture": "assessment-receipt-v2.incomplete.json"
+      "baseFixture": "assessment-receipt-v1.incomplete.json"
     },
     {
       "name": "upstream-on-a-direct-binding",
@@ -1316,7 +1316,7 @@
           "op": "recompute-evidence-digest"
         }
       ],
-      "baseFixture": "assessment-receipt-v2.incomplete.json"
+      "baseFixture": "assessment-receipt-v1.incomplete.json"
     },
     {
       "name": "complete-claim-on-canceled-run",
@@ -1403,7 +1403,7 @@
           "op": "recompute-evidence-digest"
         }
       ],
-      "baseFixture": "assessment-receipt-v2.incomplete.json"
+      "baseFixture": "assessment-receipt-v1.incomplete.json"
     },
     {
       "name": "incomplete-claim-with-complete-evidence",

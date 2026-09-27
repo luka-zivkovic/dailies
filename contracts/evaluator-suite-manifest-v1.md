@@ -1,25 +1,22 @@
-# Evaluator suite manifest v2 specification
+# Evaluator suite manifest v1 specification
 
-This document is normative for `rubrist/evaluator-suite-manifest/v2` alongside
-`evaluator-suite-manifest-v2.schema.json`. The manifest is an immutable,
+This document is normative for `rubrist/evaluator-suite-manifest/v1` alongside
+`evaluator-suite-manifest-v1.schema.json`. The manifest is an immutable,
 policy-free grouping of separately judged criteria. It is not an assessment
 receipt.
 
-v2 keeps v1's shape and verification. Rubrist ADR-0014 section 7 changes what
-the two evaluator digests mean: `skillDigest` is v2, over the evaluator
-identity, and `outputContractDigest` is the v2 output-contract digest. v2
-replaces v1 (ADR-0014 decision 6); the v1 documents are deleted with the v1
-code, and at the launch baseline this contract takes the v1 name
-(decision 7).
+Rubrist ADR-0014 section 7 decides what the two evaluator digests mean:
+`skillDigest` is over the evaluator identity, and `outputContractDigest` is
+over the definition's output contract.
 
 ## Boundary
 
 One manifest member binds one immutable criterion definition to one exact
 evaluator version. Member order is meaningful and participates in manifest
-identity. A suite may later group separate criterion receipt-v2 artifacts, but
+identity. A suite may later group separate criterion receipt artifacts, but
 the manifest never collapses them into a score or decision.
 
-The following concepts are forbidden from v2 at every manifest level:
+The following concepts are forbidden at every manifest level:
 release thresholds, weights, mandatory/advisory/blocking/compensatory roles,
 composite scores, promotion or blocking decisions, rollout state, and
 overrides. Strict objects and `additionalProperties: false` make those fields
@@ -36,11 +33,11 @@ Each member contains exactly:
   whose bytes participate in identity;
 - `criterionDigest`: SHA-256 identity defined below;
 - `skillId` and `skillVersionId`: the exact Rubrist evaluator lineage/version;
-- `skillDigest`: the v2 evaluator digest, the same value receipt v2 and
-  calibration v2 recompute from their evaluator identity;
+- `skillDigest`: the evaluator digest, the same value the assessment receipt
+  and the calibration artifact recompute from their evaluator identity;
 - `outputContractDigest`: a separate digest of the evaluator's output
   contract; and
-- `applicability`: exactly `{ "kind": "all_items" }` in v2.
+- `applicability`: exactly `{ "kind": "all_items" }`.
 
 `criterionId`, `criterionVersionId`, and `skillVersionId` must each be unique
 inside a manifest. The array must contain each member exactly once, with
@@ -60,8 +57,8 @@ aggregation rule.
 
 ## Canonical JSON
 
-All identities use the same canonical JSON algorithm as assessment receipt
-v2:
+All identities use the same canonical JSON algorithm as the assessment
+receipt:
 
 1. object keys sort lexicographically at every depth;
 2. arrays retain their declared order;
@@ -72,9 +69,9 @@ v2:
 Exact canonical artifact bytes are UTF-8 bytes of the complete canonical
 manifest, including `manifestDigest`, with no byte-order mark. A byte-level
 reader must reject invalid UTF-8, a byte-order mark, non-JSON, and valid JSON
-that is not in canonical form. As in receipt v2, no object has a `__proto__`
-key, every string is a sequence of Unicode scalar values, and every integer is
-at most 2^53 − 1.
+that is not in canonical form. As in the assessment receipt, no object has a
+`__proto__` key, every string is a sequence of Unicode scalar values, and
+every integer is at most 2^53 − 1.
 
 ## Digests
 
@@ -92,7 +89,7 @@ All digests use lower-case SHA-256 with the `sha256:` prefix.
 ```
 
 `outputContractDigest` is SHA-256 over canonical JSON of the evaluator
-definition's output contract. For a prompted definition that is v1's object,
+definition's output contract. For a prompted definition that is this object,
 so the digest is unchanged for the same output contract:
 
 ```json
@@ -115,15 +112,15 @@ For a typed-question definition it is:
 }
 ```
 
-`skillDigest` is v2 (ADR-0014 section 1): SHA-256 over canonical JSON of
-`{ "basis": "rubrist/evaluator-identity/v2", "definitionDigest": ...,
+`skillDigest` (ADR-0014 section 1) is SHA-256 over canonical JSON of
+`{ "basis": "rubrist/evaluator-identity/v1", "definitionDigest": ...,
 "executionBinding": ... }`. The manifest carries it without the identity it
-covers; receipt v2 and calibration v2 carry that identity and recompute it,
-so a consumer checks the receipt's recomputed `skillDigest` against the
-member's.
+covers; the assessment receipt and the calibration artifact carry that
+identity and recompute it, so a consumer checks the receipt's recomputed
+`skillDigest` against the member's.
 
-Criterion or suite fields never enter `skillDigest` and never enter receipt
-v2.
+Criterion or suite fields never enter `skillDigest` and never enter the
+assessment receipt.
 
 `manifestDigest` is SHA-256 over canonical JSON of the complete manifest with
 only `manifestDigest` removed. It therefore covers contract and schema
@@ -146,16 +143,16 @@ recomputed its digests after reordering, removing, substituting, duplicating,
 or adding a criterion. Unknown criteria are rejected; they are never ignored.
 
 When criterion assessment receipts are supplied later, each expected member
-and independent trial must have exactly one separately verified receipt v2.
+and independent trial must have exactly one separately verified receipt.
 The receipt's `skillId`, `skillVersionId`, and `skillDigest` must match its
-manifest member. With v2 `all_items` applicability, criterion receipts for the
+manifest member. With `all_items` applicability, criterion receipts for the
 same trial must also cover the same submitted dataset identity. Missing or
 failed evidence remains attributable to that criterion and is never repaired
 by another member.
 
 ## Compatibility
 
-Manifest v2 is closed. New applicability kinds, trial semantics, member
+The manifest is closed. New applicability kinds, trial semantics, member
 fields, or policy concepts require, after launch, a new contract version and
 a compatibility window under ADR-0001. Before launch, ADR-0014 decision 7
 renumbers instead of keeping history.

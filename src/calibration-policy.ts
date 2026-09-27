@@ -9,7 +9,7 @@ import {
   BinaryCalibrationIntegrityError,
   type BinaryCalibrationArtifact,
   type BinaryCalibrationTrial,
-} from './binary-calibration-v2.js';
+} from './binary-calibration.js';
 import {
   calibrationEvidenceFileSourceSchema,
   type CalibrationEvidenceFileSource,
@@ -24,9 +24,9 @@ import {
   type ProviderIdentityStrength,
 } from './policy-v2.js';
 import type {
-  EvaluatorSuiteManifestV2,
-  EvaluatorSuiteManifestV2Member,
-} from './suite-manifest-v2.js';
+  EvaluatorSuiteManifest,
+  EvaluatorSuiteManifestMember,
+} from './suite-manifest.js';
 
 const digestSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
 const exactUtcMillisecondsSchema = z.string().regex(
@@ -131,8 +131,8 @@ export type CalibrationCollectionResult = z.infer<typeof calibrationCollectionRe
 export interface CollectCalibrationEvidenceInput {
   criterionVersionId: string;
   source: CalibrationEvidenceFileSource | null;
-  manifest: EvaluatorSuiteManifestV2;
-  member: EvaluatorSuiteManifestV2Member;
+  manifest: EvaluatorSuiteManifest;
+  member: EvaluatorSuiteManifestMember;
   /** Exact bytes from the configured file; filesystem I/O remains in the runner. */
   bytes?: Uint8Array;
   /** A closed local read failure. Never combine this with bytes. */
@@ -172,8 +172,8 @@ export function deriveCalibrationEvidenceScope(
 function manifestBindingFailure(
   criterionVersionId: string,
   source: CalibrationEvidenceFileSource,
-  manifest: EvaluatorSuiteManifestV2,
-  member: EvaluatorSuiteManifestV2Member,
+  manifest: EvaluatorSuiteManifest,
+  member: EvaluatorSuiteManifestMember,
 ): string | null {
   if (criterionVersionId !== member.criterionVersionId) return 'criterion binding does not match member';
   const manifestMember = manifest.members[member.position];
