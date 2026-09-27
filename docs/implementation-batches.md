@@ -1,6 +1,6 @@
 # Portfolio implementation batches
 
-Status: **Batch 6 product foundations complete: Rubrist Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5; Batch 7 Rubrist production outcome monitoring is complete under Rubrist ADR-0013; Batch 8 model-agnostic evaluator execution is in progress under Rubrist ADR-0014, with 8A through 8F complete**
+Status: **Batch 6 product foundations complete: Rubrist Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5; Batch 7 Rubrist production outcome monitoring is complete under Rubrist ADR-0013; Batch 8 model-agnostic evaluator execution is implemented under Rubrist ADR-0014 (8A through 8G merged), with its live exit-gate checks of Claude and OpenRouter bindings still to run**
 
 Last reviewed: 2026-09-27
 
@@ -561,7 +561,8 @@ and binary-calibration v1 bytes are unchanged.
 
 ## Batch 8 — Model-agnostic evaluator execution and evidence v2
 
-Implementation status: **in progress; 8A through 8F complete**. Decision
+Implementation status: **8A through 8G merged; live Claude and OpenRouter
+exit-gate checks still to run**. Decision
 gate 12 was accepted on 2026-09-25 and is recorded in Rubrist ADR-0014,
 including the founder's answers to its four open questions and later
 decisions: receipts carry a definition digest, v2 replaces v1, a launch
@@ -600,8 +601,30 @@ findings are resolved before merge.
   8G: two formats, single-criterion and suite (today's calibration-aware
   format, with calibration optional), each with a named identifier. Dailies
   ADR-0010 records it (dailies#21).
-- 8G is in progress. Casefile's report version and content-hash basis have
-  restarted at v1 (casefile#19); Rubrist and Dailies follow.
+- 8G is merged. Every versioned identifier restarted at v1:
+  - Casefile's report version and content-hash basis (casefile#19);
+  - Rubrist's evidence contracts, the evaluator identity basis, the
+    production-calibration report, and their code names (#158);
+  - Dailies' vendored Rubrist contracts and evidence kinds (dailies#23), and
+    its formats (dailies#24): `dailies/single-config/v1`,
+    `dailies/single-report/v1`, `dailies/suite-config/v1`,
+    `dailies/suite-report/v1`, and `dailies/release-policy/v1`, dispatched
+    on the contract. The former suite format 5 remains only as the suite's
+    embedded candidate assessment, and the public API names carry no version
+    (dailies#25).
+- The exit gate was checked on 2026-09-27:
+  - Every automated suite passes: Rubrist's unit (1,704) and Postgres (148)
+    tests, Dailies (331), and Casefile (187).
+  - TypeSafe was checked live: a `jev-1.13.0` binding with threshold 0.5
+    resolved in one call and judged in one call (`native_probability`, no
+    rationale). Its sealed calibration of 3 items and 1 trial made 3 calls.
+    `jev-latest` was refused at the gates with no call, and a
+    typed-question evaluator without a threshold was refused.
+  - Five live resolutions left every saved binding and version row
+    unchanged.
+  - Not yet run live: the `claude-opus-5-5` and `claude-sonnet-5` checks
+    (the configured Anthropic key was rejected) and OpenRouter (no key).
+    Tests cover both paths, including one physical call per item.
 
 This batch changes Rubrist and Dailies. Both switch to the v2 contracts in
 one window and drop v1 support. Casefile changes only in the launch baseline
@@ -777,7 +800,7 @@ Exit gate:
 - A receipt with an abstention is `complete`. Any failure or
   `not_attempted` item makes it `incomplete`.
 - A receipt carries the definition digest and never the rubric, prompt, or
-  question text. Dailies recomputes `skillDigest` v2 from the receipt's
+  question text. Dailies recomputes `skillDigest` from the receipt's
   binding and definition digest.
 - Dailies verifies the new evidence and nothing older, under its ADR-0008.
 - After the launch baseline, every contract and format in the three
