@@ -6,11 +6,11 @@ import {
   parseCanonicalBinaryCalibrationBytes,
 } from '../src/binary-calibration.js';
 import {
-  parseSuiteConfigV6,
-  type SuiteConfigV6,
-  type SuiteConfigV6Input,
-} from '../src/config-v6.js';
-import { parseSuiteConfig } from '../src/config-v5.js';
+  parseSuiteConfig,
+  type SuiteConfig,
+  type SuiteConfigInput,
+} from '../src/suite-config.js';
+import { parseCandidateAssessmentConfig } from '../src/candidate-assessment-config.js';
 
 const bytes = readFileSync(new URL(
   '../contracts/fixtures/binary-calibration-v1.complete.json',
@@ -19,7 +19,7 @@ const bytes = readFileSync(new URL(
 const artifact = parseCanonicalBinaryCalibrationBytes(bytes);
 const identity = expectedBinaryCalibrationIdentity(artifact);
 
-function rawConfig(): SuiteConfigV6 {
+function rawConfig(): SuiteConfig {
   return {
     contract: 'dailies/suite-config/v1',
     schemaVersion: 1,
@@ -86,7 +86,7 @@ function rawConfig(): SuiteConfigV6 {
 const SECOND_CRITERION = 'criterionv_second_1';
 
 /** A configuration whose policy has a second criterion after the fixture's. */
-function twoCriterionConfig(): SuiteConfigV6 {
+function twoCriterionConfig(): SuiteConfig {
   const config = rawConfig();
   config.policy.criteria.push({
     ...structuredClone(config.policy.criteria[0]!),
@@ -96,32 +96,32 @@ function twoCriterionConfig(): SuiteConfigV6 {
   return config;
 }
 
-describe('suite configuration v6', () => {
+describe('suite configuration', () => {
   it('parses a suite configuration, which the candidate assessment configuration refuses', () => {
-    const parsed = parseSuiteConfigV6(rawConfig());
+    const parsed = parseSuiteConfig(rawConfig());
     expect(parsed).toMatchObject({ contract: 'dailies/suite-config/v1', schemaVersion: 1 });
     expect(parsed.calibrationEvidence[0]?.source?.expectedIdentity).toEqual(identity);
-    expect(() => parseSuiteConfig(rawConfig())).toThrow();
+    expect(() => parseCandidateAssessmentConfig(rawConfig())).toThrow();
   });
 
   it('requires exact ordered policy coverage but permits explicit source absence', () => {
     const absent = rawConfig();
     absent.calibrationEvidence[0]!.source = null;
-    expect(parseSuiteConfigV6(absent).calibrationEvidence[0]?.source).toBeNull();
+    expect(parseSuiteConfig(absent).calibrationEvidence[0]?.source).toBeNull();
 
     const wrong = rawConfig();
     wrong.calibrationEvidence[0]!.criterionVersionId = 'another-criterion';
-    expect(() => parseSuiteConfigV6(wrong)).toThrow(/policy criterion order/);
+    expect(() => parseSuiteConfig(wrong)).toThrow(/policy criterion order/);
 
     const missing = rawConfig();
     missing.calibrationEvidence = [];
-    expect(() => parseSuiteConfigV6(missing)).toThrow();
+    expect(() => parseSuiteConfig(missing)).toThrow();
   });
 
   it('binds a null source for every criterion, in policy order, when calibrationEvidence is left out', () => {
-    const omitted: SuiteConfigV6Input = twoCriterionConfig();
+    const omitted: SuiteConfigInput = twoCriterionConfig();
     delete omitted.calibrationEvidence;
-    expect(parseSuiteConfigV6(omitted).calibrationEvidence).toEqual([
+    expect(parseSuiteConfig(omitted).calibrationEvidence).toEqual([
       { criterionVersionId: identity.criterionVersionId, source: null },
       { criterionVersionId: SECOND_CRITERION, source: null },
     ]);
@@ -131,51 +131,53 @@ describe('suite configuration v6', () => {
     const calibratedExample = JSON.parse(readFileSync(new URL(
       '../fixtures/examples/suite-calibrated/dailies.config.json',
       import.meta.url,
-    ), 'utf8')) as SuiteConfigV6;
-    const required: SuiteConfigV6Input = twoCriterionConfig();
+    ), 'utf8')) as SuiteConfig;
+    const required: SuiteConfigInput = twoCriterionConfig();
     required.policy.criteria[0]!.calibrationRequirement =
       calibratedExample.policy.criteria[0]!.calibrationRequirement;
     expect(required.policy.criteria[0]!.calibrationRequirement).not.toBeNull();
     delete required.calibrationEvidence;
-    expect(parseSuiteConfigV6(required).calibrationEvidence[0]?.source).toBeNull();
+    expect(parseSuiteConfig(required).calibrationEvidence[0]?.source).toBeNull();
   });
 
   it('refuses a present list that covers only some criteria or breaks policy order', () => {
     const partial = twoCriterionConfig();
     partial.calibrationEvidence.pop();
-    expect(() => parseSuiteConfigV6(partial)).toThrow(/exact policy criterion coverage/);
+    expect(() => parseSuiteConfig(partial)).toThrow(/exact policy criterion coverage/);
 
     const reversed = twoCriterionConfig();
     reversed.calibrationEvidence.reverse();
-    expect(() => parseSuiteConfigV6(reversed)).toThrow(/policy criterion order/);
+    expect(() => parseSuiteConfig(reversed)).toThrow(/policy criterion order/);
   });
 
   it('refuses another or a missing contract, and another schema version', () => {
     const other = { ...rawConfig(), contract: 'dailies/suite-config/v2' };
-    expect(() => parseSuiteConfigV6(other)).toThrow(
+    expect(() => parseSuiteConfig(other)).toThrow(
       /unsupported suite config contract: dailies\/suite-config\/v2/,
     );
 
     const { contract: _contract, ...missing } = rawConfig();
-    expect(() => parseSuiteConfigV6(missing)).toThrow(/unsupported suite config contract: missing/);
+    expect(() => parseSuiteConfig(missing)).toThrow(/unsupported suite config contract: missing/);
 
-    expect(() => parseSuiteConfigV6({ ...rawConfig(), schemaVersion: 2 })).toThrow();
+    expect(() => parseSuiteConfig({ ...rawConfig(), schemaVersion: 2 })).toThrow();
   });
 
   it('refuses a release policy with another contract or schema version', () => {
-    const otherContract = rawConfig() as SuiteConfigV6 & { policy: { contract: string } };
-    otherContract.policy.contract = 'dailies/release-policy/v2';
-    expect(() => parseSuiteConfigV6(otherContract)).toThrow();
-
-    const otherVersion = rawConfig() as SuiteConfigV6 & { policy: { schemaVersion: number } };
-    otherVersion.policy.schemaVersion = 2;
-    expect(() => parseSuiteConfigV6(otherVersion)).toThrow();
+    const config = rawConfig();
+    expect(() => parseSuiteConfig({
+      ...config,
+      policy: { ...config.policy, contract: 'dailies/release-policy/v2' },
+    })).toThrow();
+    expect(() => parseSuiteConfig({
+      ...config,
+      policy: { ...config.policy, schemaVersion: 2 },
+    })).toThrow();
   });
 
   it('requires suite identity fields to be all absent or all present', () => {
     const partial = rawConfig();
     partial.calibrationEvidence[0]!.source!.expectedIdentity.suiteManifestId = null;
-    expect(() => parseSuiteConfigV6(partial)).toThrow(/all null or all present/);
+    expect(() => parseSuiteConfig(partial)).toThrow(/all null or all present/);
 
     const noSuite = rawConfig();
     Object.assign(noSuite.calibrationEvidence[0]!.source!.expectedIdentity, {
@@ -183,16 +185,16 @@ describe('suite configuration v6', () => {
       suiteManifestDigest: null,
       suiteMemberPosition: null,
     });
-    expect(() => parseSuiteConfigV6(noSuite)).not.toThrow();
+    expect(() => parseSuiteConfig(noSuite)).not.toThrow();
   });
 
   it('rejects unknown fields and a source bound to another criterion', () => {
-    const unknown = rawConfig() as SuiteConfigV6 & { calibrationLatest?: boolean };
+    const unknown = rawConfig() as SuiteConfig & { calibrationLatest?: boolean };
     unknown.calibrationLatest = true;
-    expect(() => parseSuiteConfigV6(unknown)).toThrow();
+    expect(() => parseSuiteConfig(unknown)).toThrow();
 
     const swapped = rawConfig();
     swapped.calibrationEvidence[0]!.source!.expectedIdentity.criterionVersionId = 'other-version';
-    expect(() => parseSuiteConfigV6(swapped)).toThrow(/must match its criterion binding/);
+    expect(() => parseSuiteConfig(swapped)).toThrow(/must match its criterion binding/);
   });
 });

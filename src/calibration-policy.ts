@@ -13,16 +13,16 @@ import {
 import {
   calibrationEvidenceFileSourceSchema,
   type CalibrationEvidenceFileSource,
-} from './config-v6.js';
+} from './suite-config.js';
 import { canonicalJson, sha256Digest } from './rubrist-canonical.js';
 import {
-  binaryCalibrationRequirementV1Schema,
+  binaryCalibrationRequirementSchema,
   calibrationMetricNameSchema,
   providerIdentityStrengthSchema,
-  type BinaryCalibrationRequirementV1,
+  type BinaryCalibrationRequirement,
   type CalibrationMetricName,
   type ProviderIdentityStrength,
-} from './policy-v2.js';
+} from './release-policy.js';
 import type {
   EvaluatorSuiteManifest,
   EvaluatorSuiteManifestMember,
@@ -432,7 +432,7 @@ export const calibrationPolicyResultSchema = z.object({
   status: z.enum(['not_required', 'satisfied', 'insufficient', 'incomplete', 'integrity_failure']),
   admissible: z.boolean(),
   evaluatedAt: exactUtcMillisecondsSchema,
-  requirement: binaryCalibrationRequirementV1Schema.nullable(),
+  requirement: binaryCalibrationRequirementSchema.nullable(),
   collectionState: z.enum(['verified', 'incomplete', 'integrity_failure']),
   calibrationEvidenceScope: calibrationEvidenceScopeSchema.nullable(),
   reasons: z.array(calibrationPolicyReasonSchema),
@@ -510,7 +510,7 @@ function uniqueReasons(checks: CalibrationRequirementCheck[]): CalibrationPolicy
 
 function trialChecks(
   trial: BinaryCalibrationTrial,
-  requirement: BinaryCalibrationRequirementV1,
+  requirement: BinaryCalibrationRequirement,
 ): CalibrationRequirementCheck[] {
   const checks: CalibrationRequirementCheck[] = [];
   const requiredStrength = requirement.minimumProviderIdentityStrength;
@@ -611,7 +611,7 @@ function trialChecks(
  */
 export function evaluateCalibrationRequirement(
   criterionVersionId: string,
-  requirement: BinaryCalibrationRequirementV1 | null,
+  requirement: BinaryCalibrationRequirement | null,
   collection: CalibrationCollectionResult,
   evaluatedAt: string,
 ): CalibrationPolicyResult {
@@ -634,7 +634,7 @@ export function evaluateCalibrationRequirement(
       trials: [],
     };
   }
-  const parsedRequirement = binaryCalibrationRequirementV1Schema.parse(requirement);
+  const parsedRequirement = binaryCalibrationRequirementSchema.parse(requirement);
   if (collection.state === 'integrity_failure') {
     return {
       criterionVersionId,

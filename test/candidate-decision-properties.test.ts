@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
-  applyReleasePolicy,
+  applyCandidatePolicy,
   type CriterionPolicyInput,
-  type ReleasePolicyV1,
-} from '../src/policy.js';
+  type CandidatePolicy,
+} from '../src/candidate-policy.js';
 
 const digest = `sha256:${'1'.repeat(64)}`;
-const policy: ReleasePolicyV1 = {
+const policy: CandidatePolicy = {
   id: 'properties',
   version: '1',
   manifestId: 'manifest',
@@ -61,7 +61,7 @@ describe('suite decision properties', () => {
     for (const blockingRate of [0, 0.79, 0.8, 1]) {
       const decisions = new Set<string>();
       for (const advisoryRate of [0, 0.25, 0.75, 1]) {
-        decisions.add(applyReleasePolicy(
+        decisions.add(applyCandidatePolicy(
           policy,
           observed({ passRate: blockingRate }, { passRate: advisoryRate }),
           false,
@@ -73,24 +73,24 @@ describe('suite decision properties', () => {
 
   it('removing or making required evidence inadmissible never promotes', () => {
     for (const evidenceState of ['incomplete', 'integrity_failure'] as const) {
-      expect(applyReleasePolicy(policy, observed({ evidenceState }), false).decision)
+      expect(applyCandidatePolicy(policy, observed({ evidenceState }), false).decision)
         .not.toBe('promote');
     }
-    expect(applyReleasePolicy(policy, observed({ trustAdmissible: false }), false).decision)
+    expect(applyCandidatePolicy(policy, observed({ trustAdmissible: false }), false).decision)
       .toBe('inconclusive');
   });
 
   it('preserves all mixed-evidence precedence combinations', () => {
     for (const candidateFailed of [false, true]) {
-      expect(applyReleasePolicy(
+      expect(applyCandidatePolicy(
         policy,
         observed({ evidenceState: 'integrity_failure', passRate: 0 }),
         candidateFailed,
       )).toMatchObject({ decision: 'inconclusive', precedence: 'required_integrity_failure' });
     }
-    expect(applyReleasePolicy(policy, observed({ passRate: 0 }), true))
+    expect(applyCandidatePolicy(policy, observed({ passRate: 0 }), true))
       .toMatchObject({ decision: 'block', precedence: 'candidate_execution_failure' });
-    expect(applyReleasePolicy(policy, observed({ passRate: 0 }), false))
+    expect(applyCandidatePolicy(policy, observed({ passRate: 0 }), false))
       .toMatchObject({ decision: 'block', precedence: 'complete_blocking_failure' });
   });
 
@@ -109,8 +109,8 @@ describe('suite decision properties', () => {
           }
           lenientRule.minPassRate = lenientThreshold;
           strictRule.minPassRate = strictThreshold;
-          if (applyReleasePolicy(strict, observed({ passRate }), false).decision === 'promote') {
-            expect(applyReleasePolicy(lenient, observed({ passRate }), false).decision)
+          if (applyCandidatePolicy(strict, observed({ passRate }), false).decision === 'promote') {
+            expect(applyCandidatePolicy(lenient, observed({ passRate }), false).decision)
               .toBe('promote');
           }
         }

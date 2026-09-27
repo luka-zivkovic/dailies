@@ -2,9 +2,9 @@ import { createHash } from 'node:crypto';
 import { arch, cpus, platform } from 'node:os';
 import { z } from 'zod';
 import { canonicalJson } from './rubrist-canonical.js';
-import type { PolicyDecision } from './policy.js';
-import type { PolicyDecisionV2 } from './policy-v2.js';
-import type { Report } from './report.js';
+import type { CandidatePolicyDecision } from './candidate-policy.js';
+import type { PolicyDecision } from './release-policy.js';
+import type { SingleReport } from './report.js';
 
 export const AUTHORED_INVARIANT_SCENARIO_CONTRACT =
   'dailies/authored-release-invariant-scenario/v1' as const;
@@ -281,8 +281,8 @@ export interface AuthoredInvariantClassification {
   errorKind: z.infer<typeof observedErrorKindSchema>;
 }
 
-/** Derive the authored invariant classification from a validated v4 report. */
-export function classifyV4InvariantReport(report: Report): AuthoredInvariantClassification {
+/** Derive the authored invariant classification from a validated single report. */
+export function classifySingleInvariantReport(report: SingleReport): AuthoredInvariantClassification {
   const protocolError = report.items.find((item) => item.errorKind === 'protocol');
   if (protocolError !== undefined) {
     return {
@@ -336,9 +336,9 @@ export function classifyV4InvariantReport(report: Report): AuthoredInvariantClas
   return { evidenceState: 'complete', observationClass: 'policy_result', errorKind: null };
 }
 
-/** Derive the authored invariant classification from a v5 policy decision. */
-export function classifyV5InvariantDecision(
-  result: PolicyDecision,
+/** Derive the authored invariant classification from a candidate-assessment policy decision. */
+export function classifyCandidateInvariantDecision(
+  result: CandidatePolicyDecision,
 ): AuthoredInvariantClassification {
   if (result.precedence === 'required_integrity_failure') {
     return {
@@ -378,9 +378,9 @@ export function classifyV5InvariantDecision(
   return { evidenceState: 'complete', observationClass: 'policy_result', errorKind: null };
 }
 
-/** Derive the authored invariant classification from v6 candidate and calibration results. */
-export function classifyV6InvariantDecision(
-  result: PolicyDecisionV2,
+/** Derive the authored invariant classification from suite candidate and calibration results. */
+export function classifySuiteInvariantDecision(
+  result: PolicyDecision,
 ): AuthoredInvariantClassification {
   if (result.precedence === 'required_integrity_failure') {
     const reasons = result.criteria.flatMap((entry) => entry.calibration.reasons);

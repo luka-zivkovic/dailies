@@ -1,16 +1,16 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import type { Config } from '../src/config.js';
+import type { SingleConfig } from '../src/config.js';
 
 export function sha256Bytes(bytes: string | Buffer): string {
   return `sha256:${createHash('sha256').update(bytes).digest('hex')}`;
 }
 
-export function v4ContractForBytes(
+export function singleContractForBytes(
   path: string,
   bytes: string | Buffer,
   expectedItems: number,
-): Pick<Config, 'contract' | 'schemaVersion' | 'inputs' | 'scope' | 'trustPolicy'> {
+): Pick<SingleConfig, 'contract' | 'schemaVersion' | 'inputs' | 'scope' | 'trustPolicy'> {
   return {
     contract: 'dailies/single-config/v1',
     schemaVersion: 1,
@@ -30,16 +30,16 @@ export function v4ContractForBytes(
   };
 }
 
-export function v4ContractForPath(
+export function singleContractForPath(
   path: string,
   expectedItems?: number,
-): Pick<Config, 'schemaVersion' | 'inputs' | 'scope' | 'trustPolicy'> {
+): Pick<SingleConfig, 'contract' | 'schemaVersion' | 'inputs' | 'scope' | 'trustPolicy'> {
   const bytes = readFileSync(path);
   const count = expectedItems ?? bytes.toString('utf8').split('\n').filter((line) => line.trim()).length;
-  return v4ContractForBytes(path, bytes, count);
+  return singleContractForBytes(path, bytes, count);
 }
 
-export const selfReportedTestPolicy: Config['trustPolicy'] = {
+export const selfReportedTestPolicy: SingleConfig['trustPolicy'] = {
   admissibleClasses: ['verified', 'deterministic', 'self_reported'],
   selfReportedOverride: {
     reason: 'Test fixture explicitly exercises the generic HTTP integration.',

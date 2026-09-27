@@ -18,7 +18,7 @@ import {
   parseCanonicalBinaryCalibrationBytes,
 } from '../dist/binary-calibration.js';
 import { canonicalJson, sha256Digest } from '../dist/rubrist.js';
-import { parseSuiteConfigV6 } from '../dist/config-v6.js';
+import { parseSuiteConfig } from '../dist/suite-config.js';
 import {
   evaluatorSuiteManifestDigest,
   verifyEvaluatorSuiteManifest,
@@ -208,7 +208,7 @@ export async function buildExamples(outDir) {
     timeoutMs: shared.timeoutMs,
     output: shared.output,
   };
-  parseSuiteConfigV6(suiteConfig);
+  parseSuiteConfig(suiteConfig);
   files.set('suite/cases.jsonl', casesBytes);
   files.set('suite/suite-manifest.json', manifestBytes);
   files.set('suite/dailies.config.json', Buffer.from(JSON.stringify(suiteConfig, null, 2) + '\n'));
@@ -256,7 +256,7 @@ export async function buildExamples(outDir) {
     timeoutMs: shared.timeoutMs,
     output: shared.output,
   };
-  parseSuiteConfigV6(calibratedConfig);
+  parseSuiteConfig(calibratedConfig);
   files.set('suite-calibrated/cases.jsonl', casesBytes);
   files.set('suite-calibrated/suite-manifest.json', manifestBytes);
   files.set('suite-calibrated/dailies.config.json', Buffer.from(JSON.stringify(calibratedConfig, null, 2) + '\n'));

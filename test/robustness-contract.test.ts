@@ -7,17 +7,17 @@ import {
   authoredInvariantScenarioDigest,
   authoredInvariantScenarioSchema,
   buildAuthoredInvariantRun,
-  classifyV4InvariantReport,
-  classifyV5InvariantDecision,
-  classifyV6InvariantDecision,
+  classifySingleInvariantReport,
+  classifyCandidateInvariantDecision,
+  classifySuiteInvariantDecision,
   evaluateAuthoredInvariantOutcome,
   type AuthoredInvariantEnvironment,
   type AuthoredInvariantObservation,
   type AuthoredInvariantScenario,
 } from '../src/robustness.js';
-import type { PolicyDecision } from '../src/policy.js';
-import type { PolicyDecisionV2 } from '../src/policy-v2.js';
-import type { Report } from '../src/report.js';
+import type { CandidatePolicyDecision } from '../src/candidate-policy.js';
+import type { PolicyDecision } from '../src/release-policy.js';
+import type { SingleReport } from '../src/report.js';
 
 const isolation: AuthoredInvariantEnvironment['isolation'] = {
   network: 'configured_endpoints_validated_loopback',
@@ -317,7 +317,7 @@ describe('authored invariant contracts', () => {
   });
 });
 
-function v5Decision(overrides: Partial<PolicyDecision> = {}): PolicyDecision {
+function candidateDecision(overrides: Partial<CandidatePolicyDecision> = {}): CandidatePolicyDecision {
   return {
     decision: 'inconclusive',
     precedence: 'mandatory_evidence_incomplete',
@@ -338,17 +338,17 @@ function v5Decision(overrides: Partial<PolicyDecision> = {}): PolicyDecision {
   };
 }
 
-function v4ClassificationReport({
+function singleClassificationReport({
   errors = [],
   total = 1,
   evaluated = 0,
   trustAdmissible = true,
 }: {
-  errors?: Array<{ errorStage: 'candidate' | 'judge'; errorKind: Report['items'][number]['errorKind'] }>;
+  errors?: Array<{ errorStage: 'candidate' | 'judge'; errorKind: SingleReport['items'][number]['errorKind'] }>;
   total?: number;
   evaluated?: number;
   trustAdmissible?: boolean;
-} = {}): Report {
+} = {}): SingleReport {
   return {
     items: errors,
     totals: {
@@ -369,13 +369,13 @@ function v4ClassificationReport({
           admissible: false,
           reason: 'no_completed_evidence',
         },
-  } as unknown as Report;
+  } as unknown as SingleReport;
 }
 
-function v6Decision(
+function suiteDecision(
   calibrationStatus: 'satisfied' | 'insufficient' | 'incomplete' | 'integrity_failure',
-  overrides: Partial<PolicyDecisionV2> = {},
-): PolicyDecisionV2 {
+  overrides: Partial<PolicyDecision> = {},
+): PolicyDecision {
   const reason = calibrationStatus === 'integrity_failure'
     ? 'artifact_digest_mismatch'
     : calibrationStatus === 'insufficient'
@@ -423,12 +423,12 @@ function v6Decision(
     }],
     compensation: [],
     ...overrides,
-  } as PolicyDecisionV2;
+  } as PolicyDecision;
 }
 
 describe('authored invariant classifier truth tables', () => {
-  it('derives v4 protocol, execution, evidence, coverage, and trust precedence', () => {
-    expect(classifyV4InvariantReport(v4ClassificationReport({
+  it('derives single-format protocol, execution, evidence, coverage, and trust precedence', () => {
+    expect(classifySingleInvariantReport(singleClassificationReport({
       errors: [
         { errorStage: 'candidate', errorKind: 'transport' },
         { errorStage: 'judge', errorKind: 'protocol' },
@@ -440,7 +440,7 @@ describe('authored invariant classifier truth tables', () => {
       errorKind: 'protocol',
     });
 
-    expect(classifyV4InvariantReport(v4ClassificationReport({
+    expect(classifySingleInvariantReport(singleClassificationReport({
       errors: [
         { errorStage: 'candidate', errorKind: 'transport' },
         { errorStage: 'judge', errorKind: 'timeout' },
@@ -452,14 +452,14 @@ describe('authored invariant classifier truth tables', () => {
       errorKind: 'transport',
     });
 
-    expect(classifyV4InvariantReport(v4ClassificationReport({
+    expect(classifySingleInvariantReport(singleClassificationReport({
       errors: [{ errorStage: 'judge', errorKind: 'timeout' }],
     }))).toEqual({
       evidenceState: 'incomplete',
       observationClass: 'evidence_timeout',
       errorKind: 'timeout',
     });
-    expect(classifyV4InvariantReport(v4ClassificationReport({
+    expect(classifySingleInvariantReport(singleClassificationReport({
       errors: [{ errorStage: 'judge', errorKind: 'transport' }],
     }))).toEqual({
       evidenceState: 'incomplete',
@@ -467,7 +467,7 @@ describe('authored invariant classifier truth tables', () => {
       errorKind: 'transport',
     });
 
-    expect(classifyV4InvariantReport(v4ClassificationReport({
+    expect(classifySingleInvariantReport(singleClassificationReport({
       errors: [{ errorStage: 'judge', errorKind: 'timeout' }],
       total: 2,
       evaluated: 1,
@@ -476,7 +476,7 @@ describe('authored invariant classifier truth tables', () => {
       observationClass: 'partial_coverage',
       errorKind: 'timeout',
     });
-    expect(classifyV4InvariantReport(v4ClassificationReport({
+    expect(classifySingleInvariantReport(singleClassificationReport({
       evaluated: 1,
       trustAdmissible: false,
     }))).toEqual({
@@ -484,24 +484,24 @@ describe('authored invariant classifier truth tables', () => {
       observationClass: 'trust_inadmissible',
       errorKind: null,
     });
-    expect(classifyV4InvariantReport(v4ClassificationReport({ evaluated: 1 }))).toEqual({
+    expect(classifySingleInvariantReport(singleClassificationReport({ evaluated: 1 }))).toEqual({
       evidenceState: 'complete',
       observationClass: 'policy_result',
       errorKind: null,
     });
   });
 
-  it('keeps complete evidence separate from v5 trust admission and compensation policy', () => {
-    const trustDenied = v5Decision({
-      criteria: [{ ...v5Decision().criteria[0]!, trustAdmissible: false }],
+  it('keeps complete evidence separate from candidate-assessment trust admission and compensation policy', () => {
+    const trustDenied = candidateDecision({
+      criteria: [{ ...candidateDecision().criteria[0]!, trustAdmissible: false }],
     });
-    expect(classifyV5InvariantDecision(trustDenied)).toEqual({
+    expect(classifyCandidateInvariantDecision(trustDenied)).toEqual({
       evidenceState: 'complete',
       observationClass: 'trust_inadmissible',
       errorKind: null,
     });
 
-    const compensationFailure = v5Decision({
+    const compensationFailure = candidateDecision({
       decision: 'block',
       precedence: 'compensation_failure',
       compensation: [{
@@ -516,30 +516,30 @@ describe('authored invariant classifier truth tables', () => {
         },
       }],
     });
-    expect(classifyV5InvariantDecision(compensationFailure)).toEqual({
+    expect(classifyCandidateInvariantDecision(compensationFailure)).toEqual({
       evidenceState: 'complete',
       observationClass: 'policy_result',
       errorKind: null,
     });
 
-    const integrity = v5Decision({ precedence: 'required_integrity_failure' });
-    expect(classifyV5InvariantDecision(integrity)).toMatchObject({
+    const integrity = candidateDecision({ precedence: 'required_integrity_failure' });
+    expect(classifyCandidateInvariantDecision(integrity)).toMatchObject({
       evidenceState: 'integrity_failure', errorKind: 'protocol',
     });
   });
 
-  it('distinguishes v6 calibration insufficiency, missing evidence, and integrity', () => {
-    expect(classifyV6InvariantDecision(v6Decision('insufficient'))).toEqual({
+  it('distinguishes suite calibration insufficiency, missing evidence, and integrity', () => {
+    expect(classifySuiteInvariantDecision(suiteDecision('insufficient'))).toEqual({
       evidenceState: 'complete',
       observationClass: 'trust_inadmissible',
       errorKind: null,
     });
-    expect(classifyV6InvariantDecision(v6Decision('incomplete'))).toEqual({
+    expect(classifySuiteInvariantDecision(suiteDecision('incomplete'))).toEqual({
       evidenceState: 'incomplete',
       observationClass: 'partial_coverage',
       errorKind: 'incomplete',
     });
-    expect(classifyV6InvariantDecision(v6Decision('integrity_failure'))).toEqual({
+    expect(classifySuiteInvariantDecision(suiteDecision('integrity_failure'))).toEqual({
       evidenceState: 'integrity_failure',
       observationClass: 'artifact_tamper',
       errorKind: 'protocol',

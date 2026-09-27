@@ -143,7 +143,7 @@ export const judgeConfigSchema = z.discriminatedUnion('type', [
   }).strict(),
 ]);
 
-export const configSchema = z.object({
+export const singleConfigSchema = z.object({
   contract: z.literal(SINGLE_CONFIG_CONTRACT),
   schemaVersion: z.literal(1),
   inputs: inputsConfigSchema,
@@ -171,7 +171,7 @@ export const configSchema = z.object({
   }).strict(),
 }).strict();
 
-export type Config = z.infer<typeof configSchema>;
+export type SingleConfig = z.infer<typeof singleConfigSchema>;
 export type CandidateConfig = z.infer<typeof candidateConfigSchema>;
 export type JudgeConfig = z.infer<typeof judgeConfigSchema>;
 export type RubristJudgeConfig = Extract<JudgeConfig, { type: 'rubrist' }>;
@@ -190,7 +190,7 @@ export const inputItemSchema = z.object({
 
 export type InputItem = z.infer<typeof inputItemSchema>;
 
-export function parseConfig(raw: unknown): Config {
+export function parseSingleConfig(raw: unknown): SingleConfig {
   const contract = declaredContract(raw);
   if (contract !== SINGLE_CONFIG_CONTRACT) {
     throw new Error(
@@ -198,5 +198,5 @@ export function parseConfig(raw: unknown): Config {
         `single-criterion release execution requires ${SINGLE_CONFIG_CONTRACT}`,
     );
   }
-  return configSchema.parse(raw);
+  return singleConfigSchema.parse(raw);
 }

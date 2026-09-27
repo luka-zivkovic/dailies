@@ -10,7 +10,7 @@ import {
   scopeConfigSchema,
   trustPolicySchema,
 } from './config.js';
-import { releasePolicyV1Schema } from './policy.js';
+import { candidatePolicySchema } from './candidate-policy.js';
 
 export const suiteInputItemSchema = z.object({
   id: z.string().min(1),
@@ -41,7 +41,7 @@ export const suiteProviderConfigSchema = z.object({
     .default(DEFAULT_RUBRIST_POLL_TIMEOUT_MS),
 }).strict();
 
-export const suiteConfigSchema = z.object({
+export const candidateAssessmentConfigSchema = z.object({
   inputs: inputsConfigSchema,
   scope: scopeConfigSchema,
   candidate: candidateConfigSchema,
@@ -54,7 +54,7 @@ export const suiteConfigSchema = z.object({
     }).strict(),
     provider: suiteProviderConfigSchema,
   }).strict(),
-  policy: releasePolicyV1Schema,
+  policy: candidatePolicySchema,
   trustPolicy: trustPolicySchema.default({
     admissibleClasses: ['verified', 'deterministic'],
   }),
@@ -63,7 +63,7 @@ export const suiteConfigSchema = z.object({
   output: z.object({ dir: z.string().min(1) }).strict(),
 }).strict();
 
-export type SuiteConfig = z.infer<typeof suiteConfigSchema>;
+export type CandidateAssessmentConfig = z.infer<typeof candidateAssessmentConfigSchema>;
 export type SuiteInputItem = z.infer<typeof suiteInputItemSchema>;
 export type SuiteProviderConfig = z.infer<typeof suiteProviderConfigSchema>;
 
@@ -72,6 +72,6 @@ export type SuiteProviderConfig = z.infer<typeof suiteProviderConfigSchema>;
  * projects from a suite configuration, with calibration requirements left
  * out. It is not a format of its own (ADR-0010), so it carries no contract.
  */
-export function parseSuiteConfig(raw: unknown): SuiteConfig {
-  return suiteConfigSchema.parse(raw);
+export function parseCandidateAssessmentConfig(raw: unknown): CandidateAssessmentConfig {
+  return candidateAssessmentConfigSchema.parse(raw);
 }

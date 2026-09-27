@@ -11,10 +11,10 @@ import {
   rubristEvidenceOperationSchema,
   sha256Digest,
 } from '../src/rubrist.js';
-import { parseConfig, type Config } from '../src/config.js';
-import { aggregate, decideExitCode, renderMarkdown, reportSchema, type Report } from '../src/report.js';
+import { parseSingleConfig, type SingleConfig } from '../src/config.js';
+import { aggregate, decideExitCode, renderMarkdown, singleReportSchema, type SingleReport } from '../src/report.js';
 import { runShadow } from '../src/runner.js';
-import { v4ContractForPath } from './v4-fixture.js';
+import { singleContractForPath } from './single-fixture.js';
 
 type MockMode =
   | 'valid'
@@ -352,9 +352,9 @@ function makeConfig(
   judgeUrl: string,
   thresholds = { minPassRate: 1, maxRegressions: 0 },
   pollTimeoutMs = 500,
-): Config {
-  return parseConfig({
-    ...v4ContractForPath(inputsPath),
+): SingleConfig {
+  return parseSingleConfig({
+    ...singleContractForPath(inputsPath),
     candidate: { type: 'command', template: 'printf %s {input}' },
     judge: {
       type: 'rubrist',
@@ -464,7 +464,7 @@ describe('Rubrist release-evidence boundary', () => {
       });
       expect(report.decision).toBe('promote');
       expect(renderMarkdown(report)).toContain('Abstained (counted as not passing): 1');
-      expect(reportSchema.safeParse(JSON.parse(JSON.stringify(report))).success).toBe(true);
+      expect(singleReportSchema.safeParse(JSON.parse(JSON.stringify(report))).success).toBe(true);
 
       // The receipt binds the outcome: neither a pass nor a fail can stand in for the abstention.
       for (const outcome of ['pass', 'fail'] as const) {
@@ -478,7 +478,7 @@ describe('Rubrist release-evidence boundary', () => {
           regression: outcome !== 'pass',
         };
         relabeled.totals = aggregate(relabeled.items);
-        expect(reportSchema.safeParse(relabeled).success, outcome).toBe(false);
+        expect(singleReportSchema.safeParse(relabeled).success, outcome).toBe(false);
       }
     } finally {
       closeServer(mock.server);
@@ -514,7 +514,7 @@ describe('Rubrist release-evidence boundary', () => {
         receipt: { status: 'incomplete', run: { status: 'canceled', notAttemptedItems: 1 } },
       });
       expect(report.items.every((item) => item.outcome === 'error' && item.errorKind === 'incomplete')).toBe(true);
-      expect(reportSchema.safeParse(JSON.parse(JSON.stringify(report))).success).toBe(true);
+      expect(singleReportSchema.safeParse(JSON.parse(JSON.stringify(report))).success).toBe(true);
     } finally {
       closeServer(mock.server);
     }
@@ -586,7 +586,7 @@ describe('Rubrist release-evidence boundary', () => {
       const valid = await runShadow(
         makeConfig(path, mock.url, { minPassRate: 0.5, maxRegressions: 0 }),
       );
-      expect(reportSchema.safeParse(valid).success).toBe(true);
+      expect(singleReportSchema.safeParse(valid).success).toBe(true);
 
       const wrongTotals = structuredClone(valid);
       wrongTotals.totals.passed += 1;
@@ -679,7 +679,7 @@ describe('Rubrist release-evidence boundary', () => {
         ['receipt removal', receiptRemovedAfterSuccess],
         ['synthetic per-item Rubrist judge attempt', syntheticPerItemJudge],
       ] as const) {
-        expect(reportSchema.safeParse(tampered).success, name).toBe(false);
+        expect(singleReportSchema.safeParse(tampered).success, name).toBe(false);
       }
     } finally {
       closeServer(mock.server);
@@ -781,7 +781,7 @@ describe('Rubrist release-evidence boundary', () => {
         errorStage: 'candidate',
         errorKind: 'execution',
       });
-      expect(reportSchema.safeParse(report).success).toBe(true);
+      expect(singleReportSchema.safeParse(report).success).toBe(true);
     } finally {
       closeServer(mock.server);
     }
@@ -882,7 +882,7 @@ describe('Rubrist release-evidence boundary', () => {
         derivation: 'rubrist_receipt_v1',
         admissible: true,
       };
-      expect(reportSchema.safeParse(forgedVerifiedTrust).success).toBe(false);
+      expect(singleReportSchema.safeParse(forgedVerifiedTrust).success).toBe(false);
 
       const nonterminalReceipt = structuredClone(report);
       const retainedReceipt = nonterminalReceipt.evidence?.receipt;
@@ -897,7 +897,7 @@ describe('Rubrist release-evidence boundary', () => {
       retainedReceipt.run.status = 'running';
       const { evidenceDigest: _oldDigest, ...unsignedReceipt } = retainedReceipt;
       retainedReceipt.evidenceDigest = independentDigest(unsignedReceipt);
-      expect(reportSchema.safeParse(nonterminalReceipt).success).toBe(false);
+      expect(singleReportSchema.safeParse(nonterminalReceipt).success).toBe(false);
     } finally {
       closeServer(mock.server);
     }
@@ -1028,7 +1028,7 @@ describe('Rubrist release-evidence boundary', () => {
         attempts: [],
         termination: { kind: 'deadline', errorKind: 'timeout' },
       });
-      expect(reportSchema.safeParse(report).success).toBe(true);
+      expect(singleReportSchema.safeParse(report).success).toBe(true);
     } finally {
       vi.useRealTimers();
       closeServer(mock.server);
@@ -1050,9 +1050,9 @@ describe('Rubrist full CLI contract', () => {
       await writeFile(configPath, JSON.stringify({ ...config, output: { dir: outputDir } }), 'utf8');
       try {
         const cli = await runCli(configPath);
-        const report = reportSchema.parse(
+        const report = singleReportSchema.parse(
           JSON.parse(await readFile(join(outputDir, 'report.json'), 'utf8')),
-        ) as Report;
+        ) as SingleReport;
         expect(cli.code).toBe(expectedCode);
         expect(report.decision).toBe(expectedVerdict);
         expect(cli.code).toBe(decideExitCode(report));

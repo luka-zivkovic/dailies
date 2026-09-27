@@ -1,6 +1,6 @@
 import { runCandidate } from './candidate.js';
 import { SINGLE_REPORT_CONTRACT } from './contracts.js';
-import type { Config, InputItem } from './config.js';
+import type { SingleConfig, InputItem } from './config.js';
 import {
   RUBRIST_CLIENT_ITEM_ID_MAX_LENGTH,
   RubristCollectionError,
@@ -18,9 +18,9 @@ import {
   buildDecisionStatement,
   compareOutcome,
   decideDecision,
-  reportSchema,
+  singleReportSchema,
   type ItemResult,
-  type Report,
+  type SingleReport,
 } from './report.js';
 import {
   RetryFailure,
@@ -39,7 +39,7 @@ type CandidateExecution =
   | { success: CandidateSuccess }
   | { failure: ItemResult };
 
-async function executeCandidate(config: Config, item: InputItem): Promise<CandidateExecution> {
+async function executeCandidate(config: SingleConfig, item: InputItem): Promise<CandidateExecution> {
   const base: Pick<ItemResult, 'id' | 'input' | 'baseline_label' | 'baseline_output'> = {
     id: item.id,
     input: item.input,
@@ -88,7 +88,7 @@ async function executeCandidate(config: Config, item: InputItem): Promise<Candid
   }
 }
 
-async function judgeCandidate(config: Config, execution: CandidateSuccess): Promise<ItemResult> {
+async function judgeCandidate(config: SingleConfig, execution: CandidateSuccess): Promise<ItemResult> {
   const { item, base, candidateOutput } = execution;
   try {
     const result = await runWithRetry(() =>
@@ -187,7 +187,7 @@ export interface RunShadowOptions {
 }
 
 /** Run the full shadow evaluation. Throws on run errors (bad inputs file, etc.). */
-export async function runShadow(config: Config, options: RunShadowOptions = {}): Promise<Report> {
+export async function runShadow(config: SingleConfig, options: RunShadowOptions = {}): Promise<SingleReport> {
   const now = options.now ?? (() => new Date());
   const startedAt = now().toISOString();
   const inputArtifact = await loadInputArtifact(config.inputs.path, config.inputs.digest);
@@ -321,7 +321,7 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
       };
   const admissible = trust.status === 'complete' && trust.admissible;
   const decision = decideDecision(totals, config.thresholds, admissible);
-  const report: Report = {
+  const report: SingleReport = {
     contract: SINGLE_REPORT_CONTRACT,
     schemaVersion: 1,
     judgeType: config.judge.type,
@@ -366,5 +366,5 @@ export async function runShadow(config: Config, options: RunShadowOptions = {}):
     items,
   };
   // Validate the report against its versioned schema before anyone consumes it.
-  return reportSchema.parse(report);
+  return singleReportSchema.parse(report);
 }

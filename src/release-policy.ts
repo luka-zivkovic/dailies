@@ -7,17 +7,17 @@ import {
 } from './binary-calibration.js';
 import { canonicalJson } from './rubrist-canonical.js';
 import {
-  applyReleasePolicy,
+  applyCandidatePolicy,
   binaryThresholdRuleSchema,
   compensationFormulaSchema,
   passRateOperandRuleSchema,
-  verifyReleasePolicy,
+  verifyCandidatePolicy,
   type CompensationResult,
   type CriterionPolicyInput,
-  type CriterionPolicyResult,
+  type CandidateCriterionPolicyResult,
   type DecisionPrecedence,
-  type ReleasePolicyV1,
-} from './policy.js';
+  type CandidatePolicy,
+} from './candidate-policy.js';
 import type {
   CalibrationPolicyResult,
 } from './calibration-policy.js';
@@ -78,7 +78,7 @@ const calibrationMetricCheckSchema = z.object({
   }
 });
 
-export const binaryCalibrationRequirementV1Schema = z.object({
+export const binaryCalibrationRequirementSchema = z.object({
   contract: z.literal('dailies/binary-calibration-requirement/v1'),
   requiredTruthRole: z.literal('sealed_validation'),
   requiredTruthProvenanceLevel: z.literal('governed_blind'),
@@ -109,45 +109,45 @@ export const binaryCalibrationRequirementV1Schema = z.object({
   }
 });
 
-const blockingCriterionPolicyV2Schema = z.object({
+const blockingCriterionPolicySchema = z.object({
   criterionVersionId: nonBlankStringSchema,
   evidenceRequirement: z.literal('mandatory'),
   consequence: z.literal('blocking'),
   rule: binaryThresholdRuleSchema,
-  calibrationRequirement: binaryCalibrationRequirementV1Schema.nullable(),
+  calibrationRequirement: binaryCalibrationRequirementSchema.nullable(),
 }).strict();
 
-const advisoryCriterionPolicyV2Schema = z.object({
+const advisoryCriterionPolicySchema = z.object({
   criterionVersionId: nonBlankStringSchema,
   evidenceRequirement: z.enum(['mandatory', 'optional']),
   consequence: z.literal('advisory'),
   rule: binaryThresholdRuleSchema,
-  calibrationRequirement: binaryCalibrationRequirementV1Schema.nullable(),
+  calibrationRequirement: binaryCalibrationRequirementSchema.nullable(),
 }).strict();
 
-const compensatoryCriterionPolicyV2Schema = z.object({
+const compensatoryCriterionPolicySchema = z.object({
   criterionVersionId: nonBlankStringSchema,
   evidenceRequirement: z.literal('mandatory'),
   consequence: z.literal('compensatory'),
   compensationGroupId: nonBlankStringSchema,
   rule: passRateOperandRuleSchema,
-  calibrationRequirement: binaryCalibrationRequirementV1Schema.nullable(),
+  calibrationRequirement: binaryCalibrationRequirementSchema.nullable(),
 }).strict();
 
-export const criterionPolicyV2Schema = z.discriminatedUnion('consequence', [
-  blockingCriterionPolicyV2Schema,
-  advisoryCriterionPolicyV2Schema,
-  compensatoryCriterionPolicyV2Schema,
+export const criterionPolicySchema = z.discriminatedUnion('consequence', [
+  blockingCriterionPolicySchema,
+  advisoryCriterionPolicySchema,
+  compensatoryCriterionPolicySchema,
 ]);
 
-export const releasePolicyV2Schema = z.object({
+export const releasePolicySchema = z.object({
   contract: z.literal(RELEASE_POLICY_CONTRACT),
   schemaVersion: z.literal(1),
   id: nonBlankStringSchema,
   version: nonBlankStringSchema,
   manifestId: nonBlankStringSchema,
   manifestDigest: digestSchema,
-  criteria: z.array(criterionPolicyV2Schema).min(1),
+  criteria: z.array(criterionPolicySchema).min(1),
   compensationGroups: z.array(z.object({
     id: nonBlankStringSchema,
     formula: compensationFormulaSchema,
@@ -156,11 +156,11 @@ export const releasePolicyV2Schema = z.object({
 
 export type ProviderIdentityStrength = z.infer<typeof providerIdentityStrengthSchema>;
 export type CalibrationMetricName = z.infer<typeof calibrationMetricNameSchema>;
-export type BinaryCalibrationRequirementV1 = z.infer<typeof binaryCalibrationRequirementV1Schema>;
-export type CriterionPolicyV2 = z.infer<typeof criterionPolicyV2Schema>;
-export type ReleasePolicyV2 = z.infer<typeof releasePolicyV2Schema>;
+export type BinaryCalibrationRequirement = z.infer<typeof binaryCalibrationRequirementSchema>;
+export type CriterionPolicy = z.infer<typeof criterionPolicySchema>;
+export type ReleasePolicy = z.infer<typeof releasePolicySchema>;
 
-export function releasePolicyV2CandidateProjection(policy: ReleasePolicyV2): ReleasePolicyV1 {
+export function releasePolicyCandidateProjection(policy: ReleasePolicy): CandidatePolicy {
   return {
     id: policy.id,
     version: policy.version,
@@ -171,35 +171,35 @@ export function releasePolicyV2CandidateProjection(policy: ReleasePolicyV2): Rel
   };
 }
 
-export function verifyReleasePolicyV2(
+export function verifyReleasePolicy(
   raw: unknown,
   manifest: EvaluatorSuiteManifest,
-): ReleasePolicyV2 {
-  const policy = releasePolicyV2Schema.parse(raw);
-  verifyReleasePolicy(releasePolicyV2CandidateProjection(policy), manifest);
+): ReleasePolicy {
+  const policy = releasePolicySchema.parse(raw);
+  verifyCandidatePolicy(releasePolicyCandidateProjection(policy), manifest);
   return policy;
 }
 
-export function releasePolicyV2Digest(policy: ReleasePolicyV2): string {
+export function releasePolicyDigest(policy: ReleasePolicy): string {
   return `sha256:${createHash('sha256').update(canonicalJson(policy)).digest('hex')}`;
 }
 
-export interface CriterionPolicyResultV2 extends CriterionPolicyResult {
-  calibrationRequirement: BinaryCalibrationRequirementV1 | null;
+export interface CriterionPolicyResult extends CandidateCriterionPolicyResult {
+  calibrationRequirement: BinaryCalibrationRequirement | null;
   calibration: CalibrationPolicyResult;
   /** Candidate trust and calibration are separate inputs to this combined value. */
   releaseAdmissible: boolean;
 }
 
-export interface PolicyDecisionV2 {
+export interface PolicyDecision {
   decision: 'promote' | 'block' | 'inconclusive';
   precedence: DecisionPrecedence;
-  criteria: CriterionPolicyResultV2[];
+  criteria: CriterionPolicyResult[];
   compensation: CompensationResult[];
 }
 
-function isRequiredCriterion(entry: CriterionPolicyV2): boolean {
-  // V2 preserves v1's closed roles: blocking and compensatory entries are
+function isRequiredCriterion(entry: CriterionPolicy): boolean {
+  // The candidate policy's closed roles: blocking and compensatory entries are
   // structurally mandatory, while only advisory entries can be optional.
   return entry.evidenceRequirement === 'mandatory';
 }
@@ -209,17 +209,17 @@ function calibrationSatisfied(result: CalibrationPolicyResult): boolean {
 }
 
 /**
- * Apply v1 candidate policy with calibration as a separate admissibility
+ * Apply the candidate policy with calibration as a separate admissibility
  * condition. In particular, an otherwise blocking assessment can block only
  * when that criterion's own calibration requirement is satisfied.
  */
-export function applyReleasePolicyV2(
-  policy: ReleasePolicyV2,
+export function applyReleasePolicy(
+  policy: ReleasePolicy,
   evidence: CriterionPolicyInput[],
   calibration: CalibrationPolicyResult[],
   candidateExecutionFailed: boolean,
   candidateIntegrityFailure = false,
-): PolicyDecisionV2 {
+): PolicyDecision {
   const calibrationById = new Map(calibration.map((entry) => [entry.criterionVersionId, entry]));
   if (calibrationById.size !== calibration.length || calibration.length !== policy.criteria.length) {
     throw new Error('release policy evaluation requires exact unique calibration-result coverage');
@@ -257,14 +257,14 @@ export function applyReleasePolicyV2(
   const requiredCalibrationIntegrityFailure = policy.criteria.some((entry) =>
     isRequiredCriterion(entry) &&
     calibrationById.get(entry.criterionVersionId)?.status === 'integrity_failure');
-  const base = applyReleasePolicy(
-    releasePolicyV2CandidateProjection(policy),
+  const base = applyCandidatePolicy(
+    releasePolicyCandidateProjection(policy),
     effectiveEvidence,
     candidateExecutionFailed,
     candidateIntegrityFailure || requiredCalibrationIntegrityFailure,
   );
   const baseById = new Map(base.criteria.map((entry) => [entry.criterionVersionId, entry]));
-  const criteria = policy.criteria.map((entry): CriterionPolicyResultV2 => {
+  const criteria = policy.criteria.map((entry): CriterionPolicyResult => {
     const input = evidenceById.get(entry.criterionVersionId)!;
     const calibrationResult = calibrationById.get(entry.criterionVersionId)!;
     const evaluated = baseById.get(entry.criterionVersionId)!;

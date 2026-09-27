@@ -10,12 +10,12 @@ import {
 } from './config.js';
 import { ERROR_KINDS } from './errors.js';
 import {
-  applyReleasePolicy,
-  releasePolicyDigest,
-  releasePolicyV1Schema,
-  verifyReleasePolicy,
+  applyCandidatePolicy,
+  candidatePolicyDigest,
+  candidatePolicySchema,
+  verifyCandidatePolicy,
   type CriterionPolicyInput,
-} from './policy.js';
+} from './candidate-policy.js';
 import { attemptLedgerSchema } from './retry.js';
 import {
   evaluatorSuiteManifestSchema,
@@ -245,13 +245,13 @@ const reportTrustPolicySchema = z.object({
   admissibleClasses: z.unknown(),
 }).passthrough().pipe(trustPolicySchema);
 
-const reportV5ShapeSchema = z.object({
+const candidateAssessmentReportShapeSchema = z.object({
   startedAt: z.string().datetime({ offset: true }),
   finishedAt: z.string().datetime({ offset: true }),
   scope: suiteScopeSchema,
   trustPolicy: reportTrustPolicySchema,
   manifest: evaluatorSuiteManifestSchema,
-  policy: releasePolicyV1Schema,
+  policy: candidatePolicySchema,
   policyDigest: digestSchema,
   executionPolicy: executionPolicySchema,
   executionPolicyDigest: digestSchema,
@@ -274,7 +274,7 @@ const reportV5ShapeSchema = z.object({
 export type SuiteCandidateItem = z.infer<typeof candidateItemSchema>;
 export type CriterionItem = z.infer<typeof criterionItemSchema>;
 export type CriterionTotals = z.infer<typeof criterionTotalsSchema>;
-export type SuiteReport = z.infer<typeof reportV5ShapeSchema>;
+export type CandidateAssessmentReport = z.infer<typeof candidateAssessmentReportShapeSchema>;
 
 function sortedHeaderNames(headers: Record<string, string> | undefined): string[] {
   return [...new Set(Object.keys(headers ?? {}).map((name) => name.toLowerCase()))].sort();
@@ -282,7 +282,7 @@ function sortedHeaderNames(headers: Record<string, string> | undefined): string[
 
 export function providerExecutionIdentity(
   provider: { type: 'rubrist'; url: string; headers?: Record<string, string> },
-): SuiteReport['executionPolicy']['provider'] {
+): CandidateAssessmentReport['executionPolicy']['provider'] {
   const basis = {
     type: provider.type,
     url: provider.url,
@@ -295,7 +295,7 @@ export function candidateExecutionIdentity(
   candidate:
     | { type: 'command'; template: string }
     | { type: 'http'; url: string; headers?: Record<string, string> },
-): SuiteReport['executionPolicy']['candidate'] {
+): CandidateAssessmentReport['executionPolicy']['candidate'] {
   if (candidate.type === 'command') {
     const basis = { type: candidate.type, template: candidate.template } as const;
     return { ...basis, identityDigest: sha256Digest(basis) };
@@ -360,8 +360,8 @@ export function aggregateCriterionItems(items: CriterionItem[]): CriterionTotals
   };
 }
 
-export function buildSuiteDecisionStatement(
-  decision: SuiteReport['decision'],
+export function buildCandidateAssessmentDecisionStatement(
+  decision: CandidateAssessmentReport['decision'],
   policyId: string,
   policyVersion: string,
   policyDigest: string,
@@ -376,7 +376,7 @@ export function buildSuiteDecisionStatement(
     `${JSON.stringify(scopeId)} over exact JSONL input ${inputDigest}.`;
 }
 
-export const reportV5Schema = reportV5ShapeSchema.superRefine((report, ctx) => {
+export const candidateAssessmentReportSchema = candidateAssessmentReportShapeSchema.superRefine((report, ctx) => {
   let manifest;
   let policy;
   try {
@@ -384,12 +384,12 @@ export const reportV5Schema = reportV5ShapeSchema.superRefine((report, ctx) => {
       manifestId: report.manifest.manifestId,
       manifestDigest: report.manifest.manifestDigest,
     });
-    policy = verifyReleasePolicy(report.policy, manifest);
+    policy = verifyCandidatePolicy(report.policy, manifest);
   } catch (error) {
     ctx.addIssue({ code: 'custom', message: error instanceof Error ? error.message : String(error) });
     return;
   }
-  if (report.policyDigest !== releasePolicyDigest(policy)) {
+  if (report.policyDigest !== candidatePolicyDigest(policy)) {
     ctx.addIssue({ code: 'custom', path: ['policyDigest'], message: 'policyDigest mismatch' });
   }
   if (report.executionPolicyDigest !== suiteExecutionPolicyDigest(report.executionPolicy)) {
@@ -731,7 +731,7 @@ export const reportV5Schema = reportV5ShapeSchema.superRefine((report, ctx) => {
   if (retainedDatasetDigests.size > 1) {
     ctx.addIssue({ code: 'custom', path: ['criteria'], message: 'all retained receipts must share one candidate datasetDigest' });
   }
-  const expected = applyReleasePolicy(
+  const expected = applyCandidatePolicy(
     policy,
     policyInputs,
     report.candidateExecution.failed > 0,
@@ -755,7 +755,7 @@ export const reportV5Schema = reportV5ShapeSchema.superRefine((report, ctx) => {
       ctx.addIssue({ code: 'custom', path: ['criteria', index, 'policyResult'], message: 'criterion policy result mismatch' });
     }
   }
-  const statement = buildSuiteDecisionStatement(
+  const statement = buildCandidateAssessmentDecisionStatement(
     expected.decision,
     policy.id,
     policy.version,
@@ -771,7 +771,7 @@ export const reportV5Schema = reportV5ShapeSchema.superRefine((report, ctx) => {
   }
 });
 
-export function renderSuiteMarkdown(report: SuiteReport): string {
+export function renderCandidateAssessmentMarkdown(report: CandidateAssessmentReport): string {
   const lines = [
     `# Criterion release report: ${report.decision.toUpperCase()}`,
     '',

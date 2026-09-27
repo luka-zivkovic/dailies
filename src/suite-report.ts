@@ -24,7 +24,7 @@ import {
 import {
   expectedBinaryCalibrationIdentitySchema,
   type ExpectedBinaryCalibrationIdentityConfig,
-} from './config-v6.js';
+} from './suite-config.js';
 import {
   scopeConfigSchema,
   scopeKindSchema,
@@ -33,15 +33,15 @@ import {
 } from './config.js';
 import { canonicalJson, sha256Digest } from './rubrist-canonical.js';
 import {
-  applyReleasePolicyV2,
-  releasePolicyV2CandidateProjection,
-  releasePolicyV2Digest,
-  releasePolicyV2Schema,
-  verifyReleasePolicyV2,
-  type ReleasePolicyV2,
-} from './policy-v2.js';
-import type { CriterionPolicyInput } from './policy.js';
-import { reportV5Schema, type SuiteReport } from './report-v5.js';
+  applyReleasePolicy,
+  releasePolicyCandidateProjection,
+  releasePolicyDigest,
+  releasePolicySchema,
+  verifyReleasePolicy,
+  type ReleasePolicy,
+} from './release-policy.js';
+import type { CriterionPolicyInput } from './candidate-policy.js';
+import { candidateAssessmentReportSchema, type CandidateAssessmentReport } from './candidate-assessment-report.js';
 import {
   evaluatorSuiteManifestSchema,
   verifyEvaluatorSuiteManifest,
@@ -84,7 +84,7 @@ const candidateAssessmentSchema = z.discriminatedUnion('status', [
   z.object({
     status: z.literal('completed'),
     reportDigest: digestSchema,
-    report: reportV5Schema,
+    report: candidateAssessmentReportSchema,
   }).strict(),
   z.object({
     status: z.literal('not_started'),
@@ -169,7 +169,7 @@ const compensationResultSchema = z.object({
   }).strict().nullable(),
 }).strict();
 
-const reportV6ShapeSchema = z.object({
+const suiteReportShapeSchema = z.object({
   contract: z.literal(SUITE_REPORT_CONTRACT),
   schemaVersion: z.literal(1),
   startedAt: exactUtcMillisecondsSchema,
@@ -177,7 +177,7 @@ const reportV6ShapeSchema = z.object({
   evaluatedAt: exactUtcMillisecondsSchema,
   releaseScope: releaseScopeSchema,
   manifest: evaluatorSuiteManifestSchema,
-  policy: releasePolicyV2Schema,
+  policy: releasePolicySchema,
   policyDigest: digestSchema,
   candidateAssessment: candidateAssessmentSchema,
   candidateAssessmentDigest: digestSchema,
@@ -196,19 +196,19 @@ const reportV6ShapeSchema = z.object({
   decisionStatement: z.string().min(1),
 }).strict();
 
-export type CalibrationSuiteReport = z.infer<typeof reportV6ShapeSchema>;
-export type CalibrationReportCriterion = CalibrationSuiteReport['criteria'][number];
-export type CalibrationCandidateAssessment = CalibrationSuiteReport['candidateAssessment'];
+export type SuiteReport = z.infer<typeof suiteReportShapeSchema>;
+export type SuiteReportCriterion = SuiteReport['criteria'][number];
+export type SuiteCandidateAssessment = SuiteReport['candidateAssessment'];
 
-export interface BuildCalibrationReportV6Input {
+export interface BuildSuiteReportInput {
   startedAt: string;
   finishedAt: string;
   evaluatedAt: string;
-  releaseScope: CalibrationSuiteReport['releaseScope'];
+  releaseScope: SuiteReport['releaseScope'];
   manifest: EvaluatorSuiteManifest;
-  policy: ReleasePolicyV2;
+  policy: ReleasePolicy;
   candidateAssessment:
-    | { status: 'completed'; report: SuiteReport }
+    | { status: 'completed'; report: CandidateAssessmentReport }
     | { status: 'not_started'; reason: 'required_calibration_integrity_failure' };
   calibrationCollections: CalibrationCollectionResult[];
 }
@@ -241,7 +241,7 @@ function reportSource(
 
 function projectArtifactEvidence(
   collection: CalibrationCollectionResult,
-): CalibrationReportCriterion['artifactEvidence'] {
+): SuiteReportCriterion['artifactEvidence'] {
   if (collection.artifact !== null) {
     if (collection.source === null || collection.observedArtifactDigest === null) {
       throw new Error('retained calibration artifact requires configured source and observed digest');
@@ -273,7 +273,7 @@ function projectArtifactEvidence(
 }
 
 function reconstructCollection(
-  criterion: CalibrationReportCriterion,
+  criterion: SuiteReportCriterion,
   manifest: EvaluatorSuiteManifest,
 ): CalibrationCollectionResult {
   const member = manifest.members[criterion.position];
@@ -353,7 +353,7 @@ function reconstructCollection(
 }
 
 function candidatePolicyInputs(
-  candidateAssessment: CalibrationCandidateAssessment,
+  candidateAssessment: SuiteCandidateAssessment,
   manifest: EvaluatorSuiteManifest,
 ): {
   evidence: CriterionPolicyInput[];
@@ -393,9 +393,9 @@ function candidatePolicyInputs(
 }
 
 function candidateEvidenceForCriterion(
-  assessment: CalibrationCandidateAssessment,
+  assessment: SuiteCandidateAssessment,
   criterionVersionId: string,
-): Pick<CalibrationReportCriterion['effectiveAssessment'],
+): Pick<SuiteReportCriterion['effectiveAssessment'],
   'candidateEvidenceState' | 'candidateTrustAdmissible'> {
   if (assessment.status === 'not_started') {
     return { candidateEvidenceState: 'incomplete', candidateTrustAdmissible: false };
@@ -412,7 +412,7 @@ function candidateEvidenceForCriterion(
 
 function calibrationTrust(
   collection: CalibrationCollectionResult,
-): CalibrationReportCriterion['trust'] {
+): SuiteReportCriterion['trust'] {
   if (collection.state === 'verified') {
     return { status: 'verified', derivation: 'rubrist_binary_calibration_v1' };
   }
@@ -423,8 +423,8 @@ function calibrationTrust(
   };
 }
 
-export function buildCalibrationDecisionStatement(
-  report: Pick<CalibrationSuiteReport,
+export function buildSuiteDecisionStatement(
+  report: Pick<SuiteReport,
     'decision' | 'policy' | 'policyDigest' | 'manifest' | 'releaseScope' |
     'candidateAssessmentDigest' | 'calibrationEvidenceSetDigest'>,
 ): string {
@@ -442,7 +442,7 @@ function exactEqual(left: unknown, right: unknown): boolean {
   return canonicalJson(left) === canonicalJson(right);
 }
 
-function verifyReleaseScope(scope: CalibrationSuiteReport['releaseScope']): void {
+function verifyReleaseScope(scope: SuiteReport['releaseScope']): void {
   const parsed: ScopeConfig = {
     id: scope.id,
     kind: scope.kind,
@@ -459,7 +459,7 @@ function verifyReleaseScope(scope: CalibrationSuiteReport['releaseScope']): void
   }
 }
 
-function verifyReportV6(report: CalibrationSuiteReport): void {
+function verifySuiteReport(report: SuiteReport): void {
   for (const [field, value] of [
     ['startedAt', report.startedAt],
     ['finishedAt', report.finishedAt],
@@ -474,8 +474,8 @@ function verifyReportV6(report: CalibrationSuiteReport): void {
     manifestId: report.manifest.manifestId,
     manifestDigest: report.manifest.manifestDigest,
   });
-  const policy = verifyReleasePolicyV2(report.policy, manifest);
-  if (report.policyDigest !== releasePolicyV2Digest(policy)) {
+  const policy = verifyReleasePolicy(report.policy, manifest);
+  if (report.policyDigest !== releasePolicyDigest(policy)) {
     throw new Error('suite report policyDigest mismatch');
   }
   if (report.candidateAssessmentDigest !== sha256Digest(report.candidateAssessment)) {
@@ -483,12 +483,12 @@ function verifyReportV6(report: CalibrationSuiteReport): void {
   }
 
   if (report.candidateAssessment.status === 'completed') {
-    const candidateReport = reportV5Schema.parse(report.candidateAssessment.report);
+    const candidateReport = candidateAssessmentReportSchema.parse(report.candidateAssessment.report);
     if (report.candidateAssessment.reportDigest !== sha256Digest(candidateReport)) {
       throw new Error('embedded candidate report digest mismatch');
     }
     if (!exactEqual(candidateReport.manifest, manifest) ||
-      !exactEqual(candidateReport.policy, releasePolicyV2CandidateProjection(policy)) ||
+      !exactEqual(candidateReport.policy, releasePolicyCandidateProjection(policy)) ||
       !exactEqual(candidateReport.scope, report.releaseScope)) {
       throw new Error('embedded candidate report identity does not match the suite report');
     }
@@ -555,7 +555,7 @@ function verifyReportV6(report: CalibrationSuiteReport): void {
   }
 
   const candidate = candidatePolicyInputs(report.candidateAssessment, manifest);
-  const decision = applyReleasePolicyV2(
+  const decision = applyReleasePolicy(
     policy,
     candidate.evidence,
     calibrationResults,
@@ -587,13 +587,13 @@ function verifyReportV6(report: CalibrationSuiteReport): void {
       throw new Error(`effective assessment or policy result mismatch at position ${index}`);
     }
   }
-  if (report.decisionStatement !== buildCalibrationDecisionStatement(report)) {
+  if (report.decisionStatement !== buildSuiteDecisionStatement(report)) {
     throw new Error('suite report decision statement mismatch');
   }
 }
 
-export const reportV6Schema = z.unknown().transform((raw, ctx): CalibrationSuiteReport => {
-  const parsed = reportV6ShapeSchema.safeParse(raw);
+export const suiteReportSchema = z.unknown().transform((raw, ctx): SuiteReport => {
+  const parsed = suiteReportShapeSchema.safeParse(raw);
   if (!parsed.success) {
     for (const issue of parsed.error.issues) ctx.addIssue(issue);
     return z.NEVER;
@@ -616,7 +616,7 @@ export const reportV6Schema = z.unknown().transform((raw, ctx): CalibrationSuite
   return parsed.data;
 }).superRefine((report, ctx) => {
   try {
-    verifyReportV6(report);
+    verifySuiteReport(report);
   } catch (error) {
     ctx.addIssue({
       code: 'custom',
@@ -625,18 +625,18 @@ export const reportV6Schema = z.unknown().transform((raw, ctx): CalibrationSuite
   }
 });
 
-export function buildCalibrationReportV6(
-  input: BuildCalibrationReportV6Input,
-): CalibrationSuiteReport {
+export function buildSuiteReport(
+  input: BuildSuiteReportInput,
+): SuiteReport {
   const manifest = verifyEvaluatorSuiteManifest(input.manifest, {
     manifestId: input.manifest.manifestId,
     manifestDigest: input.manifest.manifestDigest,
   });
-  const policy = verifyReleasePolicyV2(input.policy, manifest);
+  const policy = verifyReleasePolicy(input.policy, manifest);
   if (input.calibrationCollections.length !== manifest.members.length) {
     throw new Error('calibration report builder requires exact collection coverage');
   }
-  const candidateAssessment: CalibrationCandidateAssessment =
+  const candidateAssessment: SuiteCandidateAssessment =
     input.candidateAssessment.status === 'completed'
       ? {
           status: 'completed',
@@ -652,14 +652,14 @@ export function buildCalibrationReportV6(
       input.evaluatedAt,
     ));
   const candidate = candidatePolicyInputs(candidateAssessment, manifest);
-  const decision = applyReleasePolicyV2(
+  const decision = applyReleasePolicy(
     policy,
     candidate.evidence,
     calibrationResults,
     candidate.executionFailed,
     candidate.integrityFailure,
   );
-  const criteria = manifest.members.map((member, index): CalibrationReportCriterion => {
+  const criteria = manifest.members.map((member, index): SuiteReportCriterion => {
     const collection = input.calibrationCollections[index]!;
     const calibration = calibrationResults[index]!;
     const effective = decision.criteria[index]!;
@@ -699,7 +699,7 @@ export function buildCalibrationReportV6(
     releaseScope: input.releaseScope,
     manifest,
     policy,
-    policyDigest: releasePolicyV2Digest(policy),
+    policyDigest: releasePolicyDigest(policy),
     candidateAssessment,
     candidateAssessmentDigest: sha256Digest(candidateAssessment),
     calibrationEvidenceSetDigest: calibrationEvidenceSetDigest(input.calibrationCollections),
@@ -707,29 +707,29 @@ export function buildCalibrationReportV6(
     compensation: decision.compensation,
     decision: decision.decision,
     decisionPrecedence: decision.precedence,
-  } satisfies Omit<CalibrationSuiteReport, 'decisionStatement'>;
-  return reportV6Schema.parse({
+  } satisfies Omit<SuiteReport, 'decisionStatement'>;
+  return suiteReportSchema.parse({
     ...basis,
-    decisionStatement: buildCalibrationDecisionStatement(basis),
+    decisionStatement: buildSuiteDecisionStatement(basis),
   });
 }
 
 /** Deterministic canonical transport bytes for report archival and digesting. */
-export function serializeCalibrationReportV6(report: CalibrationSuiteReport): Uint8Array {
-  return Buffer.from(canonicalJson(reportV6Schema.parse(report)), 'utf8');
+export function serializeSuiteReport(report: SuiteReport): Uint8Array {
+  return Buffer.from(canonicalJson(suiteReportSchema.parse(report)), 'utf8');
 }
 
-export function parseCanonicalCalibrationReportV6Bytes(bytes: Uint8Array): CalibrationSuiteReport {
+export function parseCanonicalSuiteReportBytes(bytes: Uint8Array): SuiteReport {
   if (bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) {
     throw new Error('suite report has a UTF-8 BOM');
   }
   const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
   const raw = JSON.parse(text) as unknown;
   if (canonicalJson(raw) !== text) throw new Error('suite report is not exact canonical JSON');
-  return reportV6Schema.parse(raw);
+  return suiteReportSchema.parse(raw);
 }
 
-export function renderCalibrationReportMarkdown(report: CalibrationSuiteReport): string {
+export function renderSuiteMarkdown(report: SuiteReport): string {
   const verified = report.criteria.filter((criterion) => criterion.evidenceState === 'verified').length;
   const renderCheck = (check: CalibrationPolicyResult['checks'][number]) =>
     `- ${check.passed ? 'PASS' : 'FAIL'} ${check.check}` +

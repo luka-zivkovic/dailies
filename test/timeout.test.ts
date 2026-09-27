@@ -4,11 +4,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { runCandidate } from '../src/candidate.js';
-import type { Config } from '../src/config.js';
+import type { SingleConfig } from '../src/config.js';
 import { judgeItem } from '../src/judge.js';
 import { decideExitCode, EXIT_BLOCK } from '../src/report.js';
 import { runShadow } from '../src/runner.js';
-import { v4ContractForPath } from './v4-fixture.js';
+import { singleContractForPath } from './single-fixture.js';
 
 /** A server that accepts requests but never responds (simulates a hung endpoint). */
 let hangingServer: Server;
@@ -58,8 +58,8 @@ describe('timeouts', () => {
       JSON.stringify({ id: 'slow', input: 'x', baseline_output: 'x' }) + '\n',
       'utf8',
     );
-    const config: Config = {
-      ...v4ContractForPath(inputsPath),
+    const config: SingleConfig = {
+      ...singleContractForPath(inputsPath),
       candidate: { type: 'command', template: 'sleep 30' },
       judge: { type: 'exact-match' },
       thresholds: { minPassRate: 1, maxRegressions: 0 },

@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
-import { parseConfig } from '../src/config.js';
+import { parseSingleConfig } from '../src/config.js';
 import { formatDigestSyncResult, syncInputDigest } from '../src/digest.js';
 import { loadInputArtifact } from '../src/inputs.js';
 
@@ -26,7 +26,7 @@ const TWO_ITEMS =
   '{"id":"b","input":"y","baseline_output":"y"}\n';
 const THREE_ITEMS = TWO_ITEMS + '\n{"id":"c","input":"z","baseline_output":"z"}\n';
 
-/** A hand-formatted v4 config whose layout should survive an in-place update. */
+/** A hand-formatted single config whose layout should survive an in-place update. */
 function formattedConfig(digest: string, expectedItems: number): string {
   return `{
   "contract": "dailies/single-config/v1",
@@ -102,7 +102,7 @@ describe('dailies digest', () => {
     const updated = await readFile(configPath, 'utf8');
     expect(updated).toBe(formattedConfig(sha256(THREE_ITEMS), 3));
     // The rewritten config is valid and the run-time loader accepts the artifact.
-    const config = parseConfig(JSON.parse(updated));
+    const config = parseSingleConfig(JSON.parse(updated));
     const artifact = await loadInputArtifact(join(dir, 'cases.jsonl'), config.inputs.digest);
     expect(artifact.items).toHaveLength(config.scope.expectedItems);
     // Blank lines never count as items.

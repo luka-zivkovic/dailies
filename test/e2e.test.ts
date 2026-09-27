@@ -3,10 +3,10 @@ import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import type { Config } from '../src/config.js';
+import type { SingleConfig } from '../src/config.js';
 import { decideExitCode, EXIT_RUN_ERROR } from '../src/report.js';
 import { runShadow } from '../src/runner.js';
-import { selfReportedTestPolicy, v4ContractForPath } from './v4-fixture.js';
+import { selfReportedTestPolicy, singleContractForPath } from './single-fixture.js';
 
 interface JudgeRequest {
   input: string;
@@ -104,9 +104,9 @@ describe('end-to-end with mock HTTP candidate and judge', () => {
     return path;
   }
 
-  function makeConfig(inputsPath: string, overrides: Partial<Config> = {}): Config {
+  function makeConfig(inputsPath: string, overrides: Partial<SingleConfig> = {}): SingleConfig {
     return {
-      ...v4ContractForPath(inputsPath),
+      ...singleContractForPath(inputsPath),
       trustPolicy: selfReportedTestPolicy,
       candidate: { type: 'http', url: candidateUrl, bodyTemplate: '{"prompt": {input}}' },
       judge: { type: 'http', url: judgeUrl },

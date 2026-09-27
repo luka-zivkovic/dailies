@@ -3,7 +3,7 @@ import { mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { parseConfig } from '../src/config.js';
+import { parseSingleConfig } from '../src/config.js';
 import {
   initializeDailiesProject,
   STARTER_CONFIG_FILENAME,
@@ -30,7 +30,7 @@ describe('starter initialization', () => {
     const directory = join(parent, 'starter');
     const result = await initializeDailiesProject(directory);
     const inputBytes = await readFile(result.inputsPath);
-    const config = parseConfig(JSON.parse(await readFile(result.configPath, 'utf8')));
+    const config = parseSingleConfig(JSON.parse(await readFile(result.configPath, 'utf8')));
     const digest = `sha256:${createHash('sha256').update(inputBytes).digest('hex')}`;
 
     expect(result.directory).toBe(directory);
@@ -78,7 +78,7 @@ describe('starter initialization', () => {
 
     expect(outcomes.filter(({ status }) => status === 'fulfilled')).toHaveLength(1);
     expect(outcomes.filter(({ status }) => status === 'rejected')).toHaveLength(1);
-    const config = parseConfig(
+    const config = parseSingleConfig(
       JSON.parse(await readFile(join(directory, STARTER_CONFIG_FILENAME), 'utf8')),
     );
     await expect(
