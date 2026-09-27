@@ -48,7 +48,6 @@ import {
   type EvaluatorSuiteManifest,
 } from './suite-manifest.js';
 
-
 const digestSchema = z.string().regex(/^sha256:[0-9a-f]{64}$/);
 const exactUtcMillisecondsSchema = z.string().regex(
   /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
@@ -309,7 +308,7 @@ function reconstructCollection(
     });
   }
   if (evidence.reason === 'invalid_collection_input') {
-    throw new Error('invalid_collection_input cannot be serialized by the report v6 runner');
+    throw new Error('invalid_collection_input cannot be serialized by the suite runner');
   }
   if (evidence.reason === 'source_not_found' || evidence.reason === 'source_read_failed') {
     if (evidence.observedArtifactDigest !== null) {
@@ -349,7 +348,7 @@ function reconstructCollection(
     artifact: null,
     calibrationEvidenceScope: null,
     reason: evidence.reason,
-    detail: 'rejected evidence detail intentionally omitted from report v6',
+    detail: 'rejected evidence detail intentionally omitted from the suite report',
   };
 }
 
@@ -429,7 +428,7 @@ export function buildCalibrationDecisionStatement(
     'decision' | 'policy' | 'policyDigest' | 'manifest' | 'releaseScope' |
     'candidateAssessmentDigest' | 'calibrationEvidenceSetDigest'>,
 ): string {
-  return `Decision ${report.decision} under calibration-aware policy ` +
+  return `Decision ${report.decision} under release policy ` +
     `${JSON.stringify(`${report.policy.id}@${report.policy.version}`)} (${report.policyDigest}) ` +
     `for evaluator suite ${JSON.stringify(report.manifest.manifestId)} ` +
     `(${report.manifest.manifestDigest}) on ${report.releaseScope.kind} release scope ` +
@@ -467,7 +466,7 @@ function verifyReportV6(report: CalibrationSuiteReport): void {
     ['evaluatedAt', report.evaluatedAt],
   ] as const) assertExactTimestamp(value, field);
   if (report.evaluatedAt > report.startedAt || report.startedAt > report.finishedAt) {
-    throw new Error('report v6 timestamps are not in lifecycle order');
+    throw new Error('suite report timestamps are not in lifecycle order');
   }
   verifyReleaseScope(report.releaseScope);
 
@@ -477,7 +476,7 @@ function verifyReportV6(report: CalibrationSuiteReport): void {
   });
   const policy = verifyReleasePolicyV2(report.policy, manifest);
   if (report.policyDigest !== releasePolicyV2Digest(policy)) {
-    throw new Error('report v6 policyDigest mismatch');
+    throw new Error('suite report policyDigest mismatch');
   }
   if (report.candidateAssessmentDigest !== sha256Digest(report.candidateAssessment)) {
     throw new Error('candidateAssessmentDigest mismatch');
@@ -491,15 +490,15 @@ function verifyReportV6(report: CalibrationSuiteReport): void {
     if (!exactEqual(candidateReport.manifest, manifest) ||
       !exactEqual(candidateReport.policy, releasePolicyV2CandidateProjection(policy)) ||
       !exactEqual(candidateReport.scope, report.releaseScope)) {
-      throw new Error('embedded candidate report identity does not match report v6');
+      throw new Error('embedded candidate report identity does not match the suite report');
     }
     if (candidateReport.startedAt !== report.startedAt || candidateReport.finishedAt !== report.finishedAt) {
-      throw new Error('embedded candidate report lifecycle does not match report v6');
+      throw new Error('embedded candidate report lifecycle does not match the suite report');
     }
   }
 
   if (report.criteria.length !== manifest.members.length) {
-    throw new Error('report v6 criterion coverage mismatch');
+    throw new Error('suite report criterion coverage mismatch');
   }
   const collections: CalibrationCollectionResult[] = [];
   const calibrationResults: CalibrationPolicyResult[] = [];
@@ -509,7 +508,7 @@ function verifyReportV6(report: CalibrationSuiteReport): void {
     if (criterion.position !== index ||
       criterion.criterionId !== member.criterionId ||
       criterion.criterionVersionId !== member.criterionVersionId) {
-      throw new Error(`report v6 criterion identity mismatch at position ${index}`);
+      throw new Error(`suite report criterion identity mismatch at position ${index}`);
     }
     const collection = reconstructCollection(criterion, manifest);
     collections.push(collection);
@@ -565,7 +564,7 @@ function verifyReportV6(report: CalibrationSuiteReport): void {
   );
   if (report.decision !== decision.decision || report.decisionPrecedence !== decision.precedence ||
     !exactEqual(report.compensation, decision.compensation)) {
-    throw new Error('report v6 decision, precedence, or compensation mismatch');
+    throw new Error('suite report decision, precedence, or compensation mismatch');
   }
   for (const [index, criterion] of report.criteria.entries()) {
     const expected = decision.criteria[index]!;
@@ -589,7 +588,7 @@ function verifyReportV6(report: CalibrationSuiteReport): void {
     }
   }
   if (report.decisionStatement !== buildCalibrationDecisionStatement(report)) {
-    throw new Error('report v6 decision statement mismatch');
+    throw new Error('suite report decision statement mismatch');
   }
 }
 
@@ -603,14 +602,14 @@ export const reportV6Schema = z.unknown().transform((raw, ctx): CalibrationSuite
     if (canonicalJson(raw) !== canonicalJson(parsed.data)) {
       ctx.addIssue({
         code: 'custom',
-        message: 'report v6 must contain every explicit field; schema normalization is forbidden',
+        message: 'suite report must contain every explicit field; schema normalization is forbidden',
       });
       return z.NEVER;
     }
   } catch (error) {
     ctx.addIssue({
       code: 'custom',
-      message: `report v6 cannot be canonicalized: ${error instanceof Error ? error.message : String(error)}`,
+      message: `suite report cannot be canonicalized: ${error instanceof Error ? error.message : String(error)}`,
     });
     return z.NEVER;
   }
@@ -722,11 +721,11 @@ export function serializeCalibrationReportV6(report: CalibrationSuiteReport): Ui
 
 export function parseCanonicalCalibrationReportV6Bytes(bytes: Uint8Array): CalibrationSuiteReport {
   if (bytes.length >= 3 && bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) {
-    throw new Error('report v6 has a UTF-8 BOM');
+    throw new Error('suite report has a UTF-8 BOM');
   }
   const text = new TextDecoder('utf-8', { fatal: true }).decode(bytes);
   const raw = JSON.parse(text) as unknown;
-  if (canonicalJson(raw) !== text) throw new Error('report v6 is not exact canonical JSON');
+  if (canonicalJson(raw) !== text) throw new Error('suite report is not exact canonical JSON');
   return reportV6Schema.parse(raw);
 }
 
@@ -739,7 +738,7 @@ export function renderCalibrationReportMarkdown(report: CalibrationSuiteReport):
     `actual=${check.actual}; required=${check.required}` +
     `${check.reason === null ? '' : `; reason=${check.reason}`}`;
   const lines = [
-    `# Calibration-aware criterion release report: ${report.decision.toUpperCase()}`,
+    `# Suite release report: ${report.decision.toUpperCase()}`,
     '',
     `- Decision: **${report.decision}**`,
     `- Precedence: ${report.decisionPrecedence}`,

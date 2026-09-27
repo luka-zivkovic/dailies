@@ -1,4 +1,5 @@
 export {
+  CONFIG_CONTRACTS,
   RELEASE_POLICY_CONTRACT,
   SINGLE_CONFIG_CONTRACT,
   SINGLE_REPORT_CONTRACT,
@@ -49,6 +50,7 @@ export {
   type CalibrationEvidenceFileSource,
   type ExpectedBinaryCalibrationIdentityConfig,
   type SuiteConfigV6,
+  type SuiteConfigV6Input,
 } from './config-v6.js';
 export {
   binaryCalibrationArtifactByteDigest,

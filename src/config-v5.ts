@@ -12,7 +12,6 @@ import {
 } from './config.js';
 import { releasePolicyV1Schema } from './policy.js';
 
-
 export const suiteInputItemSchema = z.object({
   id: z.string().min(1),
   input: z.string(),

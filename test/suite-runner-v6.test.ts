@@ -813,7 +813,7 @@ describe('calibration-aware suite preflight', () => {
         expect(cli.stderr).not.toContain('dailies inconclusive:');
       }
       expect(await readFile(join(fixture.config.output.dir, 'report.md'), 'utf8'))
-        .toContain(`# Calibration-aware criterion release report: ${decision.toUpperCase()}`);
+        .toContain(`# Suite release report: ${decision.toUpperCase()}`);
     } finally {
       close(servers.candidateServer);
       close(servers.rubristServer);

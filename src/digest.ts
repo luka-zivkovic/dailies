@@ -1,13 +1,10 @@
 import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, resolve } from 'node:path';
-import { SINGLE_CONFIG_CONTRACT, SUITE_CONFIG_CONTRACT } from './contracts.js';
+import { CONFIG_CONTRACTS } from './contracts.js';
 
 /** The configuration formats whose `inputs.digest` and `scope.expectedItems` this command maintains. */
-export const DIGEST_SUPPORTED_CONTRACTS: readonly string[] = [
-  SINGLE_CONFIG_CONTRACT,
-  SUITE_CONFIG_CONTRACT,
-];
+export const DIGEST_SUPPORTED_CONTRACTS: readonly string[] = CONFIG_CONTRACTS;
 
 export interface DigestSyncOptions {
   /** Report only; never write the config file. */

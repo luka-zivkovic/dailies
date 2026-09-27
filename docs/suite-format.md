@@ -46,8 +46,8 @@ until a customer policy names how repeated evidence is reduced.
 
 A suite configuration has `"contract": "dailies/suite-config/v1"` and
 `"schemaVersion": 1`. It keeps the single format's exact-byte input
-declaration, scope, candidate, timeouts, concurrency, and output directory,
-and binds:
+declaration, scope, candidate, trust policy, timeouts, concurrency, and output
+directory, and binds:
 
 - a pinned suite manifest and Rubrist provider;
 - a strict release policy;

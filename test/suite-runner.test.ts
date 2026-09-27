@@ -277,7 +277,7 @@ describe('criterion suite runner', () => {
     test.config.suite.manifest.manifestDigest = repeated.manifestDigest;
     test.config.policy.manifestDigest = repeated.manifestDigest;
     try {
-      await expect(runSuiteRelease(test.config)).rejects.toThrow(/unsupported by Dailies v5/);
+      await expect(runSuiteRelease(test.config)).rejects.toThrow(/unsupported by Dailies suite execution/);
       expect(test.candidateCalls).toBe(0);
       expect(test.rubrist.submissions).toHaveLength(0);
     } finally {

@@ -7,7 +7,7 @@ import {
   type SuiteConfigV6,
 } from './config-v6.js';
 import { parseConfig, type Config } from './config.js';
-import { declaredContract, SUITE_CONFIG_CONTRACT, SUITE_REPORT_CONTRACT } from './contracts.js';
+import { CONFIG_CONTRACTS, declaredContract, SUITE_CONFIG_CONTRACT, SUITE_REPORT_CONTRACT } from './contracts.js';
 import { decideExitCode, EXIT_RUN_ERROR, renderMarkdown } from './report.js';
 import {
   renderCalibrationReportMarkdown,
@@ -29,7 +29,14 @@ function resolveFrom(baseDir: string, p: string): string {
 async function loadConfig(configPath: string): Promise<Config | SuiteConfigV6> {
   const absPath = resolve(configPath);
   const raw: unknown = JSON.parse(await readFile(absPath, 'utf8'));
-  const config = declaredContract(raw) === SUITE_CONFIG_CONTRACT ? parseSuiteConfigV6(raw) : parseConfig(raw);
+  const contract = declaredContract(raw);
+  if (typeof contract !== 'string' || !CONFIG_CONTRACTS.includes(contract)) {
+    throw new Error(
+      `unsupported config contract: ${contract === undefined ? 'missing' : String(contract)}; ` +
+        `dailies runs ${CONFIG_CONTRACTS.join(' or ')}`,
+    );
+  }
+  const config = contract === SUITE_CONFIG_CONTRACT ? parseSuiteConfigV6(raw) : parseConfig(raw);
   // Paths in the config are relative to the config file's directory.
   const baseDir = dirname(absPath);
   config.inputs.path = resolveFrom(baseDir, config.inputs.path);
@@ -79,7 +86,7 @@ async function runConfiguredRelease(configPath: string): Promise<number> {
   if (report.decision === 'inconclusive') {
     if (report.contract === SUITE_REPORT_CONTRACT) {
       console.error(
-        `dailies inconclusive: calibration-aware release policy stopped at ` +
+        `dailies inconclusive: release policy stopped at ` +
           `${report.decisionPrecedence}. Incomplete or unverifiable required evidence is not a ` +
           `decision on the candidate. Exiting ${EXIT_RUN_ERROR} (run error).`,
       );

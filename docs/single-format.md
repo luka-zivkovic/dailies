@@ -113,7 +113,8 @@ Configuration that doesn't name `dailies/single-config/v1` or
 `dailies/suite-config/v1` is rejected before execution.
 
 Schema validation proves report consistency, not report authenticity. The
-single report is not signed: a party that can rewrite the scope, trust policy, items,
-and decision consistently can create a different internally valid report.
+single report is not signed: a party that can rewrite the scope, trust
+policy, items, and decision consistently can create a different internally
+valid report.
 Consumers must protect the report artifact and separately authenticate any
 provider evidence; a later signing contract must be versioned explicitly.

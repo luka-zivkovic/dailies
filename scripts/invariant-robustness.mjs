@@ -152,7 +152,7 @@ function policyObservation(source, result) {
 
 function v5Policy() {
   return releasePolicyV1Schema.parse({
-    id: 'authored-v5-policy',
+    id: 'authored-candidate-policy',
     version: '1',
     manifestId: 'authored-manifest',
     manifestDigest: DIGEST,
@@ -192,7 +192,7 @@ function criterionEvidence(
 
 function v5CompensationPolicy() {
   return releasePolicyV1Schema.parse({
-    id: 'authored-v5-compensation-policy',
+    id: 'authored-candidate-compensation-policy',
     version: '1',
     manifestId: 'authored-manifest',
     manifestDigest: DIGEST,
@@ -241,7 +241,7 @@ function v6Policy() {
   return releasePolicyV2Schema.parse({
     contract: 'dailies/release-policy/v1',
     schemaVersion: 1,
-    id: 'authored-v6-policy',
+    id: 'authored-suite-policy',
     version: '1',
     manifestId: 'authored-manifest',
     manifestDigest: DIGEST,
@@ -1016,7 +1016,7 @@ const registered = [
   },
   {
     scenario: scenario({
-      id: 'multi-v5-integrity-outranks-block',
+      id: 'multi-candidate-integrity-outranks-block',
       family: 'multi_criterion_conflict',
       seam: 'candidate_policy',
       description: 'Required integrity failure outranks a different blocking result.',
@@ -1035,7 +1035,7 @@ const registered = [
   },
   {
     scenario: scenario({
-      id: 'multi-v5-block-outranks-unrelated-missing',
+      id: 'multi-candidate-block-outranks-unrelated-missing',
       family: 'multi_criterion_conflict',
       seam: 'candidate_policy',
       description: 'A complete blocking failure outranks unrelated mandatory incompleteness.',
@@ -1054,7 +1054,7 @@ const registered = [
   },
   {
     scenario: scenario({
-      id: 'multi-v5-candidate-failure-blocks',
+      id: 'multi-candidate-candidate-failure-blocks',
       family: 'multi_criterion_conflict',
       seam: 'candidate_policy',
       description: 'A required candidate execution failure precedes completed assessment policy.',
@@ -1073,7 +1073,7 @@ const registered = [
   },
   {
     scenario: scenario({
-      id: 'multi-v5-mandatory-incomplete',
+      id: 'multi-candidate-mandatory-incomplete',
       family: 'multi_criterion_conflict',
       seam: 'candidate_policy',
       description: 'Mandatory incompleteness is inconclusive when no blocking result exists.',
@@ -1092,7 +1092,7 @@ const registered = [
   },
   {
     scenario: scenario({
-      id: 'multi-v5-policy-satisfied',
+      id: 'multi-candidate-policy-satisfied',
       family: 'multi_criterion_conflict',
       seam: 'candidate_policy',
       description: 'Complete admissible multi-criterion evidence can promote.',
@@ -1110,7 +1110,7 @@ const registered = [
   },
   {
     scenario: scenario({
-      id: 'multi-v5-compensation-failure',
+      id: 'multi-candidate-compensation-failure',
       family: 'multi_criterion_conflict',
       seam: 'candidate_policy',
       description: 'Complete compensatory evidence below its exact weighted threshold blocks.',
@@ -1128,7 +1128,7 @@ const registered = [
   },
   {
     scenario: scenario({
-      id: 'multi-v6-own-calibration-missing',
+      id: 'multi-suite-own-calibration-missing',
       family: 'multi_criterion_conflict',
       seam: 'suite_policy',
       description: 'A failing assessment cannot block without its own required calibration.',
@@ -1150,7 +1150,7 @@ const registered = [
   },
   {
     scenario: scenario({
-      id: 'multi-v6-valid-block-outranks-other-missing',
+      id: 'multi-suite-valid-block-outranks-other-missing',
       family: 'multi_criterion_conflict',
       seam: 'suite_policy',
       description: 'An independently calibrated block outranks unrelated missing calibration.',
@@ -1172,7 +1172,7 @@ const registered = [
   },
   {
     scenario: scenario({
-      id: 'multi-v6-own-calibration-integrity-outranks-valid-block',
+      id: 'multi-suite-own-calibration-integrity-outranks-valid-block',
       family: 'multi_criterion_conflict',
       seam: 'suite_policy',
       description: 'A required calibration integrity failure outranks another valid block.',

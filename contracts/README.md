@@ -65,6 +65,7 @@ Rubrist and Dailies retain independent release cadences. Producer and consumer
 tests pin identical schema and fixture file digests.
 
 The suite configuration, release policy, suite report, runner, and CLI path
-consumes explicitly configured local calibration artifact bytes, verifies freshness and runtime
-admissibility, and applies customer release policy. It performs no network
-latest-artifact or current-revocation lookup and has no private-ledger access.
+consumes explicitly configured local calibration artifact bytes, verifies
+freshness and runtime admissibility, and applies customer release policy. It
+performs no network latest-artifact or current-revocation lookup and has no
+private-ledger access.

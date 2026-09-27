@@ -21,7 +21,10 @@ versioning while the public API remains pre-1.0.
   their runner, aggregation, and decision statement remain as the suite's
   embedded candidate assessment, which has no identifier of its own. The
   authored-invariant seams become `single_*`, `candidate_policy`, and
-  `suite_policy`. The report references are now `docs/single-format.md` and
+  `suite_policy`, and the scenario IDs drop their v5/v6 names. The suite
+  report's decision statement reads "under release policy", its markdown
+  heading is "Suite release report", and a configuration naming neither
+  contract is refused with both named. The report references are now `docs/single-format.md` and
   `docs/suite-format.md`, and the examples are `fixtures/examples/suite/` and
   `fixtures/examples/suite-calibrated/`. Configurations and reports written
   before this change can't be read.

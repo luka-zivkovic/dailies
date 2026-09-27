@@ -222,11 +222,11 @@ export function applyReleasePolicyV2(
 ): PolicyDecisionV2 {
   const calibrationById = new Map(calibration.map((entry) => [entry.criterionVersionId, entry]));
   if (calibrationById.size !== calibration.length || calibration.length !== policy.criteria.length) {
-    throw new Error('policy v2 evaluation requires exact unique calibration-result coverage');
+    throw new Error('release policy evaluation requires exact unique calibration-result coverage');
   }
   const evidenceById = new Map(evidence.map((entry) => [entry.criterionVersionId, entry]));
   if (evidenceById.size !== evidence.length || evidence.length !== policy.criteria.length) {
-    throw new Error('policy v2 evaluation requires exact unique criterion-evidence coverage');
+    throw new Error('release policy evaluation requires exact unique criterion-evidence coverage');
   }
 
   const effectiveEvidence = policy.criteria.map((entry): CriterionPolicyInput => {

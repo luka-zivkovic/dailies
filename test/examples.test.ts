@@ -210,6 +210,29 @@ describe('fixtures/examples', () => {
     expect(await readFile(join(outDir, 'report.md'), 'utf8')).toContain('Calibration evidence: 2/2 verified');
   });
 
+  it('suite-calibrated without calibrationEvidence runs, and each required calibration is not configured', async () => {
+    const providerUrl = await startMock(join(examplesRoot, 'suite-calibrated', 'suite-manifest.json'));
+    const configPath = await stageExample('suite-calibrated', providerUrl);
+    const config = JSON.parse(await readFile(configPath, 'utf8')) as Record<string, unknown>;
+    delete config.calibrationEvidence;
+    await writeFile(configPath, JSON.stringify(config, null, 2) + '\n', 'utf8');
+
+    const result = await runCli(configPath);
+    expect(result.code, result.stderr).toBe(2);
+    expect(result.stderr).toContain('dailies inconclusive: release policy stopped at mandatory_evidence_incomplete');
+    const report = parseCanonicalCalibrationReportV6Bytes(
+      await readFile(join(dirname(configPath), 'dailies-out', 'report.json')),
+    );
+    expect(report.decision).toBe('inconclusive');
+    expect(report.decisionPrecedence).toBe('mandatory_evidence_incomplete');
+    expect(report.candidateAssessment.status).toBe('completed');
+    expect(report.criteria).toHaveLength(2);
+    for (const criterion of report.criteria) {
+      expect(criterion.artifactEvidence).toMatchObject({ disposition: 'unavailable', reason: 'source_not_configured' });
+      expect(criterion.calibrationPolicy.admissible).toBe(false);
+    }
+  });
+
   it('suite-calibrated stays inconclusive without the stub instead of inventing evidence', async () => {
     const configPath = await stageExample('suite-calibrated', 'http://127.0.0.1:1');
     const result = await runCli(configPath);

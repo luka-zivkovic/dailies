@@ -48,7 +48,7 @@ describe('Batch 6 authored invariant robustness gate', () => {
       },
     });
     expect(run.scenarioSetDigest)
-      .toBe('sha256:b720dd9de31e3da57a0d6345d1cf0487da05d393ffe3a166aa2003051c92ddd9');
+      .toBe('sha256:afbaf31e00481a9cd60f8389bd1f1a9d142bdd69939e48d542d2f6671d3734cc');
     expect(run.environment.isolation.validatedLoopbackEndpoints).toBeGreaterThan(0);
     expect(run.environment.isolation.credentialVariablesRemoved).toBeGreaterThanOrEqual(0);
     expect(run.environment.isolation.proxyVariablesRemoved).toBeGreaterThanOrEqual(0);

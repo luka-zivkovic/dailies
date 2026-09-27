@@ -10,7 +10,6 @@ import {
 import { suiteProviderConfigSchema } from './config-v5.js';
 import { releasePolicyV2Schema } from './policy-v2.js';
 
-
 const nonBlankStringSchema = z.string().min(1).refine((value) => value.trim().length > 0, {
   message: 'must contain a non-whitespace character',
 });
@@ -184,6 +183,8 @@ export type CalibrationEvidenceFileSource = z.infer<typeof calibrationEvidenceFi
 export type CalibrationEvidenceBinding = z.infer<typeof calibrationEvidenceBindingSchema>;
 /** A parsed suite configuration, with calibration evidence bound for every criterion. */
 export type SuiteConfigV6 = z.infer<typeof suiteConfigV6Schema>;
+/** A suite configuration before parsing: `calibrationEvidence` may be left out. */
+export type SuiteConfigV6Input = z.input<typeof suiteConfigV6Schema>;
 
 export function parseSuiteConfigV6(raw: unknown): SuiteConfigV6 {
   const contract = declaredContract(raw);

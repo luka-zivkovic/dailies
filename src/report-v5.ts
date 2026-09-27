@@ -418,7 +418,7 @@ export const reportV5Schema = reportV5ShapeSchema.superRefine((report, ctx) => {
     ctx.addIssue({
       code: 'custom',
       path: ['manifest', 'trialPlan'],
-      message: 'Dailies v5 reports do not support repeated-trial execution',
+      message: 'the candidate assessment does not support repeated-trial execution',
     });
   }
   const candidates = report.candidateExecution.items;

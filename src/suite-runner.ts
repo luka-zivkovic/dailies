@@ -380,7 +380,7 @@ export async function preflightSuiteRelease(
   });
   if (manifest.trialPlan !== null) {
     throw new Error(
-      'evaluator suite trialPlan independent_repetitions is valid producer metadata but unsupported by Dailies v5 execution',
+      'evaluator suite trialPlan independent_repetitions is valid producer metadata but unsupported by Dailies suite execution',
     );
   }
   const policy = verifyReleasePolicy(config.policy, manifest);

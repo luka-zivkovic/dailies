@@ -29,9 +29,9 @@ The stub is not Rubrist and has no evaluator. Every outcome it returns is
 scripted: `pass` by default, `fail` for criteria named with
 `--fail-criterion`, and `abstain` for criteria named with
 `--abstain-criterion`. An abstention counts as not passing (ADR-0009). A
-`promote` from these examples says only that the bundled three-case corpus satisfied the bundled policy against scripted
-evidence; it is a demonstration of the report, not evidence about any real
-system.
+`promote` from these examples says only that the bundled three-case corpus
+satisfied the bundled policy against scripted evidence; it is a demonstration
+of the report, not evidence about any real system.
 
 ## Run
 

@@ -391,7 +391,7 @@ describe('calibration-aware report v6', () => {
       calibrationCollections: [collectionFor(fixture)],
     });
     const markdown = renderCalibrationReportMarkdown(report);
-    expect(markdown).toContain('# Calibration-aware criterion release report: BLOCK');
+    expect(markdown).toContain('# Suite release report: BLOCK');
     expect(markdown).toContain('verified/rubrist_binary_calibration_v1');
     expect(markdown).toContain('Separate calibration truth scope: sealed_validation_calibration/');
     expect(markdown).toContain('Artifact age: 3598000 ms');

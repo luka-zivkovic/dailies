@@ -359,7 +359,24 @@ describe('CLI decision and report agreement', () => {
       );
       const cli = await runCli(configPath);
       expect(cli.code).toBe(2);
-      expect(cli.stderr).toContain('unsupported config contract: dailies/single-config/v0');
+      expect(cli.stderr).toContain(
+        'unsupported config contract: dailies/single-config/v0; ' +
+          'dailies runs dailies/single-config/v1 or dailies/suite-config/v1',
+      );
+      expect(candidateCalls).toBe(0);
+
+      // A suite user is not pointed at the single format.
+      const { configPath: suitePath } = await writeRun(
+        [{ id: 'must-not-run', input: 'x', baseline_output: 'x' }],
+        { contract: 'dailies/suite-config/v2' },
+      );
+      const suite = await runCli(suitePath);
+      expect(suite.code).toBe(2);
+      expect(suite.stderr).toContain(
+        'unsupported config contract: dailies/suite-config/v2; ' +
+          'dailies runs dailies/single-config/v1 or dailies/suite-config/v1',
+      );
+      expect(suite.stderr).not.toContain('single-criterion release execution requires');
       expect(candidateCalls).toBe(0);
     } finally {
       candidateServer.closeAllConnections();
