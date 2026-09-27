@@ -5,18 +5,18 @@ import {
   aggregateCriterionItems,
   applyCandidatePolicy,
   buildCandidateAssessmentDecisionStatement,
+  candidateAssessmentReportSchema,
   candidateExecutionIdentity,
+  candidatePolicyDigest,
   compareCriterionOutcome,
   evaluatorSuiteCriterionDigest,
   evaluatorSuiteManifestDigest,
   providerExecutionIdentity,
-  candidatePolicyDigest,
-  candidateAssessmentReportSchema,
   sha256Digest,
   suiteCandidateDatasetDigest,
   suiteExecutionPolicyDigest,
-  verifyEvaluatorSuiteManifest,
   verifyCandidatePolicy,
+  verifyEvaluatorSuiteManifest,
 } from '../dist/index.js';
 
 const CRITERION_COUNTS = [1, 10, 50];

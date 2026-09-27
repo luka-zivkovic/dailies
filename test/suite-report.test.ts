@@ -79,8 +79,8 @@ function governedFixture(name = 'binary-calibration-v1.complete.json'): {
   const manifest: EvaluatorSuiteManifest = {
     contract: 'rubrist/evaluator-suite-manifest/v1',
     schemaVersion: 1,
-    manifestId: 'manifest-calibration-report-v6',
-    suiteId: 'suite-calibration-report-v6',
+    manifestId: 'manifest-suite-report',
+    suiteId: 'suite-suite-report',
     projectId: artifact.projectId,
     revision: 1,
     members: [member],
@@ -127,7 +127,7 @@ function policy(manifest: EvaluatorSuiteManifest, artifact: BinaryCalibrationArt
   return verifyReleasePolicy({
     contract: 'dailies/release-policy/v1',
     schemaVersion: 1,
-    id: 'release-policy-v6',
+    id: 'release-policy-suite',
     version: '1',
     manifestId: manifest.manifestId,
     manifestDigest: manifest.manifestDigest,

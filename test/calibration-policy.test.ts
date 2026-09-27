@@ -337,7 +337,7 @@ function policyFor(
   return {
     contract: 'dailies/release-policy/v1',
     schemaVersion: 1,
-    id: 'release-policy-v2-test',
+    id: 'release-policy-test',
     version: '1',
     manifestId: manifest.manifestId,
     manifestDigest: manifest.manifestDigest,

@@ -30,18 +30,18 @@ import {
   type PreflightedCandidateAssessment,
 } from './candidate-assessment-runner.js';
 
-export interface PreflightSuiteOptions {
+export interface PreflightSuiteReleaseOptions {
   now?: () => Date;
   /** Failure-injection seam; each configured source is invoked exactly once. */
   readCalibrationBytes?: (path: string) => Promise<Uint8Array>;
 }
 
-export type RunSuiteOptions = PreflightSuiteOptions;
+export type RunSuiteReleaseOptions = PreflightSuiteReleaseOptions;
 
 export interface PreflightedSuiteRelease {
   config: SuiteConfig;
-  candidateConfig: CandidateAssessmentConfig;
-  candidatePreflight: PreflightedCandidateAssessment;
+  candidateAssessmentConfig: CandidateAssessmentConfig;
+  candidateAssessmentPreflight: PreflightedCandidateAssessment;
   policy: ReleasePolicy;
   evaluatedAt: string;
   calibrationCollections: CalibrationCollectionResult[];
@@ -49,7 +49,7 @@ export interface PreflightedSuiteRelease {
   requiredCalibrationIntegrityFailure: boolean;
 }
 
-function candidateConfigProjection(config: SuiteConfig): CandidateAssessmentConfig {
+function candidateAssessmentConfigProjection(config: SuiteConfig): CandidateAssessmentConfig {
   return {
     inputs: config.inputs,
     scope: config.scope,
@@ -78,17 +78,17 @@ function exactNow(now: () => Date): string {
  */
 export async function preflightSuiteRelease(
   inputConfig: SuiteConfigInput,
-  options: PreflightSuiteOptions = {},
+  options: PreflightSuiteReleaseOptions = {},
 ): Promise<PreflightedSuiteRelease> {
   const now = options.now ?? (() => new Date());
   const evaluatedAt = exactNow(now);
   const config = suiteConfigSchema.parse(inputConfig);
-  const candidateConfig = candidateConfigProjection(config);
-  const candidatePreflight = await preflightCandidateAssessment(candidateConfig);
-  const policy = verifyReleasePolicy(config.policy, candidatePreflight.manifest);
+  const candidateAssessmentConfig = candidateAssessmentConfigProjection(config);
+  const candidateAssessmentPreflight = await preflightCandidateAssessment(candidateAssessmentConfig);
+  const policy = verifyReleasePolicy(config.policy, candidateAssessmentPreflight.manifest);
 
   const calibrationCollections: CalibrationCollectionResult[] = [];
-  for (const [index, member] of candidatePreflight.manifest.members.entries()) {
+  for (const [index, member] of candidateAssessmentPreflight.manifest.members.entries()) {
     const binding = config.calibrationEvidence[index];
     if (binding === undefined || binding.criterionVersionId !== member.criterionVersionId) {
       throw new Error('calibrationEvidence must exactly follow manifest order');
@@ -97,7 +97,7 @@ export async function preflightSuiteRelease(
       calibrationCollections.push(collectCalibrationEvidence({
         criterionVersionId: member.criterionVersionId,
         source: null,
-        manifest: candidatePreflight.manifest,
+        manifest: candidateAssessmentPreflight.manifest,
         member,
       }));
       continue;
@@ -110,7 +110,7 @@ export async function preflightSuiteRelease(
       calibrationCollections.push(collectCalibrationEvidence({
         criterionVersionId: member.criterionVersionId,
         source: binding.source,
-        manifest: candidatePreflight.manifest,
+        manifest: candidateAssessmentPreflight.manifest,
         member,
         bytes,
       }));
@@ -119,7 +119,7 @@ export async function preflightSuiteRelease(
       calibrationCollections.push(collectCalibrationEvidence({
         criterionVersionId: member.criterionVersionId,
         source: binding.source,
-        manifest: candidatePreflight.manifest,
+        manifest: candidateAssessmentPreflight.manifest,
         member,
         readFailure: error.code === 'source_not_found' ? 'not_found' : 'read_failed',
       }));
@@ -139,8 +139,8 @@ export async function preflightSuiteRelease(
 
   return {
     config,
-    candidateConfig,
-    candidatePreflight,
+    candidateAssessmentConfig,
+    candidateAssessmentPreflight,
     policy,
     evaluatedAt,
     calibrationCollections,
@@ -150,20 +150,20 @@ export async function preflightSuiteRelease(
 }
 
 /**
- * Run the unchanged candidatePreflight candidate/receipt flow once after calibration
+ * Run the unchanged candidate assessment (the candidate/receipt flow) once after calibration
  * preflight, or emit a typed no-execution report for required integrity
  * failure. Calibration truth scope is never copied into the candidate scope.
  */
 export async function runSuiteRelease(
   config: SuiteConfigInput,
-  options: RunSuiteOptions = {},
+  options: RunSuiteReleaseOptions = {},
 ): Promise<SuiteReport> {
   const now = options.now ?? (() => new Date());
   const preflight = await preflightSuiteRelease(config, {
     ...options,
     now,
   });
-  const releaseScope = suiteReleaseScope(preflight.candidateConfig, preflight.candidatePreflight.inputArtifact);
+  const releaseScope = suiteReleaseScope(preflight.candidateAssessmentConfig, preflight.candidateAssessmentPreflight.inputArtifact);
 
   if (preflight.requiredCalibrationIntegrityFailure) {
     const finishedAt = exactNow(now);
@@ -172,7 +172,7 @@ export async function runSuiteRelease(
       finishedAt,
       evaluatedAt: preflight.evaluatedAt,
       releaseScope,
-      manifest: preflight.candidatePreflight.manifest,
+      manifest: preflight.candidateAssessmentPreflight.manifest,
       policy: preflight.policy,
       candidateAssessment: {
         status: 'not_started',
@@ -183,8 +183,8 @@ export async function runSuiteRelease(
   }
 
   const candidateReport = await runPreflightedCandidateAssessment(
-    preflight.candidateConfig,
-    preflight.candidatePreflight,
+    preflight.candidateAssessmentConfig,
+    preflight.candidateAssessmentPreflight,
     { now },
   );
   return buildSuiteReport({
@@ -192,7 +192,7 @@ export async function runSuiteRelease(
     finishedAt: candidateReport.finishedAt,
     evaluatedAt: preflight.evaluatedAt,
     releaseScope,
-    manifest: preflight.candidatePreflight.manifest,
+    manifest: preflight.candidateAssessmentPreflight.manifest,
     policy: preflight.policy,
     candidateAssessment: { status: 'completed', report: candidateReport },
     calibrationCollections: preflight.calibrationCollections,

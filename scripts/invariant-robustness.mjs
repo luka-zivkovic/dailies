@@ -14,23 +14,23 @@ import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
-  AUTHORED_INVARIANT_SCENARIO_CONTRACT,
   applyCandidatePolicy,
   applyReleasePolicy,
+  AUTHORED_INVARIANT_SCENARIO_CONTRACT,
   authoredInvariantEnvironment,
   authoredInvariantScenarioSchema,
   buildAuthoredInvariantRun,
   calibrationPolicyResultSchema,
+  candidatePolicySchema,
   canonicalJson,
   classifyAuthoredInvariantThrownError,
-  classifySingleInvariantReport,
   classifyCandidateInvariantDecision,
+  classifySingleInvariantReport,
   classifySuiteInvariantDecision,
   evaluateAuthoredInvariantOutcome,
-  singleReportSchema,
-  candidatePolicySchema,
   releasePolicySchema,
   runShadow,
+  singleReportSchema,
   verifyAuthoredInvariantRun,
 } from '../dist/index.js';
 
@@ -310,7 +310,7 @@ function readBody(request) {
   });
 }
 
-async function runV4Fixture(mode, seed) {
+async function runSingleFixture(mode, seed) {
   const dir = await mkdtemp(join(tmpdir(), 'dailies-authored-invariant-'));
   let candidateServer;
   let judgeServer;
@@ -460,7 +460,7 @@ async function runV4Fixture(mode, seed) {
 
 function runnerExecutor(mode) {
   return async (seed) => {
-    const result = await runV4Fixture(mode, seed);
+    const result = await runSingleFixture(mode, seed);
     const classification = classifySingleInvariantReport(result.report);
     return {
       observation: {
@@ -525,7 +525,7 @@ async function fileExists(path) {
   }
 }
 
-async function runV4CliFixture(tampered) {
+async function runSingleCliFixture(tampered) {
   const dir = await mkdtemp(join(tmpdir(), 'dailies-authored-cli-'));
   try {
     const inputBytes = Buffer.from(JSON.stringify({
@@ -635,7 +635,7 @@ async function runV4CliFixture(tampered) {
 
 function cliExecutor(tampered) {
   return async () => {
-    const result = await runV4CliFixture(tampered);
+    const result = await runSingleCliFixture(tampered);
     if (result.report === null) {
       const classification = classifyAuthoredInvariantThrownError(
         result.cli.stderr,
@@ -747,7 +747,7 @@ async function scopeMismatchExecutor() {
 }
 
 async function reportTamperExecutor(seed) {
-  const result = await runV4Fixture('clean', seed);
+  const result = await runSingleFixture('clean', seed);
   const tampered = structuredClone(result.report);
   tampered.decision = tampered.decision === 'promote' ? 'block' : 'promote';
   let rejection = '';
