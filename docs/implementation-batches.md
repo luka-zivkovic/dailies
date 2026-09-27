@@ -1,6 +1,6 @@
 # Portfolio implementation batches
 
-Status: **Batch 6 product foundations complete: Rubrist Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5; Batch 7 Rubrist production outcome monitoring is complete under Rubrist ADR-0013; Batch 8 model-agnostic evaluator execution is in progress under Rubrist ADR-0014, with 8A through 8F complete**
+Status: **Batch 6 product foundations complete: Rubrist Analyze → Measure, the Dailies invariant gate, and the neutral blind-contract foundation are implemented; comparative execution remains gated by Gate 5; Batch 7 Rubrist production outcome monitoring is complete under Rubrist ADR-0013; Batch 8 model-agnostic evaluator execution is implemented under Rubrist ADR-0014 (8A through 8G merged), with its live exit-gate checks of Claude and OpenRouter bindings still to run**
 
 Last reviewed: 2026-09-27
 
@@ -561,14 +561,14 @@ and binary-calibration v1 bytes are unchanged.
 
 ## Batch 8 — Model-agnostic evaluator execution and evidence v2
 
-Implementation status: **in progress; 8A through 8F complete**. Decision
-gate 12 was accepted on 2026-09-25 and is recorded in Rubrist ADR-0014,
-including the founder's answers to its four open questions and later
-decisions: receipts carry a definition digest, v2 replaces v1, a launch
-baseline restarts every versioned identifier at v1, and how typed-question
-evaluators record their verdicts, credentials, and state. Every slice gets an
-independent review against its exact diff, and each review's correctness
-findings are resolved before merge.
+Implementation status: **8A through 8G merged; live Claude and OpenRouter
+exit-gate checks still to run**. Decision gate 12 was accepted on 2026-09-25
+and is recorded in Rubrist ADR-0014, including the founder's answers to its
+four open questions and later decisions: receipts carry a definition digest,
+v2 replaces v1, a launch baseline restarts every versioned identifier at v1,
+and how typed-question evaluators record their verdicts, credentials, and
+state. Every slice gets an independent review against its exact diff, and
+each review's correctness findings are resolved before merge.
 
 - 8A (#125, #127–#130), 8B (#132, #133), and 8C (#134) are merged; #126
   and #131 amended ADR-0014.
@@ -600,8 +600,40 @@ findings are resolved before merge.
   8G: two formats, single-criterion and suite (today's calibration-aware
   format, with calibration optional), each with a named identifier. Dailies
   ADR-0010 records it (dailies#21).
-- 8G is in progress. Casefile's report version and content-hash basis have
-  restarted at v1 (casefile#19); Rubrist and Dailies follow.
+- 8G is merged. Every versioned identifier restarted at v1:
+  - Casefile's report version and content-hash basis (casefile#19);
+  - Rubrist's contracts, including `skill-format`, the evaluator identity
+    basis, the production-calibration report and its metrics, the provider
+    data-handling policy, and their code names (#158);
+  - Dailies' vendored Rubrist contracts and evidence kinds (dailies#23), and
+    its formats (dailies#24): `dailies/single-config/v1`,
+    `dailies/single-report/v1`, `dailies/suite-config/v1`,
+    `dailies/suite-report/v1`, and `dailies/release-policy/v1`, dispatched
+    on the contract. The former suite format 5 remains only as the suite's
+    embedded candidate assessment (dailies#24), and the public API names
+    carry no version (dailies#25).
+  - The v2 names in this batch's plan below were scaffolding; those
+    contracts are now v1.
+- The exit gate was partly checked on 2026-09-27, and is not yet passed:
+  - The automated test suites pass: Rubrist's unit (1,704) and Postgres
+    (148) tests, Dailies (331), and Casefile (187).
+  - TypeSafe was checked live: a `jev-1.13.0` binding with threshold 0.5
+    resolved in one call and judged in one call (`native_probability`, no
+    rationale). Its sealed calibration of 3 items and 1 trial passed a
+    one-call re-check, made one call per item, and minted a complete
+    artifact. `jev-latest` was refused at the gates with no call, and a
+    typed-question evaluator without a threshold was refused.
+  - Five resolutions ran against live endpoints, and each left the saved
+    binding and version row unchanged. Only TypeSafe's resolved; the four
+    Claude ones were refused authentication (401) and stayed unresolved.
+  - Not yet run live: `claude-opus-5-5` and `claude-sonnet-5` resolving,
+    judging, and running sealed calibration, and the checks that a rejected
+    parameter or reasoning mode fails resolution (the configured Anthropic
+    key was rejected); and every OpenRouter check (no key). Tests stub
+    these providers and cover the paths in parts. One physical call per
+    item is tested in the provider-neutral calibration worker and a
+    TypeSafe run; no test runs a Claude or OpenRouter sealed calibration
+    end to end, or a successful OpenRouter resolution.
 
 This batch changes Rubrist and Dailies. Both switch to the v2 contracts in
 one window and drop v1 support. Casefile changes only in the launch baseline
@@ -777,7 +809,7 @@ Exit gate:
 - A receipt with an abstention is `complete`. Any failure or
   `not_attempted` item makes it `incomplete`.
 - A receipt carries the definition digest and never the rubric, prompt, or
-  question text. Dailies recomputes `skillDigest` v2 from the receipt's
+  question text. Dailies recomputes `skillDigest` from the receipt's
   binding and definition digest.
 - Dailies verifies the new evidence and nothing older, under its ADR-0008.
 - After the launch baseline, every contract and format in the three
