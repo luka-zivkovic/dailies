@@ -5,8 +5,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
-import { decideExitCode, reportSchema, type Report } from '../src/report.js';
-import { selfReportedTestPolicy, v4ContractForBytes } from './v4-fixture.js';
+import { decideExitCode, singleReportSchema, type SingleReport } from '../src/report.js';
+import { selfReportedTestPolicy, singleContractForBytes } from './single-fixture.js';
 
 const projectRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const cliPath = join(projectRoot, 'dist', 'cli.js');
@@ -49,7 +49,7 @@ async function writeRun(
   await writeFile(join(dir, 'inputs.jsonl'), inputBytes, 'utf8');
   const outputDir = join(dir, 'out');
   const config = {
-    ...v4ContractForBytes('inputs.jsonl', inputBytes, inputs.length),
+    ...singleContractForBytes('inputs.jsonl', inputBytes, inputs.length),
     trustPolicy: selfReportedTestPolicy,
     candidate: { type: 'command', template: 'printf %s {input}' },
     judge: { type: 'exact-match' },
@@ -64,8 +64,8 @@ async function writeRun(
   return { configPath, outputDir };
 }
 
-async function readReport(outputDir: string): Promise<Report> {
-  return reportSchema.parse(JSON.parse(await readFile(join(outputDir, 'report.json'), 'utf8')));
+async function readReport(outputDir: string): Promise<SingleReport> {
+  return singleReportSchema.parse(JSON.parse(await readFile(join(outputDir, 'report.json'), 'utf8')));
 }
 
 async function listen(server: Server): Promise<number> {

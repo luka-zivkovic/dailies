@@ -3,20 +3,20 @@ import { createHash } from 'node:crypto';
 import { performance } from 'node:perf_hooks';
 import {
   aggregateCriterionItems,
-  applyReleasePolicy,
-  buildSuiteDecisionStatement,
+  applyCandidatePolicy,
+  buildCandidateAssessmentDecisionStatement,
+  candidateAssessmentReportSchema,
   candidateExecutionIdentity,
+  candidatePolicyDigest,
   compareCriterionOutcome,
   evaluatorSuiteCriterionDigest,
   evaluatorSuiteManifestDigest,
   providerExecutionIdentity,
-  releasePolicyDigest,
-  reportV5Schema,
   sha256Digest,
   suiteCandidateDatasetDigest,
   suiteExecutionPolicyDigest,
+  verifyCandidatePolicy,
   verifyEvaluatorSuiteManifest,
-  verifyReleasePolicy,
 } from '../dist/index.js';
 
 const CRITERION_COUNTS = [1, 10, 50];
@@ -188,7 +188,7 @@ function deriveValidatedReport(fixture) {
     manifestId: fixture.rawManifest.manifestId,
     manifestDigest: fixture.rawManifest.manifestDigest,
   });
-  const policy = verifyReleasePolicy(fixture.rawPolicy, manifest);
+  const policy = verifyCandidatePolicy(fixture.rawPolicy, manifest);
   const criteriaWithoutPolicy = manifest.members.map((member) => {
     const labels = new Map(fixture.candidates.map((candidate, itemIndex) => [
       candidate.id,
@@ -268,7 +268,7 @@ function deriveValidatedReport(fixture) {
     passRate: criterion.totals.passRate,
     regressions: criterion.totals.regressions,
   }));
-  const applied = applyReleasePolicy(policy, policyInputs, false, false);
+  const applied = applyCandidatePolicy(policy, policyInputs, false, false);
   const criteria = criteriaWithoutPolicy.map((criterion, index) => ({
     ...criterion,
     policyResult: {
@@ -292,13 +292,13 @@ function deriveValidatedReport(fixture) {
     provider,
     candidate,
   };
-  const policyDigest = releasePolicyDigest(policy);
+  const policyDigest = candidatePolicyDigest(policy);
   const successfulCandidates = fixture.candidates.map((candidate) => ({
     id: candidate.id,
     input: candidate.input,
     output: candidate.candidate_output,
   }));
-  return reportV5Schema.parse({
+  return candidateAssessmentReportSchema.parse({
     startedAt: FIXED_TIME,
     finishedAt: FIXED_TIME,
     scope: {
@@ -338,7 +338,7 @@ function deriveValidatedReport(fixture) {
     compensation: applied.compensation,
     decision: applied.decision,
     decisionPrecedence: applied.precedence,
-    decisionStatement: buildSuiteDecisionStatement(
+    decisionStatement: buildCandidateAssessmentDecisionStatement(
       applied.decision,
       policy.id,
       policy.version,

@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { parseConfig } from '../src/config.js';
-import { v4ContractForBytes } from './v4-fixture.js';
+import { parseSingleConfig } from '../src/config.js';
+import { singleContractForBytes } from './single-fixture.js';
 
 const validConfig = {
-  ...v4ContractForBytes('inputs.jsonl', '{"id":"one","input":"x"}\n', 1),
+  ...singleContractForBytes('inputs.jsonl', '{"id":"one","input":"x"}\n', 1),
   candidate: { type: 'command', template: 'echo {input}' },
   judge: { type: 'exact-match' },
   thresholds: { minPassRate: 0.9, maxRegressions: 0 },
@@ -13,32 +13,32 @@ const validConfig = {
 describe('config validation', () => {
   it('rejects missing and legacy config versions with a migration diagnostic', () => {
     const { contract: _contract, ...unnamed } = validConfig;
-    expect(() => parseConfig(unnamed)).toThrow(/unsupported config contract: missing/);
-    expect(() => parseConfig({ ...validConfig, contract: 'dailies/suite-config/v1' })).toThrow(
+    expect(() => parseSingleConfig(unnamed)).toThrow(/unsupported config contract: missing/);
+    expect(() => parseSingleConfig({ ...validConfig, contract: 'dailies/suite-config/v1' })).toThrow(
       /single-criterion release execution requires dailies\/single-config\/v1/,
     );
-    expect(() => parseConfig({ ...validConfig, schemaVersion: 4 })).toThrow();
+    expect(() => parseSingleConfig({ ...validConfig, schemaVersion: 4 })).toThrow();
   });
 
   it('accepts a valid command + exact-match config and defaults concurrency to 4', () => {
-    const config = parseConfig(validConfig);
+    const config = parseSingleConfig(validConfig);
     expect(config.concurrency).toBe(4);
     expect(config.candidate.type).toBe('command');
     expect(config.trustPolicy.admissibleClasses).toEqual(['verified', 'deterministic']);
   });
 
   it('defaults timeoutMs to 60000 and accepts an explicit value', () => {
-    expect(parseConfig(validConfig).timeoutMs).toBe(60_000);
-    expect(parseConfig({ ...validConfig, timeoutMs: 500 }).timeoutMs).toBe(500);
+    expect(parseSingleConfig(validConfig).timeoutMs).toBe(60_000);
+    expect(parseSingleConfig({ ...validConfig, timeoutMs: 500 }).timeoutMs).toBe(500);
   });
 
   it('rejects a non-positive or non-integer timeoutMs', () => {
-    expect(() => parseConfig({ ...validConfig, timeoutMs: 0 })).toThrow();
-    expect(() => parseConfig({ ...validConfig, timeoutMs: 1.5 })).toThrow();
+    expect(() => parseSingleConfig({ ...validConfig, timeoutMs: 0 })).toThrow();
+    expect(() => parseSingleConfig({ ...validConfig, timeoutMs: 1.5 })).toThrow();
   });
 
   it('accepts an http candidate and http judge with headers', () => {
-    const config = parseConfig({
+    const config = parseSingleConfig({
       ...validConfig,
       candidate: {
         type: 'http',
@@ -54,7 +54,7 @@ describe('config validation', () => {
   });
 
   it('accepts a pinned Rubrist judge and applies bounded polling defaults', () => {
-    const config = parseConfig({
+    const config = parseSingleConfig({
       ...validConfig,
       judge: {
         type: 'rubrist',
@@ -72,11 +72,11 @@ describe('config validation', () => {
   });
 
   it('rejects unpinned Rubrist judges and polling values outside hard bounds', () => {
-    expect(() => parseConfig({
+    expect(() => parseSingleConfig({
       ...validConfig,
       judge: { type: 'rubrist', url: 'https://rubrist.example' },
     })).toThrow();
-    expect(() => parseConfig({
+    expect(() => parseSingleConfig({
       ...validConfig,
       judge: {
         type: 'rubrist',
@@ -85,7 +85,7 @@ describe('config validation', () => {
         pollIntervalMs: 30_001,
       },
     })).toThrow();
-    expect(() => parseConfig({
+    expect(() => parseSingleConfig({
       ...validConfig,
       judge: {
         type: 'rubrist',
@@ -98,46 +98,46 @@ describe('config validation', () => {
 
   it('rejects a missing thresholds block', () => {
     const { thresholds: _thresholds, ...rest } = validConfig;
-    expect(() => parseConfig(rest)).toThrow();
+    expect(() => parseSingleConfig(rest)).toThrow();
   });
 
   it('rejects minPassRate outside [0, 1]', () => {
     expect(() =>
-      parseConfig({ ...validConfig, thresholds: { minPassRate: 1.5, maxRegressions: 0 } }),
+      parseSingleConfig({ ...validConfig, thresholds: { minPassRate: 1.5, maxRegressions: 0 } }),
     ).toThrow();
   });
 
   it('rejects negative or non-integer maxRegressions', () => {
     expect(() =>
-      parseConfig({ ...validConfig, thresholds: { minPassRate: 0.9, maxRegressions: -1 } }),
+      parseSingleConfig({ ...validConfig, thresholds: { minPassRate: 0.9, maxRegressions: -1 } }),
     ).toThrow();
     expect(() =>
-      parseConfig({ ...validConfig, thresholds: { minPassRate: 0.9, maxRegressions: 0.5 } }),
+      parseSingleConfig({ ...validConfig, thresholds: { minPassRate: 0.9, maxRegressions: 0.5 } }),
     ).toThrow();
   });
 
   it('rejects an unknown candidate type', () => {
     expect(() =>
-      parseConfig({ ...validConfig, candidate: { type: 'grpc', url: 'x' } }),
+      parseSingleConfig({ ...validConfig, candidate: { type: 'grpc', url: 'x' } }),
     ).toThrow();
   });
 
   it('rejects an http candidate without bodyTemplate', () => {
     expect(() =>
-      parseConfig({ ...validConfig, candidate: { type: 'http', url: 'http://localhost:1' } }),
+      parseSingleConfig({ ...validConfig, candidate: { type: 'http', url: 'http://localhost:1' } }),
     ).toThrow();
   });
 
   it('rejects concurrency < 1', () => {
-    expect(() => parseConfig({ ...validConfig, concurrency: 0 })).toThrow();
+    expect(() => parseSingleConfig({ ...validConfig, concurrency: 0 })).toThrow();
   });
 
   it('requires bounded ordered time windows for production samples', () => {
-    expect(() => parseConfig({
+    expect(() => parseSingleConfig({
       ...validConfig,
       scope: { ...validConfig.scope, kind: 'production_sample' },
     })).toThrow(/bounded time range/i);
-    expect(() => parseConfig({
+    expect(() => parseSingleConfig({
       ...validConfig,
       scope: {
         ...validConfig.scope,

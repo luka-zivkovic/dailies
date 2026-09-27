@@ -3,7 +3,7 @@ import { createServer, type IncomingMessage, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import type { Config } from '../src/config.js';
+import type { SingleConfig } from '../src/config.js';
 import {
   compareOutcome,
   decideDecision,
@@ -11,7 +11,7 @@ import {
   type Totals,
 } from '../src/report.js';
 import { runShadow } from '../src/runner.js';
-import { v4ContractForPath } from './v4-fixture.js';
+import { singleContractForPath } from './single-fixture.js';
 
 const tempDirs: string[] = [];
 
@@ -80,9 +80,9 @@ function exactConfig(
   path: string,
   concurrency: number,
   thresholds = { minPassRate: 1, maxRegressions: 0 },
-): Config {
+): SingleConfig {
   return {
-    ...v4ContractForPath(path),
+    ...singleContractForPath(path),
     candidate: { type: 'command', template: 'printf %s {input}' },
     judge: { type: 'exact-match' },
     thresholds,

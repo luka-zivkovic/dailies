@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseSuiteConfig } from '../src/config-v5.js';
+import { parseCandidateAssessmentConfig } from '../src/candidate-assessment-config.js';
 
 const digest = `sha256:${'1'.repeat(64)}`;
 const base = {
@@ -33,20 +33,20 @@ const base = {
   output: { dir: 'out' },
 };
 
-describe('suite config v5', () => {
+describe('candidate assessment config', () => {
   it('is additive and applies bounded provider defaults', () => {
-    expect(parseSuiteConfig(base)).toMatchObject({
+    expect(parseCandidateAssessmentConfig(base)).toMatchObject({
       suite: { provider: { pollIntervalMs: 1_000, evidenceDeadlineMs: 300_000 } },
       concurrency: 4,
       timeoutMs: 60_000,
     });
   });
 
-  it('rejects v4, unknown fields, ambiguous consequence rules, and implicit compensation', () => {
-    expect(() => parseSuiteConfig({ ...base, schemaVersion: 4 })).toThrow();
-    expect(() => parseSuiteConfig({ ...base, thresholds: { minPassRate: 1, maxRegressions: 0 } }))
+  it('rejects a schemaVersion, unknown fields, ambiguous consequence rules, and implicit compensation', () => {
+    expect(() => parseCandidateAssessmentConfig({ ...base, schemaVersion: 4 })).toThrow();
+    expect(() => parseCandidateAssessmentConfig({ ...base, thresholds: { minPassRate: 1, maxRegressions: 0 } }))
       .toThrow();
-    expect(() => parseSuiteConfig({
+    expect(() => parseCandidateAssessmentConfig({
       ...base,
       policy: {
         ...base.policy,
@@ -58,7 +58,7 @@ describe('suite config v5', () => {
         }],
       },
     })).toThrow();
-    expect(() => parseSuiteConfig({
+    expect(() => parseCandidateAssessmentConfig({
       ...base,
       policy: {
         ...base.policy,
@@ -68,7 +68,7 @@ describe('suite config v5', () => {
         }],
       },
     })).toThrow();
-    expect(() => parseSuiteConfig({
+    expect(() => parseCandidateAssessmentConfig({
       ...base,
       policy: {
         ...base.policy,
@@ -88,11 +88,11 @@ describe('suite config v5', () => {
   });
 
   it('rejects invalid deadlines and self-reported trust without a reasoned override', () => {
-    expect(() => parseSuiteConfig({
+    expect(() => parseCandidateAssessmentConfig({
       ...base,
       suite: { ...base.suite, provider: { ...base.suite.provider, evidenceDeadlineMs: 0 } },
     })).toThrow();
-    expect(() => parseSuiteConfig({
+    expect(() => parseCandidateAssessmentConfig({
       ...base,
       trustPolicy: { admissibleClasses: ['self_reported'] },
     })).toThrow(/override/i);

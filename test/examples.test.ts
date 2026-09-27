@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { afterEach, describe, expect, it } from 'vitest';
-import { parseCanonicalCalibrationReportV6Bytes } from '../src/report-v6.js';
-import { reportSchema } from '../src/report.js';
+import { parseCanonicalSuiteReportBytes } from '../src/suite-report.js';
+import { singleReportSchema } from '../src/report.js';
 
 const projectRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const cliPath = join(projectRoot, 'dist', 'cli.js');
@@ -117,7 +117,7 @@ describe('fixtures/examples', () => {
     await cp(join(projectRoot, 'fixtures', 'example-inputs.jsonl'), join(dir, 'example-inputs.jsonl'));
     const result = await runCli(join(dir, 'dailies.config.json'));
     expect(result.code, result.stderr).toBe(0);
-    const report = reportSchema.parse(JSON.parse(await readFile(join(dir, 'dailies-out', 'report.json'), 'utf8')));
+    const report = singleReportSchema.parse(JSON.parse(await readFile(join(dir, 'dailies-out', 'report.json'), 'utf8')));
     expect(report.decision).toBe('promote');
   });
 
@@ -128,7 +128,7 @@ describe('fixtures/examples', () => {
     expect(result.code, result.stderr).toBe(0);
     expect(result.stdout).toContain('decision: promote');
     const outDir = join(dirname(configPath), 'dailies-out');
-    const report = parseCanonicalCalibrationReportV6Bytes(await readFile(join(outDir, 'report.json')));
+    const report = parseCanonicalSuiteReportBytes(await readFile(join(outDir, 'report.json')));
     expect(report.decision).toBe('promote');
     expect(report.decisionPrecedence).toBe('policy_satisfied');
     expect(report.criteria).toHaveLength(2);
@@ -153,7 +153,7 @@ describe('fixtures/examples', () => {
     const configPath = await stageExample('suite', providerUrl);
     const result = await runCli(configPath);
     expect(result.code).toBe(1);
-    const report = parseCanonicalCalibrationReportV6Bytes(
+    const report = parseCanonicalSuiteReportBytes(
       await readFile(join(dirname(configPath), 'dailies-out', 'report.json')),
     );
     expect(report.decision).toBe('block');
@@ -170,7 +170,7 @@ describe('fixtures/examples', () => {
     const result = await runCli(configPath);
     expect(result.code).toBe(1);
     const outDir = join(dirname(configPath), 'dailies-out');
-    const report = parseCanonicalCalibrationReportV6Bytes(await readFile(join(outDir, 'report.json')));
+    const report = parseCanonicalSuiteReportBytes(await readFile(join(outDir, 'report.json')));
     expect(report.decision).toBe('block');
     const candidate = report.candidateAssessment.status === 'completed' ? report.candidateAssessment.report.criteria[0] : undefined;
     expect(candidate?.items.map((item) => item.assessedLabel)).toEqual(['abstain', 'abstain', 'abstain']);
@@ -198,7 +198,7 @@ describe('fixtures/examples', () => {
     expect(result.code, result.stderr).toBe(0);
     expect(result.stdout).toContain('decision: promote');
     const outDir = join(dirname(configPath), 'dailies-out');
-    const report = parseCanonicalCalibrationReportV6Bytes(await readFile(join(outDir, 'report.json')));
+    const report = parseCanonicalSuiteReportBytes(await readFile(join(outDir, 'report.json')));
     expect(report.decision).toBe('promote');
     expect(report.candidateAssessment.status).toBe('completed');
     expect(report.criteria).toHaveLength(2);
@@ -220,7 +220,7 @@ describe('fixtures/examples', () => {
     const result = await runCli(configPath);
     expect(result.code, result.stderr).toBe(2);
     expect(result.stderr).toContain('dailies inconclusive: release policy stopped at mandatory_evidence_incomplete');
-    const report = parseCanonicalCalibrationReportV6Bytes(
+    const report = parseCanonicalSuiteReportBytes(
       await readFile(join(dirname(configPath), 'dailies-out', 'report.json')),
     );
     expect(report.decision).toBe('inconclusive');

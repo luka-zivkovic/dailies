@@ -17,7 +17,7 @@ export const passRateOperandRuleSchema = z.object({
   unit: z.literal('pass_rate_ratio'),
 }).strict();
 
-export const criterionPolicySchema = z.discriminatedUnion('consequence', [
+export const candidateCriterionPolicySchema = z.discriminatedUnion('consequence', [
   z.object({
     criterionVersionId: nonBlankStringSchema,
     evidenceRequirement: z.literal('mandatory'),
@@ -67,31 +67,31 @@ export const compensationFormulaSchema = z.object({
  * assessment applies it. It is not a format of its own (ADR-0010), so it
  * carries no contract.
  */
-export const releasePolicyV1Schema = z.object({
+export const candidatePolicySchema = z.object({
   id: nonBlankStringSchema,
   version: nonBlankStringSchema,
   manifestId: nonBlankStringSchema,
   manifestDigest: digestSchema,
-  criteria: z.array(criterionPolicySchema).min(1),
+  criteria: z.array(candidateCriterionPolicySchema).min(1),
   compensationGroups: z.array(z.object({
     id: nonBlankStringSchema,
     formula: compensationFormulaSchema,
   }).strict()).default([]),
 }).strict();
 
-export type CriterionPolicy = z.infer<typeof criterionPolicySchema>;
+export type CandidateCriterionPolicy = z.infer<typeof candidateCriterionPolicySchema>;
 export type CompensationFormula = z.infer<typeof compensationFormulaSchema>;
-export type ReleasePolicyV1 = z.infer<typeof releasePolicyV1Schema>;
+export type CandidatePolicy = z.infer<typeof candidatePolicySchema>;
 
-export function releasePolicyDigest(policy: ReleasePolicyV1): string {
+export function candidatePolicyDigest(policy: CandidatePolicy): string {
   return `sha256:${createHash('sha256').update(canonicalJson(policy)).digest('hex')}`;
 }
 
-export function verifyReleasePolicy(
+export function verifyCandidatePolicy(
   raw: unknown,
   manifest: EvaluatorSuiteManifest,
-): ReleasePolicyV1 {
-  const policy = releasePolicyV1Schema.parse(raw);
+): CandidatePolicy {
+  const policy = candidatePolicySchema.parse(raw);
   if (policy.manifestId !== manifest.manifestId) {
     throw new Error(`policy manifestId mismatch: expected ${manifest.manifestId}`);
   }
@@ -116,7 +116,7 @@ export function verifyReleasePolicy(
     groups.set(group.id, group);
   }
   const compensatory = policy.criteria.filter(
-    (entry): entry is Extract<CriterionPolicy, { consequence: 'compensatory' }> =>
+    (entry): entry is Extract<CandidateCriterionPolicy, { consequence: 'compensatory' }> =>
       entry.consequence === 'compensatory',
   );
   const expectedByGroup = new Map<string, string[]>();
@@ -153,9 +153,9 @@ export interface CriterionPolicyInput {
   regressions: number;
 }
 
-export interface CriterionPolicyResult extends CriterionPolicyInput {
-  evidenceRequirement: CriterionPolicy['evidenceRequirement'];
-  consequence: CriterionPolicy['consequence'];
+export interface CandidateCriterionPolicyResult extends CriterionPolicyInput {
+  evidenceRequirement: CandidateCriterionPolicy['evidenceRequirement'];
+  consequence: CandidateCriterionPolicy['consequence'];
   rulePassed: boolean | null;
 }
 
@@ -181,14 +181,14 @@ export type DecisionPrecedence =
   | 'compensation_failure'
   | 'policy_satisfied';
 
-export interface PolicyDecision {
+export interface CandidatePolicyDecision {
   decision: 'promote' | 'block' | 'inconclusive';
   precedence: DecisionPrecedence;
-  criteria: CriterionPolicyResult[];
+  criteria: CandidateCriterionPolicyResult[];
   compensation: CompensationResult[];
 }
 
-function rulePass(entry: CriterionPolicy, input: CriterionPolicyInput): boolean | null {
+function rulePass(entry: CandidateCriterionPolicy, input: CriterionPolicyInput): boolean | null {
   if (input.evidenceState !== 'complete' || !input.trustAdmissible) return null;
   // Compensatory entries are operands, not independently gated rules. The
   // compensation formula is the only place where their pass rates are judged.
@@ -236,17 +236,17 @@ function decimalFraction(value: number): Fraction {
   return normalizeFraction({ numerator, denominator });
 }
 
-export function applyReleasePolicy(
-  policy: ReleasePolicyV1,
+export function applyCandidatePolicy(
+  policy: CandidatePolicy,
   evidence: CriterionPolicyInput[],
   candidateExecutionFailed: boolean,
   candidateIntegrityFailure = false,
-): PolicyDecision {
+): CandidatePolicyDecision {
   const byId = new Map(evidence.map((entry) => [entry.criterionVersionId, entry]));
   if (byId.size !== evidence.length || evidence.length !== policy.criteria.length) {
     throw new Error('policy evaluation requires exact unique criterion evidence coverage');
   }
-  const criteria = policy.criteria.map((entry): CriterionPolicyResult => {
+  const criteria = policy.criteria.map((entry): CandidateCriterionPolicyResult => {
     const input = byId.get(entry.criterionVersionId);
     if (input === undefined) {
       throw new Error(`missing criterion evidence ${entry.criterionVersionId}`);
@@ -302,7 +302,7 @@ export function applyReleasePolicy(
     };
   });
 
-  const isRequired = (entry: CriterionPolicyResult) =>
+  const isRequired = (entry: CandidateCriterionPolicyResult) =>
     entry.evidenceRequirement === 'mandatory' || entry.consequence === 'compensatory';
   if (candidateIntegrityFailure || criteria.some(
     (entry) => isRequired(entry) && entry.evidenceState === 'integrity_failure',

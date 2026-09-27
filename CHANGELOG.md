@@ -5,6 +5,32 @@ versioning while the public API remains pre-1.0.
 
 ## Unreleased
 
+- Give the public API unversioned names (ADR-0010). The suite takes the plain
+  names, and the candidate assessment's say so:
+  - suite: `parseSuiteConfig`, `suiteConfigSchema`, `SuiteConfig`,
+    `SuiteConfigInput`, `suiteReportSchema`, `SuiteReport`,
+    `buildSuiteReport`, `serializeSuiteReport`,
+    `parseCanonicalSuiteReportBytes`, `renderSuiteMarkdown`,
+    `buildSuiteDecisionStatement`, `preflightSuiteRelease`,
+    `runSuiteRelease`;
+  - release policy: `releasePolicySchema`, `ReleasePolicy`,
+    `applyReleasePolicy`, `verifyReleasePolicy`, `releasePolicyDigest`,
+    `releasePolicyCandidateProjection`, `criterionPolicySchema`,
+    `CriterionPolicy`, `CriterionPolicyResult`, `PolicyDecision`,
+    `binaryCalibrationRequirementSchema`, `BinaryCalibrationRequirement`;
+  - candidate assessment (the former 5 and policy 1):
+    `parseCandidateAssessmentConfig`, `CandidateAssessmentConfig`,
+    `candidateAssessmentReportSchema`, `CandidateAssessmentReport`,
+    `runCandidateAssessment`, `candidatePolicySchema`, `CandidatePolicy`,
+    `applyCandidatePolicy`, and the rest of the `Candidate*` names;
+  - single: `parseSingleConfig`, `singleConfigSchema`, `SingleConfig`,
+    `singleReportSchema`, `SingleReport`;
+  - robustness: `classifySingleInvariantReport`,
+    `classifyCandidateInvariantDecision`, `classifySuiteInvariantDecision`.
+
+  Source modules follow: `suite-config`, `suite-report`, `suite-runner`,
+  `release-policy`, and `candidate-assessment-config`, `-report`, `-runner`
+  and `candidate-policy`.
 - Keep two formats with named identifiers (ADR-0010, founder decision
   2026-09-27). Each configuration and report declares a `contract` beside
   `schemaVersion: 1`, and the CLI, the digest command, and

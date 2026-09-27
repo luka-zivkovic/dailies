@@ -14,9 +14,9 @@ import { ERROR_KINDS, type ErrorKind } from './errors.js';
 import { judgeResultSchema } from './judge.js';
 import { attemptLedgerSchema } from './retry.js';
 import {
-  reportV6Schema,
-  type CalibrationSuiteReport,
-} from './report-v6.js';
+  suiteReportSchema,
+  type SuiteReport,
+} from './suite-report.js';
 import { declaredContract, SINGLE_REPORT_CONTRACT, SUITE_REPORT_CONTRACT } from './contracts.js';
 
 /**
@@ -159,7 +159,7 @@ function refineItemResult(
   }
 }
 
-/** Current v4 item contract. Trust is attached only to completed evidence. */
+/** Single-report item contract. Trust is attached only to completed evidence. */
 export const itemResultSchema = itemResultBaseSchema.extend({
   trustClass: trustClassSchema.optional(),
 }).strict().superRefine(refineItemResult);
@@ -222,7 +222,7 @@ const commonReportFields = {
 };
 
 type SingleCriterionReportCore = Pick<
-  z.infer<typeof reportV4ShapeSchema>,
+  z.infer<typeof singleReportShapeSchema>,
   'judgeType' | 'thresholds' | 'totals' | 'evidence' | 'items'
 >;
 
@@ -552,7 +552,7 @@ const trustSummarySchema = z.discriminatedUnion('status', [z.object({
   reason: z.literal('no_completed_evidence'),
 }).strict()]);
 
-const reportV4ShapeSchema = z.object({
+const singleReportShapeSchema = z.object({
   contract: z.literal(SINGLE_REPORT_CONTRACT),
   schemaVersion: z.literal(1),
   ...commonReportFields,
@@ -577,7 +577,7 @@ function expectedTrust(judgeType: 'exact-match' | 'http' | 'rubrist'): {
   return { class: 'self_reported', derivation: 'http_judge_v1' };
 }
 
-export const reportSchema = reportV4ShapeSchema.superRefine((report, ctx) => {
+export const singleReportSchema = singleReportShapeSchema.superRefine((report, ctx) => {
   refineSingleCriterionEvidence(report, ctx);
 
   const expected = expectedTrust(report.judgeType);
@@ -720,27 +720,27 @@ export const reportSchema = reportV4ShapeSchema.superRefine((report, ctx) => {
 });
 
 export type ItemResult = z.infer<typeof itemResultSchema>;
-export type Report = z.infer<typeof reportSchema>;
+export type SingleReport = z.infer<typeof singleReportSchema>;
 export type ItemOutcome = z.infer<typeof itemOutcomeSchema>;
 export type Comparison = z.infer<typeof comparisonSchema>;
 export type ErrorStage = z.infer<typeof errorStageSchema>;
 export type { ErrorKind };
-export type Decision = Report['decision'];
+export type Decision = SingleReport['decision'];
 
 export type ReportInspection =
-  | { contract: typeof SINGLE_REPORT_CONTRACT; report: Report }
-  | { contract: typeof SUITE_REPORT_CONTRACT; report: CalibrationSuiteReport };
+  | { contract: typeof SINGLE_REPORT_CONTRACT; report: SingleReport }
+  | { contract: typeof SUITE_REPORT_CONTRACT; report: SuiteReport };
 
 /** Parse a single or suite report by its contract, without normalizing it. */
 export function parseReportForInspection(raw: unknown): ReportInspection {
   const contract = declaredContract(raw);
   if (contract === SINGLE_REPORT_CONTRACT) {
-    reportSchema.parse(raw);
-    return { contract, report: raw as Report };
+    singleReportSchema.parse(raw);
+    return { contract, report: raw as SingleReport };
   }
   if (contract === SUITE_REPORT_CONTRACT) {
     try {
-      return { contract, report: reportV6Schema.parse(raw) };
+      return { contract, report: suiteReportSchema.parse(raw) };
     } catch (error) {
       throw new Error(
         `invalid ${SUITE_REPORT_CONTRACT} report: ${error instanceof Error ? error.message : String(error)}`,
@@ -847,7 +847,7 @@ export const EXIT_RUN_ERROR = 2;
  * Map a finished report to the CLI exit code. Inconclusive evidence is a run
  * error, not a product-quality verdict.
  */
-export function decideExitCode(report: Pick<Report, 'decision'>): number {
+export function decideExitCode(report: Pick<SingleReport, 'decision'>): number {
   if (report.decision === 'inconclusive') return EXIT_RUN_ERROR;
   return report.decision === 'promote' ? EXIT_PROMOTE : EXIT_BLOCK;
 }
@@ -858,7 +858,7 @@ function truncate(s: string, max = 200): string {
   return s.length > max ? s.slice(0, max) + '…' : s;
 }
 
-export function renderMarkdown(report: Report): string {
+export function renderMarkdown(report: SingleReport): string {
   const { totals, thresholds } = report;
   const pct = (n: number) => `${(n * 100).toFixed(1)}%`;
   const heading = report.decision.toUpperCase();

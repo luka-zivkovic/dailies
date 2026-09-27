@@ -4,13 +4,13 @@ import { createServer, type Server } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { parseConfig, type Config } from '../src/config.js';
+import { parseSingleConfig, type SingleConfig } from '../src/config.js';
 import {
   aggregate,
   buildDecisionStatement,
   parseReportForInspection,
-  reportSchema,
-  type Report,
+  singleReportSchema,
+  type SingleReport,
 } from '../src/report.js';
 import { runShadow } from '../src/runner.js';
 
@@ -27,8 +27,8 @@ function digest(bytes: string): string {
 async function fixture(
   judge: Record<string, unknown> = { type: 'exact-match' },
   trustPolicy?: Record<string, unknown>,
-): Promise<{ config: Config; path: string; bytes: string }> {
-  const dir = await mkdtemp(join(tmpdir(), 'dailies-v4-'));
+): Promise<{ config: SingleConfig; path: string; bytes: string }> {
+  const dir = await mkdtemp(join(tmpdir(), 'dailies-single-'));
   tempDirs.push(dir);
   const path = join(dir, 'inputs.jsonl');
   const bytes = [
@@ -39,7 +39,7 @@ async function fixture(
   return {
     path,
     bytes,
-    config: parseConfig({
+    config: parseSingleConfig({
       contract: 'dailies/single-config/v1',
       schemaVersion: 1,
       inputs: { type: 'jsonl', path, digest: digest(bytes) },
@@ -82,7 +82,7 @@ async function httpJudge(body: object): Promise<{ server: Server; url: string }>
   return { server, url: `http://127.0.0.1:${port}/judge` };
 }
 
-function asLegacyV3(report: Report): Record<string, unknown> {
+function asLegacyV3(report: SingleReport): Record<string, unknown> {
   const {
     contract: _contract,
     schemaVersion: _version,
@@ -102,7 +102,7 @@ function asLegacyV3(report: Report): Record<string, unknown> {
   };
 }
 
-describe('report/config v4 scope and trust contract', () => {
+describe('single report and config scope and trust contract', () => {
   it('binds a deterministic exact-match decision to exact input bytes and declared scope', async () => {
     const { config, bytes } = await fixture();
     const report = await runShadow(config, { now: () => new Date('2026-08-22T12:00:00.000Z') });
@@ -198,7 +198,7 @@ describe('report/config v4 scope and trust contract', () => {
       const relabeled = structuredClone(blocked);
       relabeled.items = relabeled.items.map((item) => ({ ...item, outcome: 'abstain' as const }));
       relabeled.totals = aggregate(relabeled.items);
-      const result = reportSchema.safeParse(relabeled);
+      const result = singleReportSchema.safeParse(relabeled);
       expect(result.success).toBe(false);
       expect(result.error?.issues.map((issue) => issue.message)).toContain('only a Rubrist evaluator can abstain');
     } finally {
@@ -231,9 +231,9 @@ describe('report/config v4 scope and trust contract', () => {
     const { config, path } = await fixture();
     const raw = structuredClone(config) as Record<string, unknown>;
     delete raw.scope;
-    expect(() => parseConfig(raw)).toThrow();
-    expect(() => parseConfig({ ...config, schemaVersion: 3 })).toThrow();
-    expect(() => parseConfig({
+    expect(() => parseSingleConfig(raw)).toThrow();
+    expect(() => parseSingleConfig({ ...config, schemaVersion: 3 })).toThrow();
+    expect(() => parseSingleConfig({
       ...config,
       trustPolicy: { admissibleClasses: ['self_reported'] },
     })).toThrow(/override/i);
@@ -310,7 +310,7 @@ describe('report/config v4 scope and trust contract', () => {
     for (const [name, mutate] of mutations) {
       const candidate = structuredClone(report) as unknown as Record<string, any>;
       mutate(candidate);
-      expect(reportSchema.safeParse(candidate).success, name).toBe(false);
+      expect(singleReportSchema.safeParse(candidate).success, name).toBe(false);
     }
   });
 
@@ -336,7 +336,7 @@ describe('report/config v4 scope and trust contract', () => {
         masquerade.scope.id,
         masquerade.scope.inputArtifact.digest,
       );
-      expect(reportSchema.safeParse(masquerade).success).toBe(false);
+      expect(singleReportSchema.safeParse(masquerade).success).toBe(false);
     } finally {
       closeServer(judge.server);
     }
@@ -346,11 +346,11 @@ describe('report/config v4 scope and trust contract', () => {
     const { config } = await fixture();
     const current = await runShadow(config);
     expect(parseReportForInspection(current)).toMatchObject({ contract: 'dailies/single-report/v1' });
-    expect(reportSchema.safeParse({ ...current, verdict: 'promote' }).success).toBe(false);
+    expect(singleReportSchema.safeParse({ ...current, verdict: 'promote' }).success).toBe(false);
 
     // ADR-0008 removed historical v3 inspection before launch.
     const legacy = asLegacyV3(current);
-    expect(reportSchema.safeParse(legacy).success).toBe(false);
+    expect(singleReportSchema.safeParse(legacy).success).toBe(false);
     for (const contract of [undefined, 'dailies/single-report/v0', 'dailies/suite-config/v1', 'dailies/suite-report/v1']) {
       const candidate: Record<string, unknown> = { ...legacy, ...(contract === undefined ? {} : { contract }) };
       expect(() => parseReportForInspection(candidate)).toThrow(/unsupported report contract|invalid dailies\/suite-report\/v1 report/);

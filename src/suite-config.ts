@@ -7,8 +7,8 @@ import {
   scopeConfigSchema,
   trustPolicySchema,
 } from './config.js';
-import { suiteProviderConfigSchema } from './config-v5.js';
-import { releasePolicyV2Schema } from './policy-v2.js';
+import { suiteProviderConfigSchema } from './candidate-assessment-config.js';
+import { releasePolicySchema } from './release-policy.js';
 
 const nonBlankStringSchema = z.string().min(1).refine((value) => value.trim().length > 0, {
   message: 'must contain a non-whitespace character',
@@ -113,7 +113,7 @@ export const calibrationEvidenceBindingSchema = z.object({
 }).strict();
 
 /** The suite configuration (`dailies/suite-config/v1`, ADR-0010). */
-export const suiteConfigV6Schema = z.object({
+export const suiteConfigSchema = z.object({
   contract: z.literal(SUITE_CONFIG_CONTRACT),
   schemaVersion: z.literal(1),
   inputs: inputsConfigSchema,
@@ -128,7 +128,7 @@ export const suiteConfigV6Schema = z.object({
     }).strict(),
     provider: suiteProviderConfigSchema,
   }).strict(),
-  policy: releasePolicyV2Schema,
+  policy: releasePolicySchema,
   /** Left out, it equals a null source for every criterion (ADR-0010). */
   calibrationEvidence: z.array(calibrationEvidenceBindingSchema).min(1).optional(),
   trustPolicy: trustPolicySchema.default({
@@ -182,11 +182,11 @@ export type ExpectedBinaryCalibrationIdentityConfig = z.infer<
 export type CalibrationEvidenceFileSource = z.infer<typeof calibrationEvidenceFileSourceSchema>;
 export type CalibrationEvidenceBinding = z.infer<typeof calibrationEvidenceBindingSchema>;
 /** A parsed suite configuration, with calibration evidence bound for every criterion. */
-export type SuiteConfigV6 = z.infer<typeof suiteConfigV6Schema>;
+export type SuiteConfig = z.infer<typeof suiteConfigSchema>;
 /** A suite configuration before parsing: `calibrationEvidence` may be left out. */
-export type SuiteConfigV6Input = z.input<typeof suiteConfigV6Schema>;
+export type SuiteConfigInput = z.input<typeof suiteConfigSchema>;
 
-export function parseSuiteConfigV6(raw: unknown): SuiteConfigV6 {
+export function parseSuiteConfig(raw: unknown): SuiteConfig {
   const contract = declaredContract(raw);
   if (contract !== SUITE_CONFIG_CONTRACT) {
     throw new Error(
@@ -194,5 +194,5 @@ export function parseSuiteConfigV6(raw: unknown): SuiteConfigV6 {
       `suite release execution requires ${SUITE_CONFIG_CONTRACT}`,
     );
   }
-  return suiteConfigV6Schema.parse(raw);
+  return suiteConfigSchema.parse(raw);
 }

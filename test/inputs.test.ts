@@ -3,10 +3,10 @@ import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { Config } from '../src/config.js';
+import type { SingleConfig } from '../src/config.js';
 import { loadInputArtifact, loadInputs } from '../src/inputs.js';
 import { runShadow } from '../src/runner.js';
-import { v4ContractForPath } from './v4-fixture.js';
+import { singleContractForPath } from './single-fixture.js';
 
 async function writeInputs(lines: object[]): Promise<string> {
   const dir = await mkdtemp(join(tmpdir(), 'dailies-inputs-'));
@@ -38,8 +38,8 @@ describe('input preflight', () => {
         resolve(address.port);
       });
     });
-    const config: Config = {
-      ...v4ContractForPath(path),
+    const config: SingleConfig = {
+      ...singleContractForPath(path),
       candidate: {
         type: 'http',
         url: `http://127.0.0.1:${port}/candidate`,
@@ -74,8 +74,8 @@ describe('input preflight', () => {
         resolve(address.port);
       });
     });
-    const config: Config = {
-      ...v4ContractForPath(path),
+    const config: SingleConfig = {
+      ...singleContractForPath(path),
       candidate: {
         type: 'http',
         url: `http://127.0.0.1:${port}/candidate`,

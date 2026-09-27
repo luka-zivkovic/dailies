@@ -13,29 +13,29 @@ import {
 } from '../src/calibration-policy.js';
 import { canonicalJson, sha256Digest } from '../src/rubrist.js';
 import {
-  releasePolicyV2CandidateProjection,
-  releasePolicyV2Digest,
-  verifyReleasePolicyV2,
-  type ReleasePolicyV2,
-} from '../src/policy-v2.js';
-import { releasePolicyDigest } from '../src/policy.js';
+  releasePolicyCandidateProjection,
+  releasePolicyDigest,
+  verifyReleasePolicy,
+  type ReleasePolicy,
+} from '../src/release-policy.js';
+import { candidatePolicyDigest } from '../src/candidate-policy.js';
 import {
-  buildCalibrationReportV6,
-  parseCanonicalCalibrationReportV6Bytes,
-  renderCalibrationReportMarkdown,
-  reportV6Schema,
-  serializeCalibrationReportV6,
-  type CalibrationSuiteReport,
-} from '../src/report-v6.js';
+  buildSuiteReport,
+  parseCanonicalSuiteReportBytes,
+  renderSuiteMarkdown,
+  suiteReportSchema,
+  serializeSuiteReport,
+  type SuiteReport,
+} from '../src/suite-report.js';
 import {
   aggregateCriterionItems,
-  buildSuiteDecisionStatement,
+  buildCandidateAssessmentDecisionStatement,
   candidateExecutionIdentity,
   providerExecutionIdentity,
-  reportV5Schema,
+  candidateAssessmentReportSchema,
   suiteExecutionPolicyDigest,
-  type SuiteReport,
-} from '../src/report-v5.js';
+  type CandidateAssessmentReport,
+} from '../src/candidate-assessment-report.js';
 import { parseReportForInspection } from '../src/report.js';
 import {
   evaluatorSuiteCriterionDigest,
@@ -79,8 +79,8 @@ function governedFixture(name = 'binary-calibration-v1.complete.json'): {
   const manifest: EvaluatorSuiteManifest = {
     contract: 'rubrist/evaluator-suite-manifest/v1',
     schemaVersion: 1,
-    manifestId: 'manifest-calibration-report-v6',
-    suiteId: 'suite-calibration-report-v6',
+    manifestId: 'manifest-suite-report',
+    suiteId: 'suite-suite-report',
     projectId: artifact.projectId,
     revision: 1,
     members: [member],
@@ -123,11 +123,11 @@ function requirement(artifact: BinaryCalibrationArtifact) {
   };
 }
 
-function policy(manifest: EvaluatorSuiteManifest, artifact: BinaryCalibrationArtifact): ReleasePolicyV2 {
-  return verifyReleasePolicyV2({
+function policy(manifest: EvaluatorSuiteManifest, artifact: BinaryCalibrationArtifact): ReleasePolicy {
+  return verifyReleasePolicy({
     contract: 'dailies/release-policy/v1',
     schemaVersion: 1,
-    id: 'release-policy-v6',
+    id: 'release-policy-suite',
     version: '1',
     manifestId: manifest.manifestId,
     manifestDigest: manifest.manifestDigest,
@@ -170,10 +170,10 @@ function releaseScope() {
 
 function candidateReport(
   manifest: EvaluatorSuiteManifest,
-  policyV2: ReleasePolicyV2,
-): SuiteReport {
+  releasePolicy: ReleasePolicy,
+): CandidateAssessmentReport {
   const scope = releaseScope();
-  const policyV1 = releasePolicyV2CandidateProjection(policyV2);
+  const candidatePolicy = releasePolicyCandidateProjection(releasePolicy);
   const provider = providerExecutionIdentity({ type: 'rubrist', url: 'https://rubrist.example' });
   const candidate = candidateExecutionIdentity({ type: 'command', template: 'candidate {input}' });
   const executionPolicy = {
@@ -193,14 +193,14 @@ function candidateReport(
     regression: false,
   }];
   const totals = aggregateCriterionItems(criterionItems);
-  const report: SuiteReport = {
+  const report: CandidateAssessmentReport = {
     startedAt: STARTED_AT,
     finishedAt: FINISHED_AT,
     scope,
     trustPolicy: { admissibleClasses: ['verified', 'deterministic'] },
     manifest,
-    policy: policyV1,
-    policyDigest: releasePolicyDigest(policyV1),
+    policy: candidatePolicy,
+    policyDigest: candidatePolicyDigest(candidatePolicy),
     executionPolicy,
     executionPolicyDigest: suiteExecutionPolicyDigest(executionPolicy),
     candidateExecution: {
@@ -261,11 +261,11 @@ function candidateReport(
     compensation: [],
     decision: 'block',
     decisionPrecedence: 'candidate_execution_failure',
-    decisionStatement: buildSuiteDecisionStatement(
+    decisionStatement: buildCandidateAssessmentDecisionStatement(
       'block',
-      policyV1.id,
-      policyV1.version,
-      releasePolicyDigest(policyV1),
+      candidatePolicy.id,
+      candidatePolicy.version,
+      candidatePolicyDigest(candidatePolicy),
       manifest.manifestId,
       manifest.manifestDigest,
       scope.kind,
@@ -273,7 +273,7 @@ function candidateReport(
       scope.inputArtifact.digest,
     ),
   };
-  return reportV5Schema.parse(report);
+  return candidateAssessmentReportSchema.parse(report);
 }
 
 function sourceFor(fixture: ReturnType<typeof governedFixture>) {
@@ -298,9 +298,9 @@ function collectionFor(fixture: ReturnType<typeof governedFixture>): Calibration
 function completedReport(
   fixture = governedFixture(),
   collection = collectionFor(fixture),
-): CalibrationSuiteReport {
+): SuiteReport {
   const acceptedPolicy = policy(fixture.manifest, fixture.artifact);
-  return buildCalibrationReportV6({
+  return buildSuiteReport({
     startedAt: STARTED_AT,
     finishedAt: FINISHED_AT,
     evaluatedAt: EVALUATED_AT,
@@ -318,8 +318,8 @@ function completedReport(
 function preflightReport(
   fixture: ReturnType<typeof governedFixture>,
   collection: CalibrationCollectionResult,
-): CalibrationSuiteReport {
-  return buildCalibrationReportV6({
+): SuiteReport {
+  return buildSuiteReport({
     startedAt: STARTED_AT,
     finishedAt: STARTED_AT,
     evaluatedAt: EVALUATED_AT,
@@ -334,13 +334,13 @@ function preflightReport(
   });
 }
 
-function tamper(report: CalibrationSuiteReport, mutate: (copy: any) => void): unknown {
+function tamper(report: SuiteReport, mutate: (copy: any) => void): unknown {
   const copy = structuredClone(report);
   mutate(copy);
   return copy;
 }
 
-describe('calibration-aware report v6', () => {
+describe('suite report', () => {
   it('retains separate release/calibration scopes and independently verifies deterministic bytes', () => {
     const report = completedReport();
     expect(report).toMatchObject({ contract: 'dailies/suite-report/v1', schemaVersion: 1 });
@@ -361,10 +361,10 @@ describe('calibration-aware report v6', () => {
     expect(report.decisionStatement).toContain(report.calibrationEvidenceSetDigest);
     expect(report.decisionStatement).toContain(report.candidateAssessmentDigest);
 
-    const first = serializeCalibrationReportV6(report);
-    const second = serializeCalibrationReportV6(structuredClone(report));
+    const first = serializeSuiteReport(report);
+    const second = serializeSuiteReport(structuredClone(report));
     expect(Buffer.from(first).equals(Buffer.from(second))).toBe(true);
-    expect(parseCanonicalCalibrationReportV6Bytes(first)).toEqual(report);
+    expect(parseCanonicalSuiteReportBytes(first)).toEqual(report);
     const raw = structuredClone(report);
     const inspection = parseReportForInspection(raw);
     expect(inspection).toMatchObject({ contract: 'dailies/suite-report/v1' });
@@ -376,8 +376,8 @@ describe('calibration-aware report v6', () => {
     const fixture = governedFixture();
     const strictPolicy = structuredClone(policy(fixture.manifest, fixture.artifact));
     strictPolicy.criteria[0]!.calibrationRequirement.metricChecks[0]!.minimumWilsonLowerBound = '1';
-    const acceptedPolicy = verifyReleasePolicyV2(strictPolicy, fixture.manifest);
-    const report = buildCalibrationReportV6({
+    const acceptedPolicy = verifyReleasePolicy(strictPolicy, fixture.manifest);
+    const report = buildSuiteReport({
       startedAt: STARTED_AT,
       finishedAt: FINISHED_AT,
       evaluatedAt: EVALUATED_AT,
@@ -390,7 +390,7 @@ describe('calibration-aware report v6', () => {
       },
       calibrationCollections: [collectionFor(fixture)],
     });
-    const markdown = renderCalibrationReportMarkdown(report);
+    const markdown = renderSuiteMarkdown(report);
     expect(markdown).toContain('# Suite release report: BLOCK');
     expect(markdown).toContain('verified/rubrist_binary_calibration_v1');
     expect(markdown).toContain('Separate calibration truth scope: sealed_validation_calibration/');
@@ -406,7 +406,7 @@ describe('calibration-aware report v6', () => {
     const collection = collectionFor(fixture);
     expect(collection.state).toBe('incomplete');
     const acceptedPolicy = policy(fixture.manifest, fixture.artifact);
-    const report = buildCalibrationReportV6({
+    const report = buildSuiteReport({
       startedAt: STARTED_AT,
       finishedAt: FINISHED_AT,
       evaluatedAt: EVALUATED_AT,
@@ -425,7 +425,7 @@ describe('calibration-aware report v6', () => {
       status: 'unavailable',
       reason: 'artifact_incomplete',
     });
-    expect(reportV6Schema.parse(structuredClone(report))).toEqual(report);
+    expect(suiteReportSchema.parse(structuredClone(report))).toEqual(report);
   });
 
   it('retains rejected evidence only as bounded digests and a typed reason', () => {
@@ -449,7 +449,7 @@ describe('calibration-aware report v6', () => {
     expect(evidence).not.toHaveProperty('artifact');
     expect(canonicalJson(report)).not.toContain('/sealed/calibration.json');
     expect(report.decisionPrecedence).toBe('required_integrity_failure');
-    expect(reportV6Schema.parse(structuredClone(report))).toEqual(report);
+    expect(suiteReportSchema.parse(structuredClone(report))).toEqual(report);
   });
 
   it.each([
@@ -469,14 +469,14 @@ describe('calibration-aware report v6', () => {
     ['decision', (r: any) => { r.decision = 'promote'; }],
     ['decision statement', (r: any) => { r.decisionStatement += ' tampered'; }],
   ])('rejects %s tampering', (_name, mutateReport) => {
-    expect(() => reportV6Schema.parse(tamper(completedReport(), mutateReport))).toThrow();
+    expect(() => suiteReportSchema.parse(tamper(completedReport(), mutateReport))).toThrow();
   });
 
   it('enforces evaluatedAt <= startedAt and candidate preflight termination', () => {
-    expect(() => reportV6Schema.parse(tamper(completedReport(), (report) => {
+    expect(() => suiteReportSchema.parse(tamper(completedReport(), (report) => {
       report.evaluatedAt = '2026-08-23T13:00:00.001Z';
     }))).toThrow(/lifecycle/);
-    expect(() => reportV6Schema.parse(tamper(completedReport(), (report) => {
+    expect(() => suiteReportSchema.parse(tamper(completedReport(), (report) => {
       report.candidateAssessment = {
         status: 'not_started',
         reason: 'required_calibration_integrity_failure',
@@ -495,7 +495,7 @@ describe('calibration-aware report v6', () => {
       bytes: fixture.bytes,
     });
     const digestReport = preflightReport(fixture, digestMismatch);
-    expect(() => reportV6Schema.parse(tamper(digestReport, (report) => {
+    expect(() => suiteReportSchema.parse(tamper(digestReport, (report) => {
       report.criteria[0].artifactEvidence.observedArtifactDigest = ZERO_DIGEST;
     }))).toThrow(/distinct/);
 
@@ -507,7 +507,7 @@ describe('calibration-aware report v6', () => {
       readFailure: 'not_found',
     });
     const notFoundReport = preflightReport(fixture, notFound);
-    expect(() => reportV6Schema.parse(tamper(notFoundReport, (report) => {
+    expect(() => suiteReportSchema.parse(tamper(notFoundReport, (report) => {
       report.criteria[0].artifactEvidence.observedArtifactDigest = ZERO_DIGEST;
     }))).toThrow(/cannot have an observed digest/);
 
@@ -521,21 +521,21 @@ describe('calibration-aware report v6', () => {
       bytes: fixture.bytes,
     });
     const bindingReport = preflightReport(fixture, binding);
-    expect(() => reportV6Schema.parse(tamper(bindingReport, (report) => {
+    expect(() => suiteReportSchema.parse(tamper(bindingReport, (report) => {
       report.criteria[0].expectedIdentity.projectId = fixture.manifest.projectId;
     }))).toThrow(/manifest_binding_mismatch/);
   });
 
   it('rejects noncanonical transport, BOM, unknown fields, and unsupported legacy shapes', () => {
     const report = completedReport();
-    expect(() => parseCanonicalCalibrationReportV6Bytes(
+    expect(() => parseCanonicalSuiteReportBytes(
       Buffer.from(`${canonicalJson(report)}\n`, 'utf8'),
     )).toThrow(/canonical/);
-    expect(() => parseCanonicalCalibrationReportV6Bytes(Buffer.concat([
+    expect(() => parseCanonicalSuiteReportBytes(Buffer.concat([
       Buffer.from([0xef, 0xbb, 0xbf]),
-      serializeCalibrationReportV6(report),
+      serializeSuiteReport(report),
     ]))).toThrow(/BOM/);
-    expect(() => reportV6Schema.parse(tamper(report, (copy) => {
+    expect(() => suiteReportSchema.parse(tamper(report, (copy) => {
       copy.criteria[0].sealedCases = ['must-not-appear'];
     }))).toThrow();
     expect(() => parseReportForInspection({ ...report, schemaVersion: 5 })).toThrow();
@@ -543,27 +543,27 @@ describe('calibration-aware report v6', () => {
 
   it.each([
     ['outer policy default', (report: any) => { delete report.policy.compensationGroups; }],
-    ['embedded v5 policy default', (report: any) => {
+    ['embedded candidate policy default', (report: any) => {
       delete report.candidateAssessment.report.policy.compensationGroups;
     }],
   ])('rejects omitted %s without normalizing object or canonical bytes', (_name, omitDefault) => {
     const alternate = structuredClone(completedReport());
     omitDefault(alternate);
-    expect(() => reportV6Schema.parse(alternate)).toThrow(/normalization is forbidden/);
-    expect(() => parseCanonicalCalibrationReportV6Bytes(
+    expect(() => suiteReportSchema.parse(alternate)).toThrow(/normalization is forbidden/);
+    expect(() => parseCanonicalSuiteReportBytes(
       Buffer.from(canonicalJson(alternate), 'utf8'),
     )).toThrow(/normalization is forbidden/);
   });
 
-  it('binds the v2 policy digest and never substitutes the v5 candidate projection', () => {
+  it('binds the release policy digest and never substitutes the candidate projection', () => {
     const report = completedReport();
-    expect(report.policyDigest).toBe(releasePolicyV2Digest(report.policy));
-    expect(() => reportV6Schema.parse(tamper(report, (copy) => {
+    expect(report.policyDigest).toBe(releasePolicyDigest(report.policy));
+    expect(() => suiteReportSchema.parse(tamper(report, (copy) => {
       copy.candidateAssessment.report.policy.criteria[0].rule.minPassRate = 0;
-      copy.candidateAssessment.report.policyDigest = releasePolicyDigest(
+      copy.candidateAssessment.report.policyDigest = candidatePolicyDigest(
         copy.candidateAssessment.report.policy,
       );
-      copy.candidateAssessment.report.decisionStatement = buildSuiteDecisionStatement(
+      copy.candidateAssessment.report.decisionStatement = buildCandidateAssessmentDecisionStatement(
         copy.candidateAssessment.report.decision,
         copy.candidateAssessment.report.policy.id,
         copy.candidateAssessment.report.policy.version,

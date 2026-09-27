@@ -13,15 +13,15 @@ import {
   type CalibrationCollectionResult,
   type CalibrationPolicyResult,
 } from '../src/calibration-policy.js';
-import type { CalibrationEvidenceFileSource } from '../src/config-v6.js';
+import type { CalibrationEvidenceFileSource } from '../src/suite-config.js';
 import {
-  applyReleasePolicyV2,
-  binaryCalibrationRequirementV1Schema,
-  releasePolicyV2CandidateProjection,
-  releasePolicyV2Schema,
-  type BinaryCalibrationRequirementV1,
-  type ReleasePolicyV2,
-} from '../src/policy-v2.js';
+  applyReleasePolicy,
+  binaryCalibrationRequirementSchema,
+  releasePolicyCandidateProjection,
+  releasePolicySchema,
+  type BinaryCalibrationRequirement,
+  type ReleasePolicy,
+} from '../src/release-policy.js';
 import type {
   EvaluatorSuiteManifest,
   EvaluatorSuiteManifestMember,
@@ -95,9 +95,9 @@ function collect(name: 'complete' | 'repeated' | 'incomplete'): CalibrationColle
 
 function requirement(
   value: BinaryCalibrationArtifact,
-  overrides: Partial<BinaryCalibrationRequirementV1> = {},
-): BinaryCalibrationRequirementV1 {
-  return binaryCalibrationRequirementV1Schema.parse({
+  overrides: Partial<BinaryCalibrationRequirement> = {},
+): BinaryCalibrationRequirement {
+  return binaryCalibrationRequirementSchema.parse({
     contract: 'dailies/binary-calibration-requirement/v1',
     requiredTruthRole: 'sealed_validation',
     requiredTruthProvenanceLevel: 'governed_blind',
@@ -214,7 +214,7 @@ describe('binary calibration customer policy', () => {
     const value = artifact('complete');
     const raw = requirement(value) as unknown as Record<string, any>;
     raw.minimumClassifiedCoverage.overall = '0.0';
-    expect(binaryCalibrationRequirementV1Schema.safeParse(raw).success).toBe(false);
+    expect(binaryCalibrationRequirementSchema.safeParse(raw).success).toBe(false);
   });
 
   it('uses exact decimal point and Wilson comparisons and never pools repeated trials', () => {
@@ -331,13 +331,13 @@ describe('binary calibration customer policy', () => {
 
 function policyFor(
   value: BinaryCalibrationArtifact,
-  calibrationRequirement: BinaryCalibrationRequirementV1 | null,
-): ReleasePolicyV2 {
+  calibrationRequirement: BinaryCalibrationRequirement | null,
+): ReleasePolicy {
   const { manifest } = manifestFor(value);
   return {
     contract: 'dailies/release-policy/v1',
     schemaVersion: 1,
-    id: 'release-policy-v2-test',
+    id: 'release-policy-test',
     version: '1',
     manifestId: manifest.manifestId,
     manifestDigest: manifest.manifestDigest,
@@ -370,7 +370,7 @@ function notRequiredCalibration(criterionVersionId: string): CalibrationPolicyRe
 
 function requiredCalibrationResult(
   criterionVersionId: string,
-  calibrationRequirement: BinaryCalibrationRequirementV1,
+  calibrationRequirement: BinaryCalibrationRequirement,
   status: 'satisfied' | 'insufficient' | 'incomplete' | 'integrity_failure',
 ): CalibrationPolicyResult {
   const reason = status === 'satisfied'
@@ -399,15 +399,15 @@ function requiredCalibrationResult(
   };
 }
 
-describe('combined release policy v2 precedence', () => {
+describe('combined release policy precedence', () => {
   it('accepts a blocking criterion that does not opt into calibration', () => {
-    expect(releasePolicyV2Schema.parse(policyFor(artifact('complete'), null))
+    expect(releasePolicySchema.parse(policyFor(artifact('complete'), null))
       .criteria[0]?.calibrationRequirement).toBeNull();
   });
 
-  it('projects v2 to unchanged v1 candidate policy without calibration fields', () => {
+  it('projects the release policy to the candidate policy without calibration fields', () => {
     const value = artifact('complete');
-    const projected = releasePolicyV2CandidateProjection(policyFor(value, requirement(value)));
+    const projected = releasePolicyCandidateProjection(policyFor(value, requirement(value)));
     expect('schemaVersion' in projected).toBe(false);
     expect(projected.criteria[0]).not.toHaveProperty('calibrationRequirement');
   });
@@ -432,7 +432,7 @@ describe('combined release policy v2 precedence', () => {
       collect('complete'),
       '2026-08-23T12:00:10.000Z',
     );
-    expect(applyReleasePolicyV2(policy, evidence, [satisfied], false)).toMatchObject({
+    expect(applyReleasePolicy(policy, evidence, [satisfied], false)).toMatchObject({
       decision: 'block', precedence: 'complete_blocking_failure',
     });
 
@@ -447,7 +447,7 @@ describe('combined release policy v2 precedence', () => {
       missingCollection,
       '2026-08-23T12:00:10.000Z',
     );
-    expect(applyReleasePolicyV2(policy, evidence, [missing], false)).toMatchObject({
+    expect(applyReleasePolicy(policy, evidence, [missing], false)).toMatchObject({
       decision: 'inconclusive', precedence: 'mandatory_evidence_incomplete',
     });
 
@@ -457,7 +457,7 @@ describe('combined release policy v2 precedence', () => {
       collect('complete'),
       '2026-08-23T12:00:01.000Z',
     );
-    expect(applyReleasePolicyV2(policy, evidence, [future], true)).toMatchObject({
+    expect(applyReleasePolicy(policy, evidence, [future], true)).toMatchObject({
       decision: 'inconclusive', precedence: 'required_integrity_failure',
     });
   });
@@ -475,7 +475,7 @@ describe('combined release policy v2 precedence', () => {
       passRate: 0,
       regressions: 1,
     }];
-    expect(applyReleasePolicyV2(
+    expect(applyReleasePolicy(
       noCalibration,
       evidence,
       [notRequiredCalibration(criterionVersionId)],
@@ -488,13 +488,13 @@ describe('combined release policy v2 precedence', () => {
       collect('complete'),
       '2026-08-23T12:00:10.000Z',
     );
-    expect(() => applyReleasePolicyV2(noCalibration, evidence, [evaluated], false))
+    expect(() => applyReleasePolicy(noCalibration, evidence, [evaluated], false))
       .toThrow(/calibration requirement mismatch/);
   });
 
   it('implements the multi-criterion ADR-0005 calibration truth table', () => {
     const calibrationRequirement = requirement(artifact('complete'));
-    const twoCriteria: ReleasePolicyV2 = {
+    const twoCriteria: ReleasePolicy = {
       contract: 'dailies/release-policy/v1',
       schemaVersion: 1,
       id: 'two-criterion-policy',
@@ -541,21 +541,21 @@ describe('combined release policy v2 precedence', () => {
     ];
     const satisfiedBlock = requiredCalibrationResult('blocking', calibrationRequirement, 'satisfied');
 
-    expect(applyReleasePolicyV2(twoCriteria, evidence, [
+    expect(applyReleasePolicy(twoCriteria, evidence, [
       satisfiedBlock,
       requiredCalibrationResult('mandatory', calibrationRequirement, 'incomplete'),
     ], false)).toMatchObject({
       decision: 'block',
       precedence: 'complete_blocking_failure',
     });
-    expect(applyReleasePolicyV2(twoCriteria, evidence, [
+    expect(applyReleasePolicy(twoCriteria, evidence, [
       requiredCalibrationResult('blocking', calibrationRequirement, 'incomplete'),
       requiredCalibrationResult('mandatory', calibrationRequirement, 'satisfied'),
     ], false)).toMatchObject({
       decision: 'inconclusive',
       precedence: 'mandatory_evidence_incomplete',
     });
-    expect(applyReleasePolicyV2(twoCriteria, evidence, [
+    expect(applyReleasePolicy(twoCriteria, evidence, [
       satisfiedBlock,
       requiredCalibrationResult('mandatory', calibrationRequirement, 'integrity_failure'),
     ], false)).toMatchObject({
@@ -577,11 +577,11 @@ describe('combined release policy v2 precedence', () => {
       passRate: 1,
       regressions: 0,
     }];
-    expect(applyReleasePolicyV2(policy, evidence, [
+    expect(applyReleasePolicy(policy, evidence, [
       requiredCalibrationResult(value.criterion.criterionVersionId, calibrationRequirement, 'satisfied'),
     ], false).decision).toBe('promote');
     for (const status of ['insufficient', 'incomplete', 'integrity_failure'] as const) {
-      expect(applyReleasePolicyV2(policy, evidence, [
+      expect(applyReleasePolicy(policy, evidence, [
         requiredCalibrationResult(value.criterion.criterionVersionId, calibrationRequirement, status),
       ], false).decision).not.toBe('promote');
     }

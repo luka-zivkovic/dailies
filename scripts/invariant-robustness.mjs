@@ -14,23 +14,23 @@ import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
-  AUTHORED_INVARIANT_SCENARIO_CONTRACT,
+  applyCandidatePolicy,
   applyReleasePolicy,
-  applyReleasePolicyV2,
+  AUTHORED_INVARIANT_SCENARIO_CONTRACT,
   authoredInvariantEnvironment,
   authoredInvariantScenarioSchema,
   buildAuthoredInvariantRun,
   calibrationPolicyResultSchema,
+  candidatePolicySchema,
   canonicalJson,
   classifyAuthoredInvariantThrownError,
-  classifyV4InvariantReport,
-  classifyV5InvariantDecision,
-  classifyV6InvariantDecision,
+  classifyCandidateInvariantDecision,
+  classifySingleInvariantReport,
+  classifySuiteInvariantDecision,
   evaluateAuthoredInvariantOutcome,
-  reportSchema,
-  releasePolicyV1Schema,
-  releasePolicyV2Schema,
+  releasePolicySchema,
   runShadow,
+  singleReportSchema,
   verifyAuthoredInvariantRun,
 } from '../dist/index.js';
 
@@ -132,8 +132,8 @@ function scenario({
 
 function policyObservation(source, result) {
   const classification = source === 'candidate_policy'
-    ? classifyV5InvariantDecision(result)
-    : classifyV6InvariantDecision(result);
+    ? classifyCandidateInvariantDecision(result)
+    : classifySuiteInvariantDecision(result);
   return {
     source,
     native: {
@@ -150,8 +150,8 @@ function policyObservation(source, result) {
   };
 }
 
-function v5Policy() {
-  return releasePolicyV1Schema.parse({
+function candidatePolicy() {
+  return candidatePolicySchema.parse({
     id: 'authored-candidate-policy',
     version: '1',
     manifestId: 'authored-manifest',
@@ -190,8 +190,8 @@ function criterionEvidence(
   };
 }
 
-function v5CompensationPolicy() {
-  return releasePolicyV1Schema.parse({
+function candidateCompensationPolicy() {
+  return candidatePolicySchema.parse({
     id: 'authored-candidate-compensation-policy',
     version: '1',
     manifestId: 'authored-manifest',
@@ -237,8 +237,8 @@ const calibrationRequirement = {
   }],
 };
 
-function v6Policy() {
-  return releasePolicyV2Schema.parse({
+function suitePolicy() {
+  return releasePolicySchema.parse({
     contract: 'dailies/release-policy/v1',
     schemaVersion: 1,
     id: 'authored-suite-policy',
@@ -310,7 +310,7 @@ function readBody(request) {
   });
 }
 
-async function runV4Fixture(mode, seed) {
+async function runSingleFixture(mode, seed) {
   const dir = await mkdtemp(join(tmpdir(), 'dailies-authored-invariant-'));
   let candidateServer;
   let judgeServer;
@@ -423,7 +423,7 @@ async function runV4Fixture(mode, seed) {
         mode === 'partial_coverage' ? FAULT_TIMEOUT_MS : 1_000,
       output: { dir: join(dir, 'unused') },
     };
-    const report = reportSchema.parse(await runShadow(config, {
+    const report = singleReportSchema.parse(await runShadow(config, {
       now: () => new Date(FIXED_TIME),
     }));
     const observedCandidateCalls = report.items.reduce(
@@ -460,8 +460,8 @@ async function runV4Fixture(mode, seed) {
 
 function runnerExecutor(mode) {
   return async (seed) => {
-    const result = await runV4Fixture(mode, seed);
-    const classification = classifyV4InvariantReport(result.report);
+    const result = await runSingleFixture(mode, seed);
+    const classification = classifySingleInvariantReport(result.report);
     return {
       observation: {
         source: 'single_runner',
@@ -525,7 +525,7 @@ async function fileExists(path) {
   }
 }
 
-async function runV4CliFixture(tampered) {
+async function runSingleCliFixture(tampered) {
   const dir = await mkdtemp(join(tmpdir(), 'dailies-authored-cli-'));
   try {
     const inputBytes = Buffer.from(JSON.stringify({
@@ -608,7 +608,7 @@ async function runV4CliFixture(tampered) {
       };
     }
     const rawArtifact = await readFile(reportPath);
-    const report = reportSchema.parse(JSON.parse(rawArtifact.toString('utf8')));
+    const report = singleReportSchema.parse(JSON.parse(rawArtifact.toString('utf8')));
     const reportCandidateCalls = report.items.reduce(
       (sum, item) => sum + item.attempts.candidate.length,
       0,
@@ -635,7 +635,7 @@ async function runV4CliFixture(tampered) {
 
 function cliExecutor(tampered) {
   return async () => {
-    const result = await runV4CliFixture(tampered);
+    const result = await runSingleCliFixture(tampered);
     if (result.report === null) {
       const classification = classifyAuthoredInvariantThrownError(
         result.cli.stderr,
@@ -656,7 +656,7 @@ function cliExecutor(tampered) {
         stderr: result.cli.stderr,
       };
     }
-    const classification = classifyV4InvariantReport(result.report);
+    const classification = classifySingleInvariantReport(result.report);
     return {
       observation: {
         source: 'single_cli',
@@ -747,12 +747,12 @@ async function scopeMismatchExecutor() {
 }
 
 async function reportTamperExecutor(seed) {
-  const result = await runV4Fixture('clean', seed);
+  const result = await runSingleFixture('clean', seed);
   const tampered = structuredClone(result.report);
   tampered.decision = tampered.decision === 'promote' ? 'block' : 'promote';
   let rejection = '';
   try {
-    reportSchema.parse(tampered);
+    singleReportSchema.parse(tampered);
     throw new Error('tampered report unexpectedly validated');
   } catch (error) {
     rejection = error instanceof Error ? error.message : String(error);
@@ -1028,7 +1028,7 @@ const registered = [
       observationClass: 'protocol_integrity_failure',
       errorKind: 'protocol',
     }),
-    execute: pureExecutor('candidate_policy', () => applyReleasePolicy(v5Policy(), [
+    execute: pureExecutor('candidate_policy', () => applyCandidatePolicy(candidatePolicy(), [
       criterionEvidence('criterion-a', { evidenceState: 'integrity_failure' }),
       criterionEvidence('criterion-b', { passRate: 0 }),
     ], false)),
@@ -1047,7 +1047,7 @@ const registered = [
       observationClass: 'partial_coverage',
       errorKind: 'incomplete',
     }),
-    execute: pureExecutor('candidate_policy', () => applyReleasePolicy(v5Policy(), [
+    execute: pureExecutor('candidate_policy', () => applyCandidatePolicy(candidatePolicy(), [
       criterionEvidence('criterion-a', { evidenceState: 'incomplete' }),
       criterionEvidence('criterion-b', { passRate: 0 }),
     ], false)),
@@ -1066,7 +1066,7 @@ const registered = [
       observationClass: 'candidate_execution_failure',
       errorKind: 'execution',
     }),
-    execute: pureExecutor('candidate_policy', () => applyReleasePolicy(v5Policy(), [
+    execute: pureExecutor('candidate_policy', () => applyCandidatePolicy(candidatePolicy(), [
       criterionEvidence('criterion-a'),
       criterionEvidence('criterion-b'),
     ], true)),
@@ -1085,7 +1085,7 @@ const registered = [
       observationClass: 'partial_coverage',
       errorKind: 'incomplete',
     }),
-    execute: pureExecutor('candidate_policy', () => applyReleasePolicy(v5Policy(), [
+    execute: pureExecutor('candidate_policy', () => applyCandidatePolicy(candidatePolicy(), [
       criterionEvidence('criterion-a', { evidenceState: 'incomplete' }),
       criterionEvidence('criterion-b'),
     ], false)),
@@ -1103,7 +1103,7 @@ const registered = [
       evidenceState: 'complete',
       observationClass: 'policy_result',
     }),
-    execute: pureExecutor('candidate_policy', () => applyReleasePolicy(v5Policy(), [
+    execute: pureExecutor('candidate_policy', () => applyCandidatePolicy(candidatePolicy(), [
       criterionEvidence('criterion-a'),
       criterionEvidence('criterion-b'),
     ], false)),
@@ -1121,7 +1121,7 @@ const registered = [
       evidenceState: 'complete',
       observationClass: 'policy_result',
     }),
-    execute: pureExecutor('candidate_policy', () => applyReleasePolicy(v5CompensationPolicy(), [
+    execute: pureExecutor('candidate_policy', () => applyCandidatePolicy(candidateCompensationPolicy(), [
       criterionEvidence('criterion-a', { passRate: 0.5, passed: 1, total: 2 }),
       criterionEvidence('criterion-b', { passRate: 0.5, passed: 1, total: 2 }),
     ], false)),
@@ -1140,7 +1140,7 @@ const registered = [
       observationClass: 'partial_coverage',
       errorKind: 'incomplete',
     }),
-    execute: pureExecutor('suite_policy', () => applyReleasePolicyV2(v6Policy(), [
+    execute: pureExecutor('suite_policy', () => applyReleasePolicy(suitePolicy(), [
       criterionEvidence('criterion-a', { passRate: 0 }),
       criterionEvidence('criterion-b'),
     ], [
@@ -1162,7 +1162,7 @@ const registered = [
       observationClass: 'partial_coverage',
       errorKind: 'incomplete',
     }),
-    execute: pureExecutor('suite_policy', () => applyReleasePolicyV2(v6Policy(), [
+    execute: pureExecutor('suite_policy', () => applyReleasePolicy(suitePolicy(), [
       criterionEvidence('criterion-a'),
       criterionEvidence('criterion-b', { passRate: 0 }),
     ], [
@@ -1184,7 +1184,7 @@ const registered = [
       observationClass: 'artifact_tamper',
       errorKind: 'protocol',
     }),
-    execute: pureExecutor('suite_policy', () => applyReleasePolicyV2(v6Policy(), [
+    execute: pureExecutor('suite_policy', () => applyReleasePolicy(suitePolicy(), [
       criterionEvidence('criterion-a'),
       criterionEvidence('criterion-b', { passRate: 0 }),
     ], [

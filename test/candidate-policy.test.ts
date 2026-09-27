@@ -1,12 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
-  applyReleasePolicy,
-  releasePolicyDigest,
-  verifyReleasePolicy,
+  applyCandidatePolicy,
+  candidatePolicyDigest,
+  verifyCandidatePolicy,
   type CriterionPolicyInput,
-  type ReleasePolicyV1,
-} from '../src/policy.js';
+  type CandidatePolicy,
+} from '../src/candidate-policy.js';
 import {
   verifyEvaluatorSuiteManifest,
   type EvaluatorSuiteManifest,
@@ -17,8 +17,8 @@ const manifest = verifyEvaluatorSuiteManifest(JSON.parse(readFileSync(
   'utf8',
 )) as EvaluatorSuiteManifest);
 
-function policy(overrides: Partial<ReleasePolicyV1> = {}): ReleasePolicyV1 {
-  return verifyReleasePolicy({
+function policy(overrides: Partial<CandidatePolicy> = {}): CandidatePolicy {
+  return verifyCandidatePolicy({
     id: 'customer-release',
     version: '1',
     manifestId: manifest.manifestId,
@@ -70,7 +70,7 @@ function evidence(
   ];
 }
 
-describe('criterion release policy v1', () => {
+describe('candidate criterion policy', () => {
   it('requires exact ordered policy coverage and pins the manifest identity', () => {
     expect(policy().criteria.map((entry) => entry.criterionVersionId)).toEqual(
       manifest.members.map((member) => member.criterionVersionId),
@@ -78,26 +78,26 @@ describe('criterion release policy v1', () => {
     expect(() => policy({ manifestDigest: `sha256:${'0'.repeat(64)}` })).toThrow(/manifestDigest/);
     expect(() => policy({ criteria: policy().criteria.slice(0, 1) })).toThrow(/exact/);
     expect(() => policy({ criteria: [...policy().criteria].reverse() })).toThrow(/manifest order/);
-    expect(releasePolicyDigest(policy())).toMatch(/^sha256:[0-9a-f]{64}$/);
+    expect(candidatePolicyDigest(policy())).toMatch(/^sha256:[0-9a-f]{64}$/);
   });
 
   it('implements the accepted mixed-evidence precedence exactly', () => {
     const accepted = policy();
-    expect(applyReleasePolicy(accepted, evidence({ evidenceState: 'integrity_failure' }), true))
+    expect(applyCandidatePolicy(accepted, evidence({ evidenceState: 'integrity_failure' }), true))
       .toMatchObject({ decision: 'inconclusive', precedence: 'required_integrity_failure' });
-    expect(applyReleasePolicy(accepted, evidence(), true))
+    expect(applyCandidatePolicy(accepted, evidence(), true))
       .toMatchObject({ decision: 'block', precedence: 'candidate_execution_failure' });
-    expect(applyReleasePolicy(
+    expect(applyCandidatePolicy(
       accepted,
       evidence({ passRate: 0 }, { evidenceState: 'incomplete' }),
       false,
     )).toMatchObject({ decision: 'block', precedence: 'complete_blocking_failure' });
-    expect(applyReleasePolicy(
+    expect(applyCandidatePolicy(
       accepted,
       evidence({}, { evidenceState: 'incomplete' }),
       false,
     )).toMatchObject({ decision: 'inconclusive', precedence: 'mandatory_evidence_incomplete' });
-    expect(applyReleasePolicy(accepted, evidence(), false))
+    expect(applyCandidatePolicy(accepted, evidence(), false))
       .toMatchObject({ decision: 'promote', precedence: 'policy_satisfied' });
   });
 
@@ -109,14 +109,14 @@ describe('criterion release policy v1', () => {
     if (first.rule.kind !== 'binary_threshold/v1') throw new Error('wrong fixture');
     first.rule.minPassRate = 0.8;
     const permissive = policy({ id: 'permissive', criteria: permissiveCriteria });
-    expect(applyReleasePolicy(strict, observed, false).decision).toBe('block');
-    expect(applyReleasePolicy(permissive, observed, false).decision).toBe('promote');
+    expect(applyCandidatePolicy(strict, observed, false).decision).toBe('block');
+    expect(applyCandidatePolicy(permissive, observed, false).decision).toBe('promote');
   });
 
   it('never lets advisory evidence rescue a block or mandatory incompleteness', () => {
-    expect(applyReleasePolicy(policy(), evidence({ passRate: 0 }, { passRate: 1 }), false).decision)
+    expect(applyCandidatePolicy(policy(), evidence({ passRate: 0 }, { passRate: 1 }), false).decision)
       .toBe('block');
-    expect(applyReleasePolicy(
+    expect(applyCandidatePolicy(
       policy(),
       evidence({ evidenceState: 'incomplete' }, { passRate: 1 }),
       false,
@@ -145,7 +145,7 @@ describe('criterion release policy v1', () => {
         },
       }],
     });
-    const compensated = applyReleasePolicy(
+    const compensated = applyCandidatePolicy(
       compensatory,
       evidence(
         { passRate: 0.7, passed: 7, total: 10 },
@@ -167,7 +167,7 @@ describe('criterion release policy v1', () => {
         },
       }],
     });
-    const failed = applyReleasePolicy(
+    const failed = applyCandidatePolicy(
       compensatory,
       evidence(
         { passRate: 0.5, passed: 1, total: 2 },
@@ -179,17 +179,17 @@ describe('criterion release policy v1', () => {
 
     const raw = structuredClone(compensatory) as Record<string, any>;
     raw.compensationGroups[0].formula.terms[1].weightBasisPoints = 3000;
-    expect(() => verifyReleasePolicy(raw, manifest)).toThrow(/10000/);
+    expect(() => verifyCandidatePolicy(raw, manifest)).toThrow(/10000/);
     const missingFormula = structuredClone(compensatory);
     missingFormula.compensationGroups = [];
-    expect(() => verifyReleasePolicy(missingFormula, manifest)).toThrow(/missing compensation group/);
+    expect(() => verifyCandidatePolicy(missingFormula, manifest)).toThrow(/missing compensation group/);
   });
 
   it('allows only the four explicit evidence/consequence roles and gives compensation no hidden threshold', () => {
     const accepted = policy();
     const optionalAdvisory = structuredClone(accepted);
     optionalAdvisory.criteria[1]!.evidenceRequirement = 'optional';
-    expect(() => verifyReleasePolicy(optionalAdvisory, manifest)).not.toThrow();
+    expect(() => verifyCandidatePolicy(optionalAdvisory, manifest)).not.toThrow();
 
     for (const consequence of ['blocking', 'compensatory'] as const) {
       const invalid = structuredClone(accepted) as Record<string, any>;
@@ -202,7 +202,7 @@ describe('criterion release policy v1', () => {
           unit: 'pass_rate_ratio',
         };
       }
-      expect(() => verifyReleasePolicy(invalid, manifest), consequence).toThrow();
+      expect(() => verifyCandidatePolicy(invalid, manifest), consequence).toThrow();
     }
 
     const raw = structuredClone(accepted) as Record<string, any>;
@@ -213,6 +213,6 @@ describe('criterion release policy v1', () => {
       compensationGroupId: 'quality',
       rule: { kind: 'pass_rate_operand/v1', unit: 'pass_rate_ratio', minPassRate: 0.5 },
     };
-    expect(() => verifyReleasePolicy(raw, manifest)).toThrow();
+    expect(() => verifyCandidatePolicy(raw, manifest)).toThrow();
   });
 });

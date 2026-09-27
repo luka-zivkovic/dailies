@@ -3,18 +3,18 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { Command } from 'commander';
 import {
-  parseSuiteConfigV6,
-  type SuiteConfigV6,
-} from './config-v6.js';
-import { parseConfig, type Config } from './config.js';
+  parseSuiteConfig,
+  type SuiteConfig,
+} from './suite-config.js';
+import { parseSingleConfig, type SingleConfig } from './config.js';
 import { CONFIG_CONTRACTS, declaredContract, SUITE_CONFIG_CONTRACT, SUITE_REPORT_CONTRACT } from './contracts.js';
 import { decideExitCode, EXIT_RUN_ERROR, renderMarkdown } from './report.js';
 import {
-  renderCalibrationReportMarkdown,
-  serializeCalibrationReportV6,
-} from './report-v6.js';
+  renderSuiteMarkdown,
+  serializeSuiteReport,
+} from './suite-report.js';
 import { runShadow } from './runner.js';
-import { runCalibrationSuiteRelease } from './suite-runner-v6.js';
+import { runSuiteRelease } from './suite-runner.js';
 import { initializeDailiesProject } from './init.js';
 import { formatDigestSyncResult, syncInputDigest } from './digest.js';
 
@@ -26,7 +26,7 @@ function resolveFrom(baseDir: string, p: string): string {
 }
 
 /** Load a single or suite configuration by its contract (ADR-0010). */
-async function loadConfig(configPath: string): Promise<Config | SuiteConfigV6> {
+async function loadConfig(configPath: string): Promise<SingleConfig | SuiteConfig> {
   const absPath = resolve(configPath);
   const raw: unknown = JSON.parse(await readFile(absPath, 'utf8'));
   const contract = declaredContract(raw);
@@ -36,7 +36,7 @@ async function loadConfig(configPath: string): Promise<Config | SuiteConfigV6> {
         `dailies runs ${CONFIG_CONTRACTS.join(' or ')}`,
     );
   }
-  const config = contract === SUITE_CONFIG_CONTRACT ? parseSuiteConfigV6(raw) : parseConfig(raw);
+  const config = contract === SUITE_CONFIG_CONTRACT ? parseSuiteConfig(raw) : parseSingleConfig(raw);
   // Paths in the config are relative to the config file's directory.
   const baseDir = dirname(absPath);
   config.inputs.path = resolveFrom(baseDir, config.inputs.path);
@@ -55,15 +55,15 @@ async function loadConfig(configPath: string): Promise<Config | SuiteConfigV6> {
 async function runConfiguredRelease(configPath: string): Promise<number> {
   const config = await loadConfig(configPath);
   const report = config.contract === SUITE_CONFIG_CONTRACT
-    ? await runCalibrationSuiteRelease(config)
+    ? await runSuiteRelease(config)
     : await runShadow(config);
 
   await mkdir(config.output.dir, { recursive: true });
   const jsonPath = join(config.output.dir, 'report.json');
   const mdPath = join(config.output.dir, 'report.md');
   if (report.contract === SUITE_REPORT_CONTRACT) {
-    await writeFile(jsonPath, serializeCalibrationReportV6(report));
-    await writeFile(mdPath, renderCalibrationReportMarkdown(report), 'utf8');
+    await writeFile(jsonPath, serializeSuiteReport(report));
+    await writeFile(mdPath, renderSuiteMarkdown(report), 'utf8');
     console.log(
       `decision: ${report.decision} | criteria ${report.criteria.length}, ` +
       `candidate assessment ${report.candidateAssessment.status}, ` +

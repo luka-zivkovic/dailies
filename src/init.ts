@@ -1,7 +1,7 @@
 import { createHash } from 'node:crypto';
 import { mkdir, open, unlink, type FileHandle } from 'node:fs/promises';
 import { join, relative, resolve } from 'node:path';
-import { type Config, type InputItem } from './config.js';
+import { type SingleConfig, type InputItem } from './config.js';
 import { SINGLE_CONFIG_CONTRACT } from './contracts.js';
 
 export const STARTER_CONFIG_FILENAME = 'dailies.config.json';
@@ -75,7 +75,7 @@ export async function initializeDailiesProject(
   const inputsPath = join(directory, STARTER_INPUTS_FILENAME);
   const configPath = join(directory, STARTER_CONFIG_FILENAME);
   const inputsBytes = STARTER_ITEMS.map((item) => JSON.stringify(item)).join('\n') + '\n';
-  const config: Config = {
+  const config: SingleConfig = {
     contract: SINGLE_CONFIG_CONTRACT,
     schemaVersion: 1,
     inputs: {
