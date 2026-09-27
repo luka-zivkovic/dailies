@@ -10,8 +10,8 @@ import {
 } from './rubrist-identity.js';
 
 // Rubrist assessment receipt (contracts/assessment-receipt-v1.md), verified
-// independently of Rubrist's runtime. It replaced receipt v1 in every report
-// format (Dailies ADR-0008).
+// independently of Rubrist's runtime. Every report format consumes it
+// (Dailies ADR-0008).
 
 export const RUBRIST_RECEIPT_CONTRACT = 'rubrist/assessment-receipt/v1';
 
@@ -134,7 +134,7 @@ function verifyItem(item: RubristReceiptItem, receipt: RubristReceipt): void {
   }
 }
 
-/** Every semantic rule of receipt, plus candidate linkage when the candidates are supplied. */
+/** Every semantic rule of the assessment receipt, plus candidate linkage when the candidates are supplied. */
 export function verifyRubristReceipt(
   raw: unknown,
   expected: RubristReceiptExpectations = {},

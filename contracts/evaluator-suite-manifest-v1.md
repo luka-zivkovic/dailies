@@ -69,9 +69,9 @@ receipt:
 Exact canonical artifact bytes are UTF-8 bytes of the complete canonical
 manifest, including `manifestDigest`, with no byte-order mark. A byte-level
 reader must reject invalid UTF-8, a byte-order mark, non-JSON, and valid JSON
-that is not in canonical form. As in the assessment receipt, no object has a `__proto__`
-key, every string is a sequence of Unicode scalar values, and every integer is
-at most 2^53 − 1.
+that is not in canonical form. As in the assessment receipt, no object has a
+`__proto__` key, every string is a sequence of Unicode scalar values, and
+every integer is at most 2^53 − 1.
 
 ## Digests
 
@@ -115,9 +115,9 @@ For a typed-question definition it is:
 `skillDigest` (ADR-0014 section 1) is SHA-256 over canonical JSON of
 `{ "basis": "rubrist/evaluator-identity/v1", "definitionDigest": ...,
 "executionBinding": ... }`. The manifest carries it without the identity it
-covers; the assessment receipt and the calibration artifact carry that identity and recompute it,
-so a consumer checks the receipt's recomputed `skillDigest` against the
-member's.
+covers; the assessment receipt and the calibration artifact carry that
+identity and recompute it, so a consumer checks the receipt's recomputed
+`skillDigest` against the member's.
 
 Criterion or suite fields never enter `skillDigest` and never enter the
 assessment receipt.

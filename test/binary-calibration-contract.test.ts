@@ -48,7 +48,7 @@ const contractRoot = new URL('../contracts/', import.meta.url);
 // Byte-identical to Rubrist's published copies (Dailies ADR-0008).
 const pinnedFileDigests = {
   schema: 'c427a1f142a8f10efacdf8ccb061ee7e2772d3ce01d098c6598cbbcdf6b26a8e',
-  specification: 'ec1eba56078161fbeba98788de517241f82b24cf419ca33178b5c63a34dea695',
+  specification: 'e746ede31c475111f2097f44260d988ccdeb85326184ff4dfd26f3923ab7d876',
   complete: '58bacf44a44f9beb990856b879be5cc0cb4e6063aefafb6a05abc4f79da2d14b',
   repeated: 'd44084f8777901fd3c87519848d1dd8e20cbb2a4d32e903bc751a40ab5c56b8d',
   incomplete: '93eef8f7e35e66ed7a2f426064fcd14bd11ad72a580f57fe156e7e71dbb31513',

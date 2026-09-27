@@ -94,9 +94,9 @@ The artifact binds:
 - artifact, calibration-run, project, and correction-lineage identity;
 - exact criterion ID, criterion-version ID, and criterion digest;
 - exact skill and skill-version IDs, the evaluator identity (`basis`,
-  `definitionDigest`, and the execution binding, the same object the assessment receipt
-  carries as `evaluator`), `skillDigest`, the output-contract digest, and
-  `requestedBindingDigest`;
+  `definitionDigest`, and the execution binding, the same object the
+  assessment receipt carries as `evaluator`), `skillDigest`, the
+  output-contract digest, and `requestedBindingDigest`;
 - an optional exact suite-manifest/member binding;
 - dataset revision ID, `revisionDigest`, `contentDigest`, item count,
   `sealed_validation` role, `sealed_intake` source, and `governed_blind`
@@ -180,8 +180,8 @@ Calibration tightens the admissible input domain. Every digest-covered number
 is a nonnegative safe integer, exact fraction component, or lowercase 16-hex
 binary64 bit string, except the execution binding's sampling settings:
 `temperature` in `[0,2]` and `topP` in `[0,1]` are finite JSON numbers
-serialized as ECMAScript does, exactly as in the assessment receipt and `skillDigest`.
-Negative zero is invalid everywhere. Every string and object key must
+serialized as ECMAScript does, exactly as in the assessment receipt and
+`skillDigest`. Negative zero is invalid everywhere. Every string and object key must
 contain Unicode scalar values; unpaired UTF-16 surrogates are invalid. NFC and
 NFD strings remain distinct. UTF-8 BOM-prefixed bytes are invalid.
 Public free-text/identity strings are capped at 4,096 Unicode code points,

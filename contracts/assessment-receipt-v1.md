@@ -8,8 +8,7 @@ decides the contract.
 
 ## Canonical JSON and digests
 
-Canonical JSON is the same as in receipt v1. It accepts JSON values only and
-serializes `null`, booleans, strings, and finite numbers exactly as
+Canonical JSON accepts JSON values only and serializes `null`, booleans, strings, and finite numbers exactly as
 ECMAScript `JSON.stringify` does, which is the RFC 8785 string and number
 representation. Arrays keep their order. Object keys are sorted recursively
 by exact UTF-16 code unit order, with no insignificant whitespace and no

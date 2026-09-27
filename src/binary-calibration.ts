@@ -4,13 +4,11 @@ import { canonicalJson, sha256Digest } from './rubrist-canonical.js';
 import { rubristEvaluatorIdentitySchema, rubristSkillDigest } from './rubrist-identity.js';
 
 // Rubrist binary calibration (contracts/binary-calibration-v1.md), verified
-// independently of Rubrist's runtime. It keeps every v1 rule except what
-// Rubrist ADR-0014 changes: the evaluator is the evaluator identity with
-// skillDigest and requestedBindingDigest recomputed from it, errors use the
-// shared failure taxonomy, never-attempted items are `notAttempted`, provider
-// groups record the OpenRouter upstream, and a typed-question evaluator never
-// abstains. It replaced calibration v1, keeping its export names (Dailies
-// ADR-0008).
+// independently of Rubrist's runtime (Dailies ADR-0008): the evaluator is the
+// evaluator identity with skillDigest and requestedBindingDigest recomputed
+// from it, errors use the shared failure taxonomy, never-attempted items are
+// `notAttempted`, provider groups record the OpenRouter upstream, and a
+// typed-question evaluator never abstains.
 
 const MAX_ARTIFACT_BYTES = 16 * 1024 * 1024;
 const MAX_PUBLIC_STRING_CODE_POINTS = 4_096;
@@ -98,7 +96,7 @@ const criterionSchema = z.object({
 const evaluatorSchema = z.object({
   skillId: publicStringSchema,
   skillVersionId: publicStringSchema,
-  // The same object receipt carries as `evaluator`: basis, definition digest, execution binding.
+  // The same object the assessment receipt carries as `evaluator`: basis, definition digest, execution binding.
   identity: rubristEvaluatorIdentitySchema,
   skillDigest: digestSchema,
   outputContractDigest: digestSchema,
@@ -544,7 +542,7 @@ function assertExactCalendarTimestamp(value: string): void {
 }
 
 // The only numbers that may be fractional: the execution binding's sampling
-// settings, serialized as ECMAScript does, exactly as in receipt.
+// settings, serialized as ECMAScript does, exactly as in the assessment receipt.
 const SAMPLING_PATHS = new Set([
   'evaluator.identity.executionBinding.sampling.temperature',
   'evaluator.identity.executionBinding.sampling.topP',

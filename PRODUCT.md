@@ -108,8 +108,8 @@ customer override. Additive schema v6 consumes exact local
 `rubrist/binary-calibration/v1` artifacts under customer policy v2, preserves a
 separate sealed calibration scope, evaluates repeated calibration trials
 without pooling, and emits a canonical calibration-aware report while keeping
-the receipt unchanged. Rubrist evidence is verified throughout (ADR-0008), and an
-evaluator's abstention counts as not passing (ADR-0009). Repeated
+the receipt unchanged. Every schema consumes Rubrist's v1 evidence contracts
+(ADR-0008), and an evaluator's abstention counts as not passing (ADR-0009). Repeated
 candidate-assessment execution, staged rollout, and hosted control-plane ideas
 remain demand-gated.
 
