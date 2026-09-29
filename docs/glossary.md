@@ -2,7 +2,7 @@
 
 Status: **active shared vocabulary**
 
-Last reviewed: 2026-09-26
+Last reviewed: 2026-09-29
 
 This file is intentionally vendored in Rubrist, Dailies, and Casefile. Update
 all three copies together. Product-specific scope is defined by each repo's
@@ -83,3 +83,30 @@ all three copies together. Product-specific scope is defined by each repo's
   preregistered procedure used to compare tools or support broader claims.
 - **Artifact lock:** Casefile's digest-protected snapshot of artifact identity,
   policy, findings, and scanner/report versions.
+
+## Rubrist product vocabulary
+
+These display terms do not rename API fields or change evidence classes.
+
+- **Case:** One unit assessed by an evaluator: an imported trace or a dataset
+  example. An evaluation **run** is an execution over one or more cases.
+- **Rubric:** The evaluator's written grading rules for its criterion.
+- **Judge instructions:** The model instructions around the rubric. The API
+  continues to store these in its `prompt` field.
+- **Human label:** A person's recorded assessment of a case. When the reviewer
+  can see evaluator output, the label is ungoverned feedback; it does not
+  become human truth merely because a person recorded it.
+- **Blind human review:** Review without seeing the evaluator's assessment.
+  Blindness alone does not satisfy the governed truth contract.
+- **Human agreement:** How often an evaluator matches identified human labels
+  on a stated set of cases. Name the evaluator version, reference provenance,
+  coverage and exposure; ungoverned agreement is not sealed calibration.
+- **Review queue:** Cases waiting for human review. A **saved review queue**
+  retains an explicitly selected list and its review progress.
+- **Golden set / golden case:** Curated reference cases used to check evaluator
+  changes; a member is a golden case. Performance on this set does not estimate
+  broad production quality.
+- **Reference check:** An evaluator-version comparison against the reference
+  labels in a named set of cases.
+- **Reference disagreement:** An evaluator label differs from its reference
+  label. This does not establish a regression against an accepted baseline.
